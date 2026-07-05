@@ -28,4 +28,14 @@ async function getCertificateByCode(code) {
   return data;
 }
 
-module.exports = { createCertificate, getCertificateByCode };
+async function getAllCertificates() {
+  const { data, error } = await supabase
+    .from('certificates')
+    .select('*')
+    .order('issued_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+module.exports = { createCertificate, getCertificateByCode, getAllCertificates };

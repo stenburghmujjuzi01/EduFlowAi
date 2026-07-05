@@ -48,4 +48,14 @@ async function getLeaderboard(limit = 5) {
   return data;
 }
 
-module.exports = { createUser, getUserByPhone, updateUser, getLeaderboard };
+async function getAllUsers() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('name, phone_number, current_topic, current_lesson_number, xp, final_assessment_score, certificate_issued, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+module.exports = { createUser, getUserByPhone, updateUser, getLeaderboard, getAllUsers };
