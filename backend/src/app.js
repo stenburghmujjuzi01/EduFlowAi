@@ -4,8 +4,6 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 
 const healthRoutes = require('./routes/health.routes');
-const userRoutes = require('./routes/user.routes');
-const whatsappRoutes = require('./routes/whatsapp.routes');
 const webhookRoutes = require('./routes/webhook.routes');
 const adminRoutes = require('./routes/admin.routes');
 
@@ -22,8 +20,6 @@ app.get('/', (req, res) => {
 });
 
 app.use('/', healthRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
 app.use('/webhook', webhookRoutes);
 app.use('/api/admin', adminRoutes);
 
