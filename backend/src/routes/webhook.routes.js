@@ -63,8 +63,19 @@ router.post('/', async (req, res) => {
       return;
     }
 
-    const from = message.from;
-    const text = message.text?.body;
+const from = message.from; // sender's phone number, no "+"
+
+    let text;
+    if (message.type === 'interactive') {
+      const interactive = message.interactive;
+      if (interactive?.type === 'list_reply') {
+        text = interactive.list_reply.id;
+      } else if (interactive?.type === 'button_reply') {
+        text = interactive.button_reply.id;
+      }
+    } else {
+      text = message.text?.body;
+    }
 
     const now = Date.now();
     const last = lastMessageAt.get(from) || 0;

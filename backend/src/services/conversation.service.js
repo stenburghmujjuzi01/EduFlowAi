@@ -6,8 +6,8 @@ const gamificationService = require('./gamification.service');
 const certificatesService = require('./certificates.service');
 const certificatePdfService = require('./certificate-pdf.service');
 
-const TOTAL_LESSONS = 5; // fixed course length per topic for now
-const PASS_THRESHOLD = 6; // out of 10, minimum score to earn a certificate
+const TOTAL_LESSONS = 5;
+const PASS_THRESHOLD = 6;
 
 async function deliverLesson(user, lessonNumber) {
   const previous = lessonNumber > 1
@@ -36,7 +36,7 @@ async function deliverLesson(user, lessonNumber) {
   const isLast = lessonNumber === TOTAL_LESSONS;
   let footer = isLast
     ? "\n\n🎉 That's the final lesson! Send any message next to start your final assessment."
-    : `\n\n📘 Lesson ${lessonNumber} of ${TOTAL_LESSONS}. Reply "next" whenever you're ready for the next one.`;
+    : `\n\n📘 Lesson ${lessonNumber} of ${TOTAL_LESSONS} complete.`;
 
   footer += `\n+10 XP (${xpResult.newXp} total)`;
   if (xpResult.leveledUp) {
@@ -44,6 +44,33 @@ async function deliverLesson(user, lessonNumber) {
   }
 
   await whatsappService.sendTextMessage(user.phone_number, content + footer);
+
+  if (!isLast) {
+    await sendMenu(user.phone_number, { includeNext: true });
+  }
+}
+
+async function sendMenu(phoneNumber, { includeNext = false } = {}) {
+  const rows = [];
+  if (includeNext) rows.push({ id: 'next', title: '▶️ Next Lesson', description: 'Continue to the next lesson' });
+  rows.push({ id: 'practice', title: '🏆 Practice Challenge', description: 'Get a bonus challenge' });
+  rows.push({ id: 'progress', title: '📊 My Progress', description: 'See your stats and level' });
+  rows.push({ id: 'leaderboard', title: '🏅 Leaderboard', description: 'See top learners by XP' });
+
+  try {
+    await whatsappService.sendListMessage(
+      phoneNumber,
+      'What would you like to do?',
+      'Menu',
+      rows
+    );
+  } catch (err) {
+    console.error('[conversation] Failed to send menu:', err.details || err);
+    await whatsappService.sendTextMessage(
+      phoneNumber,
+      'Type "next", "practice", "progress", or "leaderboard" to continue.'
+    );
+  }
 }
 
 async function sendPracticeChallenge(user) {
@@ -55,6 +82,7 @@ async function sendPracticeChallenge(user) {
       message += `\n🌟 Level up! You're now a ${xpResult.newLevel}!`;
     }
     await whatsappService.sendTextMessage(user.phone_number, message);
+    await sendMenu(user.phone_number, { includeNext: user.current_lesson_number < TOTAL_LESSONS });
   } catch (err) {
     console.error('[conversation] Failed to generate practice challenge:', err.details || err);
     await whatsappService.sendTextMessage(
@@ -81,10 +109,6 @@ async function sendLeaderboard(phoneNumber) {
   }
 }
 
-/**
- * Generates, saves, uploads, and sends a certificate PDF to a learner who passed
- * their final assessment (Module 6.2 Certificate Engine).
- */
 async function issueCertificate(user, score) {
   const cert = await certificatesService.createCertificate({
     user_id: user.id,
@@ -120,7 +144,6 @@ async function issueCertificate(user, score) {
 async function handleIncomingMessage(from, text) {
   const trimmed = (text || '').trim();
 
-  // Global command: works regardless of conversation state, no user record needed.
   const verifyMatch = trimmed.match(/^verify\s+(\S+)/i);
   if (verifyMatch) {
     const code = verifyMatch[1];
@@ -208,13 +231,15 @@ async function handleIncomingMessage(from, text) {
       const level = gamificationService.getLevel(user.xp || 0);
       await whatsappService.sendTextMessage(
         user.phone_number,
-        `📊 Progress Report\n\nName: ${user.name}\nTopic: ${user.current_topic}\nLesson: ${user.current_lesson_number} of ${TOTAL_LESSONS}\nXP: ${user.xp || 0} (${level})\n\nKeep going, you're doing great! Type "next" to continue.`
+        `📊 Progress Report\n\nName: ${user.name}\nTopic: ${user.current_topic}\nLesson: ${user.current_lesson_number} of ${TOTAL_LESSONS}\nXP: ${user.xp || 0} (${level})`
       );
+      await sendMenu(user.phone_number, { includeNext: true });
       return;
     }
 
     if (lower === 'leaderboard') {
       await sendLeaderboard(user.phone_number);
+      await sendMenu(user.phone_number, { includeNext: true });
       return;
     }
 
@@ -246,8 +271,8 @@ async function handleIncomingMessage(from, text) {
         if (xpResult.leveledUp) {
           message += `\n🌟 Level up! You're now a ${xpResult.newLevel}!`;
         }
-        message += `\n\nType "next" whenever you're ready to continue to lesson ${user.current_lesson_number + 1}.`;
         await whatsappService.sendTextMessage(from, message);
+        await sendMenu(from, { includeNext: true });
       } catch (err) {
         console.error('[conversation] Failed to grade answer:', err.details || err);
         await whatsappService.sendTextMessage(
