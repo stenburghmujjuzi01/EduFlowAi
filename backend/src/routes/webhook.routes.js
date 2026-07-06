@@ -18,17 +18,12 @@ function isValidSignature(req) {
   }
 
   const signatureHeader = req.header('x-hub-signature-256');
-  if (!signatureHeader || !req.rawBody) {
-    console.log('[webhook-debug] missing header or rawBody. header present:', !!signatureHeader, 'rawBody present:', !!req.rawBody);
-    return false;
-  }
+  if (!signatureHeader || !req.rawBody) return false;
 
   const expected = 'sha256=' + crypto
     .createHmac('sha256', APP_SECRET)
     .update(req.rawBody)
     .digest('hex');
-
-  console.log('[webhook-debug] secretLen:', APP_SECRET.length, 'received:', signatureHeader, 'expected:', expected);
 
   const a = Buffer.from(signatureHeader);
   const b = Buffer.from(expected);
