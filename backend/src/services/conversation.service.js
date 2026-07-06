@@ -146,6 +146,19 @@ async function handleIncomingMessage(from, text) {
 
   let user = await userService.getUserByPhone(from);
 
+  if (user && trimmed.toLowerCase() === 'restart') {
+    await userService.updateUser(from, {
+      name: null,
+      current_topic: null,
+      current_lesson_number: 0,
+      final_assessment_question: null,
+      final_assessment_score: null,
+      certificate_issued: false,
+    });
+    await whatsappService.sendTextMessage(from, "Let's start fresh! 🎓 What's your name?");
+    return;
+  }
+
   if (!user) {
     user = await userService.createUser({ phone_number: from });
     await whatsappService.sendTextMessage(
