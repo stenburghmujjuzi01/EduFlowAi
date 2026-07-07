@@ -9,10 +9,6 @@ const certificatePdfService = require('./certificate-pdf.service');
 const TOTAL_LESSONS = 5; // fixed course length per topic for now
 const PASS_THRESHOLD = 6; // out of 10, minimum score to earn a certificate
 
-/**
- * Generates lesson `lessonNumber` for a user's current topic, saves it,
- * updates their progress, and sends it over WhatsApp.
- */
 async function deliverLesson(user, lessonNumber) {
   const previous = lessonNumber > 1
     ? await lessonsService.getLesson(user.id, user.current_topic, lessonNumber - 1)
@@ -54,11 +50,6 @@ async function deliverLesson(user, lessonNumber) {
   }
 }
 
-/**
- * Sends the tappable menu (WhatsApp List Message) for navigating between
- * lessons, practice, progress, and the leaderboard - the button-based
- * alternative to typing commands.
- */
 async function sendMenu(phoneNumber, { includeNext = false } = {}) {
   const rows = [];
   if (includeNext) rows.push({ id: 'next', title: '▶️ Next Lesson', description: 'Continue to the next lesson' });
@@ -83,9 +74,6 @@ async function sendMenu(phoneNumber, { includeNext = false } = {}) {
   }
 }
 
-/**
- * Generates and sends an on-demand bonus practice challenge (Module 4.5 Challenge Engine).
- */
 async function sendPracticeChallenge(user) {
   try {
     const challenge = await aiService.generatePracticeChallenge(user.current_topic, user.name);
@@ -105,9 +93,6 @@ async function sendPracticeChallenge(user) {
   }
 }
 
-/**
- * Fetches and sends the top-5 leaderboard by XP (Module 5.3 Community Features).
- */
 async function sendLeaderboard(phoneNumber) {
   try {
     const top = await userService.getLeaderboard(5);
@@ -125,9 +110,6 @@ async function sendLeaderboard(phoneNumber) {
   }
 }
 
-/**
- * Fetches and sends a learner's completed lesson history for their current topic.
- */
 async function sendHistory(user) {
   try {
     const lessons = await lessonsService.getLessonsForUser(user.id, user.current_topic);
@@ -152,10 +134,6 @@ async function sendHistory(user) {
   }
 }
 
-/**
- * Generates, saves, uploads, and sends a certificate PDF to a learner who passed
- * their final assessment (Module 6.2 Certificate Engine).
- */
 async function issueCertificate(user, score) {
   const cert = await certificatesService.createCertificate({
     user_id: user.id,
@@ -188,15 +166,6 @@ async function issueCertificate(user, score) {
   await userService.updateUser(user.phone_number, { certificate_issued: true });
 }
 
-/**
- * Handles a single incoming WhatsApp message and decides how to respond.
- * Conversation "state" is inferred from the user's row:
- *   - no user record             -> brand new, ask for name
- *   - user.name is null          -> this message IS their name
- *   - user.current_topic is null -> this message IS their chosen topic -> deliver lesson 1
- *   - topic set, lessons remain  -> waiting for "next" to advance
- *   - all lessons complete       -> Final Assessment / Certificate flow
- */
 async function handleIncomingMessage(from, text) {
   const trimmed = (text || '').trim();
 
@@ -336,6 +305,18 @@ async function handleIncomingMessage(from, text) {
           user.current_topic,
           user.current_lesson_number
         );
+
+        const intent = await aiService.classifyMessageIntent(trimmed);
+
+        if (intent === 'QUESTION') {
+          const answer = await aiService.answerQuestion(trimmed, user.current_topic, user.name);
+          await whatsappService.sendTextMessage(
+            from,
+            `${answer}\n\n(Whenever you're ready, go ahead and answer the lesson question, or type "next" to continue.)`
+          );
+          return;
+        }
+
         const feedback = await aiService.gradeAnswer(
           user.current_topic,
           currentLesson.content,
@@ -448,6 +429,17 @@ async function handleIncomingMessage(from, text) {
   }
 
   try {
+    const intent = await aiService.classifyMessageIntent(trimmed);
+
+    if (intent === 'QUESTION') {
+      const answer = await aiService.answerQuestion(trimmed, user.current_topic, user.name);
+      await whatsappService.sendTextMessage(
+        from,
+        `${answer}\n\n(Whenever you're ready, go ahead and answer the final assessment question above.)`
+      );
+      return;
+    }
+
     const result = await aiService.gradeFinalAssessment(
       user.current_topic,
       user.final_assessment_question,

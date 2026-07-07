@@ -8,16 +8,6 @@ function isConfigured() {
   return Boolean(GEMINI_API_KEY);
 }
 
-/**
- * Generates one lesson in a sequence, written for delivery over WhatsApp
- * (short paragraphs, no heavy markdown, friendly tone).
- *
- * @param {string} topic
- * @param {string} learnerName
- * @param {number} lessonNumber - 1-indexed position in the course
- * @param {number} totalLessons - total lessons in the course
- * @param {string|null} previousLessonContent - the prior lesson's text, so the AI builds on it instead of repeating itself
- */
 async function generateLesson(topic, learnerName, lessonNumber, totalLessons, previousLessonContent) {
   if (!isConfigured()) {
     throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
@@ -72,10 +62,6 @@ Write this lesson (120-180 words) following these rules:
   return text.trim();
 }
 
-/**
- * Grades a learner's answer to the comprehension question at the end of a lesson.
- * Returns short, encouraging, personalized feedback - not a strict pass/fail.
- */
 async function gradeAnswer(topic, lessonContent, learnerAnswer, learnerName) {
   if (!isConfigured()) {
     throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
@@ -127,10 +113,6 @@ Give short feedback (2-3 sentences, plain text, no markdown):
   return text.trim();
 }
 
-/**
- * Generates a short, fun bonus practice exercise for a learner - used by the
- * on-demand "practice"/"challenge" command (Module 4.5 Challenge Engine).
- */
 async function generatePracticeChallenge(topic, learnerName) {
   if (!isConfigured()) {
     throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
@@ -172,10 +154,6 @@ Make it feel like a fun mini-challenge, not a formal exam question.`;
   return text.trim();
 }
 
-/**
- * Generates one comprehensive final assessment question covering the whole course
- * (Module 6.1 Final Assessment).
- */
 async function generateFinalAssessmentQuestion(topic, learnerName) {
   if (!isConfigured()) {
     throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
@@ -216,9 +194,6 @@ demonstrate overall understanding of the topic, not just recall one fact. This i
   return text.trim();
 }
 
-/**
- * Grades a learner's final assessment answer. Returns { score (0-10), feedback }.
- */
 async function gradeFinalAssessment(topic, question, learnerAnswer, learnerName) {
   if (!isConfigured()) {
     throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
@@ -259,7 +234,6 @@ Respond with ONLY valid JSON, no markdown, no code fences, in exactly this shape
     throw err;
   }
 
-  // Strip accidental code fences before parsing, just in case.
   const cleaned = text.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
 
   let parsed;
@@ -277,10 +251,6 @@ Respond with ONLY valid JSON, no markdown, no code fences, in exactly this shape
   };
 }
 
-/**
- * Answers a learner's free-form question (Module 5.1 "AI Coach").
- * Works whether or not they're mid-course - topic is optional context.
- */
 async function answerQuestion(question, topic, learnerName) {
   if (!isConfigured()) {
     throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
@@ -326,6 +296,43 @@ Give a clear, conversational answer (under 150 words, plain text, no markdown).`
   return text.trim();
 }
 
+async function classifyMessageIntent(message) {
+  if (!isConfigured()) {
+    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  }
+
+  const prompt = `A tutoring bot just asked a learner a question. The learner replied with this message:
+"""
+${message}
+"""
+Is this message actually attempting to answer the question, or is it instead a separate question/request the learner is asking (e.g. asking for clarification on something else, a totally unrelated question, or asking to skip/change topic)?
+Respond with EXACTLY one word, nothing else: ANSWER or QUESTION`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'x-goog-api-key': GEMINI_API_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const err = new Error(data.error?.message || 'Gemini API request failed');
+    err.details = data;
+    throw err;
+  }
+
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
+  return text === 'QUESTION' ? 'QUESTION' : 'ANSWER';
+}
+
 module.exports = {
   generateLesson,
   gradeAnswer,
@@ -333,5 +340,6 @@ module.exports = {
   generateFinalAssessmentQuestion,
   gradeFinalAssessment,
   answerQuestion,
+  classifyMessageIntent,
   isConfigured,
 };
