@@ -297,6 +297,12 @@ async function handleIncomingMessage(from, text) {
 
   let user = await userService.getUserByPhone(from);
 
+  if (user) {
+    userService.updateUser(from, { last_active_at: new Date().toISOString() }).catch((err) => {
+      console.error('[conversation] Failed to update last_active_at:', err);
+    });
+  }
+
   if (user && trimmed.toLowerCase() === 'restart') {
     await userService.updateUser(from, {
       name: null,

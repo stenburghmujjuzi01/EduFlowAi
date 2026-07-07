@@ -1,11 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-
 const healthRoutes = require('./routes/health.routes');
 const webhookRoutes = require('./routes/webhook.routes');
 const adminRoutes = require('./routes/admin.routes');
+const cronRoutes = require('./routes/cron.routes');
 
 const app = express();
 
@@ -24,7 +20,7 @@ app.get('/', (req, res) => {
 app.use('/', healthRoutes);
 app.use('/webhook', webhookRoutes);
 app.use('/api/admin', adminRoutes);
-
+app.use('/api/cron', cronRoutes);
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });

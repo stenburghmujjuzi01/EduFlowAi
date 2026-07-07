@@ -147,4 +147,44 @@ async function sendListMessage(to, bodyText, buttonLabel, rows) {
   return data;
 }
 
-module.exports = { sendTextMessage, uploadMedia, sendDocumentMessage, sendListMessage, isConfigured };
+async function sendTemplateMessage(to, templateName, languageCode, bodyParams = []) {
+  if (!isConfigured()) {
+    throw new Error('WhatsApp is not configured (missing WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID)');
+  }
+
+  const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+  const components = bodyParams.length
+    ? [{ type: 'body', parameters: bodyParams.map((p) => ({ type: 'text', text: p })) }]
+    : [];
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to,
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: languageCode },
+        components,
+      },
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const err = new Error(data.error?.message || 'WhatsApp template send failed');
+    err.details = data;
+    throw err;
+  }
+
+  return data;
+}
+
+module.exports = { sendTextMessage, uploadMedia, sendDocumentMessage, sendListMessage, sendTemplateMessage, isConfigured };
