@@ -6,9 +6,13 @@ const gamificationService = require('./gamification.service');
 const certificatesService = require('./certificates.service');
 const certificatePdfService = require('./certificate-pdf.service');
 
-const TOTAL_LESSONS = 5;
-const PASS_THRESHOLD = 6;
+const TOTAL_LESSONS = 5; // fixed course length per topic for now
+const PASS_THRESHOLD = 6; // out of 10, minimum score to earn a certificate
 
+/**
+ * Generates lesson `lessonNumber` for a user's current topic, saves it,
+ * updates their progress, and sends it over WhatsApp.
+ */
 async function deliverLesson(user, lessonNumber) {
   const previous = lessonNumber > 1
     ? await lessonsService.getLesson(user.id, user.current_topic, lessonNumber - 1)
@@ -50,12 +54,18 @@ async function deliverLesson(user, lessonNumber) {
   }
 }
 
+/**
+ * Sends the tappable menu (WhatsApp List Message) for navigating between
+ * lessons, practice, progress, and the leaderboard - the button-based
+ * alternative to typing commands.
+ */
 async function sendMenu(phoneNumber, { includeNext = false } = {}) {
   const rows = [];
   if (includeNext) rows.push({ id: 'next', title: '▶️ Next Lesson', description: 'Continue to the next lesson' });
   rows.push({ id: 'practice', title: '🏆 Practice Challenge', description: 'Get a bonus challenge' });
   rows.push({ id: 'progress', title: '📊 My Progress', description: 'See your stats and level' });
   rows.push({ id: 'leaderboard', title: '🏅 Leaderboard', description: 'See top learners by XP' });
+  rows.push({ id: 'history', title: '📚 Lesson History', description: 'Review your past lessons' });
 
   try {
     await whatsappService.sendListMessage(
@@ -73,6 +83,9 @@ async function sendMenu(phoneNumber, { includeNext = false } = {}) {
   }
 }
 
+/**
+ * Generates and sends an on-demand bonus practice challenge (Module 4.5 Challenge Engine).
+ */
 async function sendPracticeChallenge(user) {
   try {
     const challenge = await aiService.generatePracticeChallenge(user.current_topic, user.name);
@@ -92,6 +105,9 @@ async function sendPracticeChallenge(user) {
   }
 }
 
+/**
+ * Fetches and sends the top-5 leaderboard by XP (Module 5.3 Community Features).
+ */
 async function sendLeaderboard(phoneNumber) {
   try {
     const top = await userService.getLeaderboard(5);
@@ -109,6 +125,37 @@ async function sendLeaderboard(phoneNumber) {
   }
 }
 
+/**
+ * Fetches and sends a learner's completed lesson history for their current topic.
+ */
+async function sendHistory(user) {
+  try {
+    const lessons = await lessonsService.getLessonsForUser(user.id, user.current_topic);
+    if (!lessons.length) {
+      await whatsappService.sendTextMessage(user.phone_number, "You haven't completed any lessons yet.");
+      return;
+    }
+    const lines = lessons.map((l) => {
+      const preview = l.content.replace(/\n/g, ' ').slice(0, 80);
+      return `Lesson ${l.lesson_number}: ${preview}...`;
+    });
+    await whatsappService.sendTextMessage(
+      user.phone_number,
+      `📚 Your Lesson History (${user.current_topic})\n\n${lines.join('\n\n')}`
+    );
+  } catch (err) {
+    console.error('[conversation] Failed to fetch lesson history:', err.details || err);
+    await whatsappService.sendTextMessage(
+      user.phone_number,
+      "Sorry, I couldn't load your lesson history right now. Try again in a moment."
+    );
+  }
+}
+
+/**
+ * Generates, saves, uploads, and sends a certificate PDF to a learner who passed
+ * their final assessment (Module 6.2 Certificate Engine).
+ */
 async function issueCertificate(user, score) {
   const cert = await certificatesService.createCertificate({
     user_id: user.id,
@@ -141,6 +188,15 @@ async function issueCertificate(user, score) {
   await userService.updateUser(user.phone_number, { certificate_issued: true });
 }
 
+/**
+ * Handles a single incoming WhatsApp message and decides how to respond.
+ * Conversation "state" is inferred from the user's row:
+ *   - no user record             -> brand new, ask for name
+ *   - user.name is null          -> this message IS their name
+ *   - user.current_topic is null -> this message IS their chosen topic -> deliver lesson 1
+ *   - topic set, lessons remain  -> waiting for "next" to advance
+ *   - all lessons complete       -> Final Assessment / Certificate flow
+ */
 async function handleIncomingMessage(from, text) {
   const trimmed = (text || '').trim();
 
@@ -163,6 +219,20 @@ async function handleIncomingMessage(from, text) {
     } catch (err) {
       console.error('[conversation] Failed to verify certificate:', err.details || err);
       await whatsappService.sendTextMessage(from, "Sorry, I couldn't verify that certificate right now.");
+    }
+    return;
+  }
+
+  const askMatch = trimmed.match(/^ask\s+(.+)/i);
+  if (askMatch) {
+    const question = askMatch[1];
+    const askingUser = await userService.getUserByPhone(from);
+    try {
+      const answer = await aiService.answerQuestion(question, askingUser?.current_topic, askingUser?.name);
+      await whatsappService.sendTextMessage(from, answer);
+    } catch (err) {
+      console.error('[conversation] Failed to answer question:', err.details || err);
+      await whatsappService.sendTextMessage(from, "Sorry, I couldn't answer that right now. Try again in a moment.");
     }
     return;
   }
@@ -243,6 +313,12 @@ async function handleIncomingMessage(from, text) {
       return;
     }
 
+    if (lower === 'history') {
+      await sendHistory(user);
+      await sendMenu(user.phone_number, { includeNext: true });
+      return;
+    }
+
     if (lower === 'next') {
       try {
         await deliverLesson(user, user.current_lesson_number + 1);
@@ -292,6 +368,10 @@ async function handleIncomingMessage(from, text) {
   }
   if (lowerComplete === 'leaderboard') {
     await sendLeaderboard(from);
+    return;
+  }
+  if (lowerComplete === 'history') {
+    await sendHistory(user);
     return;
   }
   if (lowerComplete === 'progress') {
