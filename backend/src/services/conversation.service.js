@@ -244,6 +244,11 @@ async function issueCertificate(user, score) {
   if (newBadge) {
     await whatsappService.sendTextMessage(user.phone_number, newBadge.trim());
   }
+
+  await whatsappService.sendTextMessage(
+    user.phone_number,
+    'Want to keep learning? Just send me a new topic name anytime to start another course! 🚀'
+  );
 }
 
 /**
@@ -469,16 +474,33 @@ async function handleIncomingMessage(from, text) {
         : 'Status: Lessons complete, final assessment pending';
     await whatsappService.sendTextMessage(
       from,
-      `📊 Progress Report\n\nName: ${user.name}\nTopic: ${user.current_topic}\n${statusLine}\nXP: ${user.xp || 0} (${level})\n\nType "practice" anytime for a bonus challenge.`
+      `📊 Progress Report\n\nName: ${user.name}\nTopic: ${user.current_topic}\n${statusLine}\nXP: ${user.xp || 0} (${level})\n\n${user.certificate_issued ? 'Send any new topic name to start another course, or type "practice" for a bonus challenge.' : 'Type "practice" anytime for a bonus challenge.'}`
     );
     return;
   }
 
-  if (user.certificate_issued) {
+ if (user.certificate_issued) {
+    await userService.updateUser(from, {
+      current_topic: trimmed,
+      current_lesson_number: 0,
+      final_assessment_question: null,
+      final_assessment_score: null,
+      certificate_issued: false,
+    });
     await whatsappService.sendTextMessage(
       from,
-      `You're already certified in ${user.current_topic}, ${user.name}! 🎓 Type "practice" anytime for a bonus challenge.`
+      `Awesome, ${user.name}! Let's start a new course on ${trimmed}. Give me a moment... 🧠`
     );
+    try {
+      user.current_topic = trimmed;
+      await deliverLesson(user, 1);
+    } catch (err) {
+      console.error('[conversation] Failed to generate lesson 1 for new course:', err.details || err);
+      await whatsappService.sendTextMessage(
+        from,
+        "Sorry, I couldn't generate your lesson right now. Try again in a moment by sending any message."
+      );
+    }
     return;
   }
 
