@@ -311,7 +311,7 @@ async function handleIncomingMessage(from, text) {
     });
     await whatsappService.sendTextMessage(
       from,
-      `Great choice! Before we start ${trimmed}, how would you rate your current understanding?\n\nReply with:\n- Beginner\n- Intermediate\n- Advanced\n\nOr just say "not sure" and I'll give you a quick question to figure out your level!`
+      `Great choice! Before we start ${trimmed}, how would you rate your current understanding?\n\nReply with one of:\n- Beginner\n- Elementary\n- Intermediate\n- Advanced\n- Expert\n- Master\n\nOr just say "not sure" and I'll give you a quick question to figure out your level!`
     );
     return;
   }
@@ -319,7 +319,7 @@ async function handleIncomingMessage(from, text) {
   if (user.current_topic && !user.skill_level) {
     const lower = trimmed.toLowerCase();
 
-    if (lower === 'beginner' || lower === 'intermediate' || lower === 'advanced') {
+    if (aiService.SKILL_LEVELS.includes(lower)) {
       await userService.updateUser(from, { skill_level: lower });
       await whatsappService.sendTextMessage(
         from,
@@ -508,7 +508,7 @@ async function handleIncomingMessage(from, text) {
     });
     await whatsappService.sendTextMessage(
       from,
-      `Awesome, ${user.name}! Before we start ${trimmed}, how would you rate your current understanding?\n\nReply with:\n- Beginner\n- Intermediate\n- Advanced\n\nOr just say "not sure" and I'll give you a quick question to figure out your level!`
+      `Awesome, ${user.name}! Before we start ${trimmed}, how would you rate your current understanding?\n\nReply with one of:\n- Beginner\n- Elementary\n- Intermediate\n- Advanced\n- Expert\n- Master\n\nOr just say "not sure" and I'll give you a quick question to figure out your level!`
     );
     return;
   }
