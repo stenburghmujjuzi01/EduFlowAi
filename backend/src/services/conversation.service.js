@@ -8,13 +8,9 @@ const certificatePdfService = require('./certificate-pdf.service');
 const badgesService = require('./badges.service');
 const teamsService = require('./teams.service');
 
-const TOTAL_LESSONS = 5; // fixed course length per topic for now
-const PASS_THRESHOLD = 6; // out of 10, minimum score to earn a certificate
+const TOTAL_LESSONS = 5;
+const PASS_THRESHOLD = 6;
 
-/**
- * Awards a badge if not already earned, and returns a message line to
- * append if it was newly awarded (empty string otherwise).
- */
 async function badgeLine(user_id, code) {
   const newlyAwarded = await badgesService.awardBadge(user_id, code);
   if (!newlyAwarded) return '';
@@ -22,10 +18,6 @@ async function badgeLine(user_id, code) {
   return `\n🏅 New Badge: ${def.emoji} ${def.name} - ${def.description}`;
 }
 
-/**
- * Generates lesson `lessonNumber` for a user's current topic, saves it,
- * updates their progress, and sends it over WhatsApp.
- */
 async function deliverLesson(user, lessonNumber) {
   const previous = lessonNumber > 1
     ? await lessonsService.getLesson(user.id, user.current_topic, lessonNumber - 1)
@@ -78,11 +70,6 @@ async function deliverLesson(user, lessonNumber) {
   }
 }
 
-/**
- * Sends the tappable menu (WhatsApp List Message) for navigating between
- * lessons, practice, progress, and the leaderboard - the button-based
- * alternative to typing commands.
- */
 async function sendMenu(phoneNumber, { includeNext = false } = {}) {
   const rows = [];
   if (includeNext) rows.push({ id: 'next', title: '▶️ Next Lesson', description: 'Continue to the next lesson' });
@@ -91,8 +78,7 @@ async function sendMenu(phoneNumber, { includeNext = false } = {}) {
   rows.push({ id: 'leaderboard', title: '🏅 Leaderboard', description: 'See top learners by XP' });
   rows.push({ id: 'history', title: '📚 Lesson History', description: 'Review your past lessons' });
   rows.push({ id: 'badges', title: '🏅 My Badges', description: 'See badges you\'ve earned' });
-  rows.push({ id: 'my team', title: '🚩 My Team', description: 'View your team and its XP' });
-  rows.push({ id: 'team leaderboard', title: '🏆 Team Leaderboard', description: 'See top-ranked teams' });
+  rows.push({ id: 'teams_menu', title: '🚩 Teams', description: 'View, create, or manage your team' });
 
   try {
     await whatsappService.sendListMessage(
@@ -110,9 +96,30 @@ async function sendMenu(phoneNumber, { includeNext = false } = {}) {
   }
 }
 
-/**
- * Generates and sends an on-demand bonus practice challenge (Module 4.5 Challenge Engine).
- */
+async function sendTeamsMenu(phoneNumber) {
+  const rows = [
+    { id: 'my team', title: '🚩 My Team', description: 'View your team and its XP' },
+    { id: 'team leaderboard', title: '🏆 Team Leaderboard', description: 'See top-ranked teams' },
+    { id: 'how to create team', title: '➕ Create a Team', description: 'Learn how to start your own team' },
+    { id: 'how to add member', title: '👥 Add a Member', description: 'Learn how to add teammates (leaders only)' },
+  ];
+
+  try {
+    await whatsappService.sendListMessage(
+      phoneNumber,
+      '🚩 Teams',
+      'Team Menu',
+      rows
+    );
+  } catch (err) {
+    console.error('[conversation] Failed to send teams menu:', err.details || err);
+    await whatsappService.sendTextMessage(
+      phoneNumber,
+      'Type "my team", "team leaderboard", "create team <name>", or "add member <phone>".'
+    );
+  }
+}
+
 async function sendPracticeChallenge(user) {
   try {
     const challenge = await aiService.generatePracticeChallenge(user.current_topic, user.name);
@@ -132,9 +139,6 @@ async function sendPracticeChallenge(user) {
   }
 }
 
-/**
- * Fetches and sends the top-5 leaderboard by XP (Module 5.3 Community Features).
- */
 async function sendLeaderboard(phoneNumber) {
   try {
     const top = await userService.getLeaderboard(5);
@@ -152,9 +156,6 @@ async function sendLeaderboard(phoneNumber) {
   }
 }
 
-/**
- * Fetches and sends a learner's completed lesson history for their current topic.
- */
 async function sendHistory(user) {
   try {
     const lessons = await lessonsService.getLessonsForUser(user.id, user.current_topic);
@@ -179,9 +180,6 @@ async function sendHistory(user) {
   }
 }
 
-/**
- * Fetches and sends a learner's earned badges.
- */
 async function sendBadges(user) {
   try {
     const earned = await badgesService.getUserBadges(user.id);
@@ -209,10 +207,6 @@ async function sendBadges(user) {
   }
 }
 
-/**
- * Generates, saves, uploads, and sends a certificate PDF to a learner who passed
- * their final assessment (Module 6.2 Certificate Engine).
- */
 async function issueCertificate(user, score) {
   const cert = await certificatesService.createCertificate({
     user_id: user.id,
@@ -255,20 +249,9 @@ async function issueCertificate(user, score) {
   );
 }
 
-/**
- * Handles a single incoming WhatsApp message and decides how to respond.
- * Conversation "state" is inferred from the user's row:
- *   - no user record             -> brand new, ask for name
- *   - user.name is null          -> this message IS their name
- *   - user.current_topic is null -> this message IS their chosen topic -> ask skill level
- *   - topic set, no skill level  -> classify level (direct answer or placement test)
- *   - topic set, lessons remain  -> waiting for "next" to advance
- *   - all lessons complete       -> Final Assessment / Certificate flow
- */
 async function handleIncomingMessage(from, text) {
   const trimmed = (text || '').trim();
 
-  // Global command: works regardless of conversation state, no user record needed.
   const verifyMatch = trimmed.match(/^verify\s+(\S+)/i);
   if (verifyMatch) {
     const code = verifyMatch[1];
@@ -306,6 +289,27 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
+  if (trimmed.toLowerCase() === 'teams_menu') {
+    await sendTeamsMenu(from);
+    return;
+  }
+
+  if (trimmed.toLowerCase() === 'how to create team') {
+    await whatsappService.sendTextMessage(
+      from,
+      'To create a team, send:\n\ncreate team <your team name>\n\nExample: create team Rockets'
+    );
+    return;
+  }
+
+  if (trimmed.toLowerCase() === 'how to add member') {
+    await whatsappService.sendTextMessage(
+      from,
+      'Only team leaders can add members. Send:\n\nadd member <their phone number>\n\nExample: add member 256700000000\n\n(They must have already messaged the bot at least once.)'
+    );
+    return;
+  }
+
   const createTeamMatch = trimmed.match(/^create team\s+(.+)/i);
   if (createTeamMatch) {
     const teamName = createTeamMatch[1].trim();
@@ -320,6 +324,7 @@ async function handleIncomingMessage(from, text) {
         from,
         `🚩 Team "${teamName}" created! You're the team leader.\n\nAdd members with: add member <phone number>`
       );
+      await sendTeamsMenu(from);
     } catch (err) {
       if (err.code === '23505') {
         if (String(err.message).includes('teams_name_key') || String(err.message).includes('name')) {
@@ -346,6 +351,7 @@ async function handleIncomingMessage(from, text) {
       }
       await teamsService.addMember(team.id, rawPhone);
       await whatsappService.sendTextMessage(from, `✅ Added ${rawPhone} to "${team.name}"!`);
+      await sendTeamsMenu(from);
     } catch (err) {
       if (err.code === '23505') {
         await whatsappService.sendTextMessage(from, `That number is already on a team.`);
@@ -375,6 +381,7 @@ async function handleIncomingMessage(from, text) {
         from,
         `🚩 ${team.name}\n\nTotal Team XP: ${totalXp}\n\n${lines.join('\n')}`
       );
+      await sendTeamsMenu(from);
     } catch (err) {
       console.error('[conversation] Failed to fetch team:', err.details || err);
       await whatsappService.sendTextMessage(from, "Sorry, I couldn't load your team right now. Try again in a moment.");
@@ -391,6 +398,7 @@ async function handleIncomingMessage(from, text) {
       }
       const lines = ranked.map((t, i) => `${i + 1}. ${t.name} - ${t.totalXp} XP (${t.memberCount} members)`);
       await whatsappService.sendTextMessage(from, `🏆 Team Leaderboard\n\n${lines.join('\n')}`);
+      await sendTeamsMenu(from);
     } catch (err) {
       console.error('[conversation] Failed to fetch team leaderboard:', err.details || err);
       await whatsappService.sendTextMessage(from, "Sorry, I couldn't load the team leaderboard right now. Try again in a moment.");
@@ -419,7 +427,6 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
-  // Step 1: brand new user
   if (!user) {
     user = await userService.createUser({ phone_number: from });
     await whatsappService.sendTextMessage(
@@ -429,7 +436,6 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
-  // Step 2: we don't know their name yet - this message is their name
   if (!user.name) {
     await userService.updateUser(from, { name: trimmed });
     await whatsappService.sendTextMessage(
@@ -439,7 +445,6 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
-  // Step 3: we know their name but not their topic - this message is their topic
   if (!user.current_topic) {
     await userService.updateUser(from, {
       current_topic: trimmed,
@@ -513,7 +518,6 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
-  // Step 4: mid-course - waiting for "next"
   if (user.current_lesson_number < TOTAL_LESSONS) {
     const lower = trimmed.toLowerCase();
 
@@ -603,7 +607,6 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
-  // Step 5: course finished lessons - now in the Final Assessment flow (Module 6.1)
   const lowerComplete = trimmed.toLowerCase();
 
   if (lowerComplete === 'practice' || lowerComplete === 'challenge') {
@@ -636,7 +639,6 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
-  // 5a: already certified - starting a new course goes through skill placement too
   if (user.certificate_issued) {
     await userService.updateUser(from, {
       current_topic: trimmed,
@@ -654,7 +656,6 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
-  // 5b: already scored - either passed (awaiting cert engine) or failed (can retake)
   if (user.final_assessment_score !== null) {
     if (user.final_assessment_score >= PASS_THRESHOLD) {
       await whatsappService.sendTextMessage(
@@ -690,7 +691,6 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
-  // 5c: no question generated yet - this is their first message since finishing lessons
   if (!user.final_assessment_question) {
     await whatsappService.sendTextMessage(
       from,
@@ -707,7 +707,6 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
-  // 5d: question already asked - this message is their answer (or maybe a side question)
   try {
     const intent = await aiService.classifyMessageIntent(trimmed);
 
