@@ -406,6 +406,27 @@ async function handleIncomingMessage(from, text) {
     return;
   }
 
+  if (trimmed.toLowerCase() === 'contest') {
+    try {
+      const contestsService = require('./contests.service');
+      const contest = await contestsService.getActiveContest();
+      if (!contest) {
+        await whatsappService.sendTextMessage(from, "There's no active contest right now. Check back soon!");
+        return;
+      }
+      const standings = await contestsService.getContestStandings(contest.id);
+      const lines = standings.map((t, i) => `${i + 1}. ${t.name} - ${t.xpEarned} XP earned`);
+      await whatsappService.sendTextMessage(
+        from,
+        `🏆 Active Contest: ${contest.name}\n\n${lines.length ? lines.join('\n') : 'No teams have earned XP yet.'}`
+      );
+    } catch (err) {
+      console.error('[conversation] Failed to fetch contest standings:', err.details || err);
+      await whatsappService.sendTextMessage(from, "Sorry, I couldn't load the contest right now. Try again in a moment.");
+    }
+    return;
+  }
+
   let user = await userService.getUserByPhone(from);
 
   if (user) {

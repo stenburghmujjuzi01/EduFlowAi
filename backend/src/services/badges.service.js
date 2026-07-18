@@ -6,6 +6,7 @@ const BADGE_DEFINITIONS = {
   graduate: { emoji: '🎓', name: 'Course Graduate', description: 'Completed all lessons in a course' },
   perfect_score: { emoji: '💯', name: 'Perfect Score', description: 'Scored 10/10 on a final assessment' },
   certified: { emoji: '📜', name: 'Certified', description: 'Earned a certificate' },
+  team_champion: { emoji: '🏆', name: 'Team Champion', description: 'Won a team contest' },
 };
 
 async function awardBadge(user_id, code) {
