@@ -91,6 +91,39 @@ async function deleteUser(phone_number) {
   if (error) throw error;
 }
 
+async function getUserByAuthId(auth_user_id) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('auth_user_id', auth_user_id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+async function linkAuthToPhone(auth_user_id, phone_number) {
+  const existing = await getUserByPhone(phone_number);
+
+  if (existing) {
+    if (existing.auth_user_id && existing.auth_user_id !== auth_user_id) {
+      const err = new Error('This phone number is already linked to a different account.');
+      err.code = 'ALREADY_LINKED';
+      throw err;
+    }
+    return updateUser(phone_number, { auth_user_id });
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .insert([{ phone_number, auth_user_id }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 module.exports = {
   createUser,
   getUserByPhone,
@@ -100,4 +133,6 @@ module.exports = {
   resetUserProgress,
   setUserXp,
   deleteUser,
+  getUserByAuthId,
+  linkAuthToPhone,
 };

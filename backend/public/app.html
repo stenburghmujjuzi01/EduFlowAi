@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EduFlow Ai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0f172a; --surface: #1a2436; --border: #2c3a52; --text: #eef2f7;
+    --muted: #93a2b8; --gold: #d8ad4c; --gold-dim: #7a622c; --green: #55c98a; --red: #e5707a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+  h1, h2, .brand { font-family: 'Space Grotesk', system-ui, sans-serif; }
+
+  .screen { min-height: 100vh; display: none; }
+  .screen.visible { display: block; }
+
+  #auth-screen { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; min-height: 100vh; }
+  #auth-screen.visible { display: flex; }
+  .brand-lockup { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .brand-lockup span { color: var(--gold); }
+  .auth-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; width: 320px; }
+  .auth-box input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 12px;
+  }
+  .auth-box button {
+    width: 100%; background: var(--gold); color: #1a1404; border: none; padding: 12px 20px;
+    border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; margin-bottom: 8px;
+  }
+  .auth-box button:hover { filter: brightness(1.08); }
+  .auth-box .switch { text-align: center; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .auth-box .switch:hover { color: var(--text); }
+  .auth-msg { font-size: 13px; min-height: 18px; color: var(--red); text-align: center; }
+
+  #main-app { max-width: 700px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+  header.top .brand { font-size: 20px; font-weight: 700; }
+  header.top .brand span { color: var(--gold); }
+  .logout-link { font-size: 12px; color: var(--muted); cursor: pointer; }
+  .logout-link:hover { color: var(--text); }
+
+  .box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+  .box input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 12px;
+  }
+  .box button {
+    background: var(--gold); color: #1a1404; border: none; padding: 12px 20px;
+    border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;
+  }
+  .box button:hover { filter: brightness(1.08); }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-card .value { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 24px; font-weight: 700; margin-top: 4px; }
+  .stat-card.gold .value { color: var(--gold); }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge-pill { background: rgba(216,173,76,0.12); border: 1px solid var(--gold-dim); color: var(--gold); padding: 6px 12px; border-radius: 999px; font-size: 12px; }
+
+  .empty { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+  <div id="auth-screen" class="screen visible">
+    <div class="brand-lockup">EduFlow <span>Ai</span></div>
+    <div class="auth-box">
+      <input type="email" id="email-input" placeholder="Email" />
+      <input type="password" id="password-input" placeholder="Password" />
+      <button id="auth-submit-btn" onclick="handleAuthSubmit()">Sign In</button>
+      <div class="switch" id="auth-switch" onclick="toggleAuthMode()">Need an account? Sign up</div>
+      <div class="auth-msg" id="auth-msg"></div>
+    </div>
+  </div>
+
+  <div id="phone-link-screen" class="screen">
+    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+      <div class="auth-box">
+        <div class="brand-lockup" style="font-size:18px;margin-bottom:16px;">One more step</div>
+        <p style="font-size:13px;color:var(--muted);margin-top:0">
+          Enter your phone number. If you've used EduFlow Ai on WhatsApp before, this links your existing progress. Otherwise, we'll start you fresh.
+        </p>
+        <input type="text" id="phone-input" placeholder="Phone number (digits only)" />
+        <button onclick="handleLinkPhone()">Continue</button>
+        <div class="auth-msg" id="phone-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="main-app" class="screen">
+    <header class="top">
+      <div>
+        <div class="brand">EduFlow <span>Ai</span></div>
+      </div>
+      <div class="logout-link" onclick="handleLogout()">Log out</div>
+    </header>
+
+    <div class="stats-row" id="stats-row"></div>
+
+    <div class="box">
+      <h2 style="margin-top:0;font-size:15px;">🏅 Badges</h2>
+      <div id="badges-row" class="badge-row"></div>
+    </div>
+
+    <div class="box">
+      <h2 style="margin-top:0;font-size:15px;">📚 Course</h2>
+      <div id="course-info"></div>
+    </div>
+  </div>
+
+<script>
+  // ---- Configuration ----
+  // TODO: replace with your actual Supabase project URL and anon key.
+const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoaXpwcHNoaGVrbWF3cXl5b3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTQxMzMsImV4cCI6MjA5ODY3MDEzM30.2y52JNtKOUGxhwTAmTNsbNhe1Dw-awL_zl7ZRljS5s8';
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let authMode = 'signin'; // 'signin' | 'signup'
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('visible'));
+    document.getElementById(id).classList.add('visible');
+  }
+
+  function toggleAuthMode() {
+    authMode = authMode === 'signin' ? 'signup' : 'signin';
+    document.getElementById('auth-submit-btn').textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
+    document.getElementById('auth-switch').textContent = authMode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in';
+    document.getElementById('auth-msg').textContent = '';
+  }
+
+  async function handleAuthSubmit() {
+    const email = document.getElementById('email-input').value.trim();
+    const password = document.getElementById('password-input').value;
+    const msgEl = document.getElementById('auth-msg');
+    msgEl.textContent = '';
+
+    if (!email || !password) { msgEl.textContent = 'Enter both email and password.'; return; }
+
+    try {
+      let result;
+      if (authMode === 'signup') {
+        result = await sb.auth.signUp({ email, password });
+      } else {
+        result = await sb.auth.signInWithPassword({ email, password });
+      }
+      if (result.error) { msgEl.textContent = result.error.message; return; }
+
+      if (authMode === 'signup' && !result.data.session) {
+        msgEl.style.color = 'var(--green)';
+        msgEl.textContent = 'Check your email to confirm your account, then sign in.';
+        return;
+      }
+
+      await afterAuth();
+    } catch (e) {
+      msgEl.textContent = 'Something went wrong. Try again.';
+    }
+  }
+
+  async function apiGet(path) {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch(path, { headers: { Authorization: `Bearer ${session.access_token}` } });
+    if (!res.ok) throw new Error('Request failed: ' + res.status);
+    return res.json();
+  }
+
+  async function apiPost(path, body) {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || ('Request failed: ' + res.status));
+    return data;
+  }
+
+  async function afterAuth() {
+    const me = await apiGet('/api/web/me');
+    if (me.needsPhoneLink) {
+      showScreen('phone-link-screen');
+    } else {
+      renderProfile(me.user);
+      showScreen('main-app');
+    }
+  }
+
+  async function handleLinkPhone() {
+    const phone = document.getElementById('phone-input').value.trim();
+    const msgEl = document.getElementById('phone-msg');
+    if (!phone) { msgEl.textContent = 'Enter a phone number.'; return; }
+    try {
+      await apiPost('/api/web/link-phone', { phone_number: phone });
+      const me = await apiGet('/api/web/me');
+      renderProfile(me.user);
+      showScreen('main-app');
+    } catch (e) {
+      msgEl.textContent = e.message;
+    }
+  }
+
+  function esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+  }
+
+  function renderProfile(user) {
+    const statsRow = document.getElementById('stats-row');
+    statsRow.innerHTML = `
+      <div class="stat-card"><div class="label">Name</div><div class="value" style="font-size:16px">${esc(user.name) || '—'}</div></div>
+      <div class="stat-card gold"><div class="label">XP</div><div class="value">${user.xp || 0}</div></div>
+      <div class="stat-card"><div class="label">Level</div><div class="value" style="font-size:16px">${esc(user.level)}</div></div>
+      <div class="stat-card"><div class="label">Certified</div><div class="value" style="font-size:16px">${user.certificate_issued ? 'Yes 🎓' : 'Not yet'}</div></div>
+    `;
+
+    const badgesRow = document.getElementById('badges-row');
+    if (!user.badges.length) {
+      badgesRow.innerHTML = '<span class="empty">No badges yet.</span>';
+    } else {
+      badgesRow.innerHTML = user.badges.map(b => `<span class="badge-pill">${b.emoji} ${esc(b.name)}</span>`).join('');
+    }
+
+    const courseInfo = document.getElementById('course-info');
+    if (!user.current_topic) {
+      courseInfo.innerHTML = '<span class="empty">No course started yet. (Lesson-taking coming in the next update!)</span>';
+    } else {
+      courseInfo.innerHTML = `
+        <p style="margin:0 0 6px 0;font-size:14px;">Topic: <strong>${esc(user.current_topic)}</strong></p>
+        <p style="margin:0 0 6px 0;font-size:14px;">Skill level: <strong>${esc(user.skill_level) || 'Not yet assessed'}</strong></p>
+        <p style="margin:0;font-size:14px;">Progress: <strong>${user.current_lesson_number || 0}/5 lessons</strong></p>
+      `;
+    }
+  }
+
+  async function handleLogout() {
+    await sb.auth.signOut();
+    showScreen('auth-screen');
+  }
+
+  document.getElementById('password-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleAuthSubmit();
+  });
+  document.getElementById('phone-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleLinkPhone();
+  });
+
+  // On page load, check if already signed in.
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      try {
+        await afterAuth();
+      } catch (e) {
+        showScreen('auth-screen');
+      }
+    }
+  })();
+</script>
+</body>
+</html>
