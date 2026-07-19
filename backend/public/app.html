@@ -9,51 +9,97 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #0f172a; --surface: #1a2436; --border: #2c3a52; --text: #eef2f7;
+    --bg: #0f172a; --sidebar-bg: #0b1220; --surface: #1a2436; --border: #2c3a52; --text: #eef2f7;
     --muted: #93a2b8; --gold: #d8ad4c; --gold-dim: #7a622c; --green: #55c98a; --red: #e5707a;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
   h1, h2, .brand { font-family: 'Space Grotesk', system-ui, sans-serif; }
+  button { font-family: inherit; }
 
-  .screen { min-height: 100vh; display: none; }
+  .screen { display: none; }
   .screen.visible { display: block; }
 
-  #auth-screen { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; min-height: 100vh; }
-  #auth-screen.visible { display: flex; }
-  .brand-lockup { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  /* ---- Auth screens (Login / Signup) ---- */
+  .auth-screen.visible { display: flex; }
+  .auth-screen {
+    align-items: center; justify-content: center; flex-direction: column; gap: 18px; min-height: 100vh; padding: 20px;
+  }
+  .brand-lockup { font-size: 26px; font-weight: 700; }
   .brand-lockup span { color: var(--gold); }
-  .auth-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; width: 320px; }
+  .auth-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: 340px; }
+  .field-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
   .auth-box input {
     width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
-    padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 12px;
+    padding: 12px 14px; border-radius: 8px; font-size: 14px;
   }
-  .auth-box button {
+  .field-wrap { margin-bottom: 14px; }
+  .password-wrap { position: relative; }
+  .password-wrap input { padding-right: 42px; }
+  .eye-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px;
+  }
+  .eye-btn:hover { color: var(--text); }
+  .auth-box button.submit-btn {
     width: 100%; background: var(--gold); color: #1a1404; border: none; padding: 12px 20px;
-    border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; margin-bottom: 8px;
+    border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; margin-top: 6px; margin-bottom: 10px;
   }
-  .auth-box button:hover { filter: brightness(1.08); }
-  .auth-box .switch { text-align: center; font-size: 13px; color: var(--muted); cursor: pointer; }
-  .auth-box .switch:hover { color: var(--text); }
-  .auth-msg { font-size: 13px; min-height: 18px; color: var(--red); text-align: center; }
+  .auth-box button.submit-btn:hover { filter: brightness(1.08); }
+  .switch-link { text-align: center; font-size: 13px; color: var(--muted); }
+  .switch-link a { color: var(--gold); cursor: pointer; text-decoration: none; }
+  .switch-link a:hover { text-decoration: underline; }
+  .auth-msg { font-size: 13px; min-height: 18px; color: var(--red); text-align: center; margin-top: 8px; }
 
-  #main-app { max-width: 700px; margin: 0 auto; padding: 40px 24px 80px; }
-  header.top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
-  header.top .brand { font-size: 20px; font-weight: 700; }
-  header.top .brand span { color: var(--gold); }
-  .logout-link { font-size: 12px; color: var(--muted); cursor: pointer; }
-  .logout-link:hover { color: var(--text); }
+  /* ---- Main app: ChatGPT-style layout ---- */
+  #app-screen.visible { display: flex; }
+  #app-screen { min-height: 100vh; }
 
-  .box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
-  .box input {
-    width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
-    padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 12px;
+  #sidebar {
+    width: 260px; min-width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; transition: width 0.15s ease, min-width 0.15s ease;
+    overflow: hidden;
   }
-  .box button {
-    background: var(--gold); color: #1a1404; border: none; padding: 12px 20px;
-    border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;
+  #sidebar.collapsed { width: 64px; min-width: 64px; }
+
+  .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--border); }
+  .sidebar-header .brand { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .sidebar-header .brand span { color: var(--gold); }
+  #sidebar.collapsed .sidebar-header .brand { display: none; }
+  .collapse-btn {
+    background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 6px;
+    border-radius: 6px; flex-shrink: 0;
   }
-  .box button:hover { filter: brightness(1.08); }
+  .collapse-btn:hover { background: var(--surface); color: var(--text); }
+
+  .nav-list { flex: 1; overflow-y: auto; padding: 10px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; color: var(--text); white-space: nowrap; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--surface); }
+  .nav-item.active { background: var(--surface); color: var(--gold); }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+  #sidebar.collapsed .nav-item .label { display: none; }
+  #sidebar.collapsed .nav-item { justify-content: center; }
+
+  .sidebar-footer { border-top: 1px solid var(--border); padding: 14px 16px; }
+  .sidebar-footer .email { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
+  #sidebar.collapsed .sidebar-footer .email { display: none; }
+  .logout-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted); padding: 8px 12px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; width: 100%;
+  }
+  .logout-btn:hover { color: var(--text); border-color: var(--muted); }
+  #sidebar.collapsed .logout-btn { font-size: 16px; padding: 8px; }
+  #sidebar.collapsed .logout-btn .logout-text { display: none; }
+
+  #main-content { flex: 1; overflow-y: auto; padding: 32px 40px; }
+  .content-section { display: none; max-width: 720px; margin: 0 auto; }
+  .content-section.active { display: block; }
+  .content-section h1 { font-size: 20px; margin: 0 0 24px 0; }
+
+  .box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-bottom: 20px; }
 
   .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
@@ -69,100 +115,211 @@
 </head>
 <body>
 
-  <div id="auth-screen" class="screen visible">
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="screen auth-screen visible">
     <div class="brand-lockup">EduFlow <span>Ai</span></div>
     <div class="auth-box">
-      <input type="email" id="email-input" placeholder="Email" />
-      <input type="password" id="password-input" placeholder="Password" />
-      <button id="auth-submit-btn" onclick="handleAuthSubmit()">Sign In</button>
-      <div class="switch" id="auth-switch" onclick="toggleAuthMode()">Need an account? Sign up</div>
-      <div class="auth-msg" id="auth-msg"></div>
+      <div class="field-wrap">
+        <label class="field-label">Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com" />
+      </div>
+      <div class="field-wrap">
+        <label class="field-label">Password</label>
+        <div class="password-wrap">
+          <input type="password" id="login-password" placeholder="Password" />
+          <button type="button" class="eye-btn" onclick="toggleEye('login-password', this)">👁</button>
+        </div>
+      </div>
+      <button class="submit-btn" onclick="handleLogin()">Log In</button>
+      <div class="switch-link">Don't have an account? <a onclick="showScreen('signup-screen')">Sign up</a></div>
+      <div class="auth-msg" id="login-msg"></div>
     </div>
   </div>
 
-  <div id="phone-link-screen" class="screen">
-    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
-      <div class="auth-box">
-        <div class="brand-lockup" style="font-size:18px;margin-bottom:16px;">One more step</div>
-        <p style="font-size:13px;color:var(--muted);margin-top:0">
-          Enter your phone number. If you've used EduFlow Ai on WhatsApp before, this links your existing progress. Otherwise, we'll start you fresh.
-        </p>
+  <!-- SIGNUP SCREEN -->
+  <div id="signup-screen" class="screen auth-screen">
+    <div class="brand-lockup">EduFlow <span>Ai</span></div>
+    <div class="auth-box">
+      <div class="field-wrap">
+        <label class="field-label">Email</label>
+        <input type="email" id="signup-email" placeholder="you@example.com" />
+      </div>
+      <div class="field-wrap">
+        <label class="field-label">Password</label>
+        <div class="password-wrap">
+          <input type="password" id="signup-password" placeholder="Password" />
+          <button type="button" class="eye-btn" onclick="toggleEye('signup-password', this)">👁</button>
+        </div>
+      </div>
+      <div class="field-wrap">
+        <label class="field-label">Phone number</label>
+        <input type="text" id="signup-phone" placeholder="e.g. 256700000000" />
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:-6px 0 14px 0;">
+        Already used EduFlow Ai on WhatsApp? Enter that same number to bring in your existing progress.
+      </p>
+      <button class="submit-btn" onclick="handleSignup()">Create Account</button>
+      <div class="switch-link">Already have an account? <a onclick="showScreen('login-screen')">Log in</a></div>
+      <div class="auth-msg" id="signup-msg"></div>
+    </div>
+  </div>
+
+  <!-- FALLBACK: phone link (edge case for accounts without a phone yet) -->
+  <div id="phone-link-screen" class="screen auth-screen">
+    <div class="brand-lockup" style="font-size:18px;">One more step</div>
+    <div class="auth-box">
+      <p style="font-size:13px;color:var(--muted);margin-top:0">
+        We need a phone number to load (or start) your EduFlow Ai profile.
+      </p>
+      <div class="field-wrap">
         <input type="text" id="phone-input" placeholder="Phone number (digits only)" />
-        <button onclick="handleLinkPhone()">Continue</button>
-        <div class="auth-msg" id="phone-msg"></div>
       </div>
+      <button class="submit-btn" onclick="handleLinkPhone()">Continue</button>
+      <div class="auth-msg" id="phone-msg"></div>
     </div>
   </div>
 
-  <div id="main-app" class="screen">
-    <header class="top">
-      <div>
+  <!-- MAIN APP -->
+  <div id="app-screen" class="screen">
+    <div id="sidebar">
+      <div class="sidebar-header">
         <div class="brand">EduFlow <span>Ai</span></div>
+        <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
       </div>
-      <div class="logout-link" onclick="handleLogout()">Log out</div>
-    </header>
-
-    <div class="stats-row" id="stats-row"></div>
-
-    <div class="box">
-      <h2 style="margin-top:0;font-size:15px;">🏅 Badges</h2>
-      <div id="badges-row" class="badge-row"></div>
+      <div class="nav-list">
+        <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">
+          <span class="icon">🏠</span><span class="label">Dashboard</span>
+        </div>
+        <div class="nav-item" data-section="course" onclick="showSection('course')">
+          <span class="icon">📘</span><span class="label">My Course</span>
+        </div>
+        <div class="nav-item" data-section="practice" onclick="showSection('practice')">
+          <span class="icon">🏆</span><span class="label">Practice</span>
+        </div>
+        <div class="nav-item" data-section="leaderboard" onclick="showSection('leaderboard')">
+          <span class="icon">📊</span><span class="label">Leaderboard</span>
+        </div>
+        <div class="nav-item" data-section="certificates" onclick="showSection('certificates')">
+          <span class="icon">📜</span><span class="label">Certificates</span>
+        </div>
+        <div class="nav-item" data-section="teams" onclick="showSection('teams')">
+          <span class="icon">🚩</span><span class="label">Teams</span>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="email" id="sidebar-email"></div>
+        <button class="logout-btn" onclick="handleLogout()">
+          <span class="logout-text">Log out</span><span style="display:none">⎋</span>
+        </button>
+      </div>
     </div>
 
-    <div class="box">
-      <h2 style="margin-top:0;font-size:15px;">📚 Course</h2>
-      <div id="course-info"></div>
+    <div id="main-content">
+      <div class="content-section active" id="section-dashboard">
+        <h1>Dashboard</h1>
+        <div class="stats-row" id="stats-row"></div>
+        <div class="box">
+          <h2 style="margin-top:0;font-size:15px;">🏅 Badges</h2>
+          <div id="badges-row" class="badge-row"></div>
+        </div>
+      </div>
+
+      <div class="content-section" id="section-course">
+        <h1>My Course</h1>
+        <div class="box" id="course-info"></div>
+      </div>
+
+      <div class="content-section" id="section-practice">
+        <h1>Practice</h1>
+        <div class="box"><span class="empty">Bonus practice challenges are coming in the next update.</span></div>
+      </div>
+
+      <div class="content-section" id="section-leaderboard">
+        <h1>Leaderboard</h1>
+        <div class="box"><span class="empty">Leaderboard view is coming in the next update.</span></div>
+      </div>
+
+      <div class="content-section" id="section-certificates">
+        <h1>Certificates</h1>
+        <div class="box"><span class="empty">Certificate downloads are coming in the next update.</span></div>
+      </div>
+
+      <div class="content-section" id="section-teams">
+        <h1>Teams</h1>
+        <div class="box"><span class="empty">Team management is coming in the next update.</span></div>
+      </div>
     </div>
   </div>
 
 <script>
-  // ---- Configuration ----
-  // TODO: replace with your actual Supabase project URL and anon key.
-const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoaXpwcHNoaGVrbWF3cXl5b3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTQxMzMsImV4cCI6MjA5ODY3MDEzM30.2y52JNtKOUGxhwTAmTNsbNhe1Dw-awL_zl7ZRljS5s8';
+  const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoaXpwcHNoaGVrbWF3cXl5b3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTQxMzMsImV4cCI6MjA5ODY3MDEzM30.2y52JNtKOUGxhwTAmTNsbNhe1Dw-awL_zl7ZRljS5s8';
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  let authMode = 'signin'; // 'signin' | 'signup'
 
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('visible'));
     document.getElementById(id).classList.add('visible');
   }
 
-  function toggleAuthMode() {
-    authMode = authMode === 'signin' ? 'signup' : 'signin';
-    document.getElementById('auth-submit-btn').textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
-    document.getElementById('auth-switch').textContent = authMode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in';
-    document.getElementById('auth-msg').textContent = '';
+  function toggleEye(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      btn.textContent = '👁';
+    }
   }
 
-  async function handleAuthSubmit() {
-    const email = document.getElementById('email-input').value.trim();
-    const password = document.getElementById('password-input').value;
-    const msgEl = document.getElementById('auth-msg');
-    msgEl.textContent = '';
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+  }
 
+  function showSection(name) {
+    document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.nav-item[data-section="${name}"]`).classList.add('active');
+  }
+
+  async function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const msgEl = document.getElementById('login-msg');
+    msgEl.textContent = '';
     if (!email || !password) { msgEl.textContent = 'Enter both email and password.'; return; }
 
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { msgEl.textContent = error.message; return; }
+    await afterAuth();
+  }
+
+  async function handleSignup() {
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const phone = document.getElementById('signup-phone').value.trim();
+    const msgEl = document.getElementById('signup-msg');
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = '';
+
+    if (!email || !password || !phone) { msgEl.textContent = 'Fill in all fields.'; return; }
+
+    const { data, error } = await sb.auth.signUp({ email, password });
+    if (error) { msgEl.textContent = error.message; return; }
+
+    if (!data.session) {
+      msgEl.style.color = 'var(--green)';
+      msgEl.textContent = 'Check your email to confirm your account, then log in.';
+      return;
+    }
+
     try {
-      let result;
-      if (authMode === 'signup') {
-        result = await sb.auth.signUp({ email, password });
-      } else {
-        result = await sb.auth.signInWithPassword({ email, password });
-      }
-      if (result.error) { msgEl.textContent = result.error.message; return; }
-
-      if (authMode === 'signup' && !result.data.session) {
-        msgEl.style.color = 'var(--green)';
-        msgEl.textContent = 'Check your email to confirm your account, then sign in.';
-        return;
-      }
-
+      await apiPost('/api/web/link-phone', { phone_number: phone });
       await afterAuth();
     } catch (e) {
-      msgEl.textContent = 'Something went wrong. Try again.';
+      msgEl.textContent = e.message;
     }
   }
 
@@ -189,10 +346,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     const me = await apiGet('/api/web/me');
     if (me.needsPhoneLink) {
       showScreen('phone-link-screen');
-    } else {
-      renderProfile(me.user);
-      showScreen('main-app');
+      return;
     }
+    const { data: { session } } = await sb.auth.getSession();
+    document.getElementById('sidebar-email').textContent = session.user.email;
+    renderProfile(me.user);
+    showScreen('app-screen');
   }
 
   async function handleLinkPhone() {
@@ -201,9 +360,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     if (!phone) { msgEl.textContent = 'Enter a phone number.'; return; }
     try {
       await apiPost('/api/web/link-phone', { phone_number: phone });
-      const me = await apiGet('/api/web/me');
-      renderProfile(me.user);
-      showScreen('main-app');
+      await afterAuth();
     } catch (e) {
       msgEl.textContent = e.message;
     }
@@ -245,24 +402,20 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
   async function handleLogout() {
     await sb.auth.signOut();
-    showScreen('auth-screen');
+    showScreen('login-screen');
   }
 
-  document.getElementById('password-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleAuthSubmit();
-  });
-  document.getElementById('phone-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleLinkPhone();
-  });
+  document.getElementById('login-password').addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+  document.getElementById('signup-phone').addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSignup(); });
+  document.getElementById('phone-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLinkPhone(); });
 
-  // On page load, check if already signed in.
   (async () => {
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
       try {
         await afterAuth();
       } catch (e) {
-        showScreen('auth-screen');
+        showScreen('login-screen');
       }
     }
   })();
