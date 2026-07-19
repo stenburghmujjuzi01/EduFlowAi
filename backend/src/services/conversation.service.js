@@ -259,6 +259,8 @@ async function handleIncomingMessage(from, text) {
       const cert = await certificatesService.getCertificateByCode(code);
       if (!cert) {
         await whatsappService.sendTextMessage(from, `❌ No certificate found with code ${code.toUpperCase()}.`);
+  } else if (cert.revoked) {
+        await whatsappService.sendTextMessage(from, `⚠️ This certificate (${cert.certificate_code}) has been revoked and is no longer valid.`);
       } else {
         const dateStr = new Date(cert.issued_at).toLocaleDateString('en-US', {
           year: 'numeric', month: 'long', day: 'numeric',
@@ -267,7 +269,7 @@ async function handleIncomingMessage(from, text) {
           from,
           `✅ Valid Certificate\n\nName: ${cert.name}\nTopic: ${cert.topic}\nScore: ${cert.score}/10\nIssued: ${dateStr}\nCode: ${cert.certificate_code}`
         );
-      }
+      }    
     } catch (err) {
       console.error('[conversation] Failed to verify certificate:', err.details || err);
       await whatsappService.sendTextMessage(from, "Sorry, I couldn't verify that certificate right now.");

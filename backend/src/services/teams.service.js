@@ -81,6 +81,44 @@ async function getTeamLeaderboard() {
   return results;
 }
 
+async function getAllTeamsWithMembers() {
+  const { data: teams, error } = await supabase
+    .from('teams')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  const results = [];
+  for (const team of teams) {
+    const members = await getTeamMembers(team.id);
+    results.push({ ...team, members, totalXp: members.reduce((s, m) => s + m.xp, 0) });
+  }
+  return results;
+}
+
+async function deleteTeam(teamId) {
+  await supabase.from('contest_snapshots').delete().eq('team_id', teamId);
+  const { error } = await supabase.from('teams').delete().eq('id', teamId);
+  if (error) throw error;
+}
+
+async function removeMember(teamId, phoneNumber) {
+  const { data: team } = await supabase.from('teams').select('leader_phone').eq('id', teamId).maybeSingle();
+  if (team && team.leader_phone === phoneNumber) {
+    const err = new Error('Cannot remove the team leader. Delete the team instead.');
+    err.code = 'IS_TEAM_LEADER';
+    throw err;
+  }
+
+  const { error } = await supabase
+    .from('team_members')
+    .delete()
+    .eq('team_id', teamId)
+    .eq('phone_number', phoneNumber);
+
+  if (error) throw error;
+}
+
 module.exports = {
   createTeam,
   addMember,
@@ -88,4 +126,7 @@ module.exports = {
   getTeamByMember,
   getTeamMembers,
   getTeamLeaderboard,
+  getAllTeamsWithMembers,
+  deleteTeam,
+  removeMember,
 };

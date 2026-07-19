@@ -8,86 +8,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f172a;
-    --surface: #1a2436;
-    --border: #2c3a52;
-    --text: #eef2f7;
-    --muted: #93a2b8;
-    --gold: #d8ad4c;
-    --gold-dim: #7a622c;
-    --green: #55c98a;
-    --red: #e5707a;
+    --bg: #0f172a; --surface: #1a2436; --border: #2c3a52; --text: #eef2f7;
+    --muted: #93a2b8; --gold: #d8ad4c; --gold-dim: #7a622c; --green: #55c98a; --red: #e5707a;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', system-ui, sans-serif;
-    min-height: 100vh;
-  }
-  h1, h2, .brand {
-    font-family: 'Space Grotesk', system-ui, sans-serif;
-  }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+  h1, h2, .brand { font-family: 'Space Grotesk', system-ui, sans-serif; }
 
-  #gate {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 16px;
-  }
+  #gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
   #gate .brand { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
   #gate .brand span { color: var(--gold); }
-  #gate input {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 12px 14px;
-    border-radius: 8px;
-    font-size: 14px;
-    width: 260px;
-  }
+  #gate input { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px 14px; border-radius: 8px; font-size: 14px; width: 260px; }
   #gate input:focus { outline: 2px solid var(--gold-dim); }
-  #gate button {
-    background: var(--gold);
-    color: #1a1404;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 14px;
-  }
+  #gate button { background: var(--gold); color: #1a1404; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
   #gate button:hover { filter: brightness(1.08); }
   #gate-error { color: var(--red); font-size: 13px; min-height: 18px; }
 
-  #dashboard { display: none; max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
-  header.top {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 32px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 20px;
-  }
+  #dashboard { display: none; max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
   header.top .brand { font-size: 20px; font-weight: 700; }
   header.top .brand span { color: var(--gold); }
   header.top .subtitle { color: var(--muted); font-size: 13px; }
 
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 40px;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px 20px;
-  }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 40px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
   .stat-card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
   .stat-card .value { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 30px; font-weight: 700; margin-top: 6px; }
   .stat-card.gold .value { color: var(--gold); }
@@ -105,43 +49,30 @@
   .badge.certified { background: rgba(216,173,76,0.15); color: var(--gold); }
   .badge.pending { background: rgba(147,162,184,0.15); color: var(--muted); }
   .badge.active { background: rgba(85,201,138,0.15); color: var(--green); }
+  .badge.revoked { background: rgba(229,112,122,0.15); color: var(--red); }
 
   .empty { color: var(--muted); font-size: 13px; padding: 16px 0; }
   .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
   .table-wrap table { margin: 0; }
   .table-wrap .empty { padding: 20px; }
 
-  .contest-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-  }
-  .contest-controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-  .contest-controls input {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    flex: 1;
-    min-width: 180px;
-  }
-  .contest-controls button {
-    border: none;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 13px;
-  }
-  .btn-start { background: var(--green); color: #06281a; }
-  .btn-end { background: var(--red); color: #2a0d10; }
-  .btn-start:hover, .btn-end:hover { filter: brightness(1.08); }
-  .contest-msg { font-size: 13px; margin-top: 10px; min-height: 18px; }
-  .contest-msg.error { color: var(--red); }
-  .contest-msg.success { color: var(--green); }
+  .box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .controls input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 13px; flex: 1; min-width: 180px; }
+  .controls button, .action-btn { border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; }
+  .btn-start, .btn-primary { background: var(--green); color: #06281a; }
+  .btn-end, .btn-danger { background: var(--red); color: #2a0d10; }
+  .btn-neutral { background: var(--border); color: var(--text); }
+  .controls button:hover, .action-btn:hover { filter: brightness(1.1); }
+  .msg { font-size: 13px; margin-top: 10px; min-height: 18px; }
+  .msg.error { color: var(--red); }
+  .msg.success { color: var(--green); }
+  .action-btn { margin-right: 4px; }
+  .team-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+  .team-card .team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .team-card .team-name { font-weight: 700; }
+  .member-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .member-row:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -166,16 +97,35 @@
 
     <section>
       <h2><span class="seal"></span> Contests</h2>
-      <div class="contest-box">
+      <div class="box">
         <div id="contest-status"></div>
-        <div class="contest-controls">
-          <input type="text" id="contest-name-input" placeholder="New contest name (e.g. October Sprint)" />
+        <div class="controls">
+          <input type="text" id="contest-name-input" placeholder="New contest name" />
           <button class="btn-start" onclick="startContest()">Start Contest</button>
           <button class="btn-end" onclick="endContest()">End Active Contest</button>
         </div>
-        <div id="contest-msg" class="contest-msg"></div>
+        <div id="contest-msg" class="msg"></div>
         <div class="table-wrap"><table id="contest-standings-table"></table></div>
       </div>
+    </section>
+
+    <section>
+      <h2><span class="seal"></span> Contest History</h2>
+      <div class="table-wrap"><table id="contest-history-table"></table></div>
+    </section>
+
+    <section>
+      <h2><span class="seal"></span> Reminders</h2>
+      <div class="box">
+        <p style="font-size:13px;color:var(--muted);margin-top:0">Normally runs daily via automated schedule. Use this to trigger it manually right now.</p>
+        <button class="btn-primary action-btn" onclick="runReminders()">Run Reminders Now</button>
+        <div id="reminders-msg" class="msg"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="seal"></span> Teams</h2>
+      <div id="teams-list"></div>
     </section>
 
     <section>
@@ -197,23 +147,25 @@
     div.textContent = str ?? '';
     return div.innerHTML;
   }
-
-  function getKey() {
-    return localStorage.getItem(KEY_STORAGE);
-  }
+  function getKey() { return localStorage.getItem(KEY_STORAGE); }
 
   async function apiGet(path) {
     const res = await fetch(path, { headers: { 'x-admin-key': getKey() } });
     if (!res.ok) throw new Error('Request failed: ' + res.status);
     return res.json();
   }
-
   async function apiPost(path, body) {
     const res = await fetch(path, {
       method: 'POST',
       headers: { 'x-admin-key': getKey(), 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
     });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || ('Request failed: ' + res.status));
+    return data;
+  }
+  async function apiDelete(path) {
+    const res = await fetch(path, { method: 'DELETE', headers: { 'x-admin-key': getKey() } });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || ('Request failed: ' + res.status));
     return data;
@@ -244,14 +196,11 @@
 
   function renderUsers(users) {
     const table = document.getElementById('users-table');
-    if (!users.length) {
-      table.innerHTML = '<tr><td class="empty">No learners yet.</td></tr>';
-      return;
-    }
+    if (!users.length) { table.innerHTML = '<tr><td class="empty">No learners yet.</td></tr>'; return; }
     table.innerHTML = `
       <tr>
         <th>Name</th><th>Phone</th><th>Topic</th><th>Lesson</th>
-        <th>XP</th><th>Level</th><th>Final Score</th><th>Certified</th>
+        <th>XP</th><th>Level</th><th>Final Score</th><th>Certified</th><th>Actions</th>
       </tr>
       ${users.map(u => `
         <tr>
@@ -262,24 +211,54 @@
           <td>${u.xp ?? 0}</td>
           <td>${esc(u.level)}</td>
           <td>${u.final_assessment_score !== null && u.final_assessment_score !== undefined ? u.final_assessment_score + '/10' : '—'}</td>
-          <td>${u.certificate_issued
-            ? '<span class="badge certified">Certified</span>'
-            : '<span class="badge pending">Pending</span>'}</td>
+          <td>${u.certificate_issued ? '<span class="badge certified">Certified</span>' : '<span class="badge pending">Pending</span>'}</td>
+          <td>
+            <button class="action-btn btn-neutral" onclick="resetUser('${esc(u.phone_number)}')">Reset</button>
+            <button class="action-btn btn-neutral" onclick="setXp('${esc(u.phone_number)}')">Set XP</button>
+            <button class="action-btn btn-danger" onclick="deleteUser('${esc(u.phone_number)}')">Delete</button>
+          </td>
         </tr>
       `).join('')}
     `;
   }
 
+  async function resetUser(phone) {
+    if (!confirm(`Reset course progress for ${phone}? Name, XP, and badges stay intact.`)) return;
+    try {
+      await apiPost(`/api/admin/users/${encodeURIComponent(phone)}/reset`);
+      await loadUsers();
+    } catch (e) { alert(e.message); }
+  }
+
+  async function setXp(phone) {
+    const val = prompt('Set XP to:');
+    if (val === null) return;
+    const xp = Number(val);
+    if (isNaN(xp) || xp < 0) { alert('Enter a valid non-negative number.'); return; }
+    try {
+      await apiPost(`/api/admin/users/${encodeURIComponent(phone)}/xp`, { xp });
+      await loadUsers();
+    } catch (e) { alert(e.message); }
+  }
+
+  async function deleteUser(phone) {
+    if (!confirm(`Permanently delete ${phone}? This cannot be undone.`)) return;
+    try {
+      await apiDelete(`/api/admin/users/${encodeURIComponent(phone)}`);
+      await loadUsers();
+    } catch (e) { alert(e.message); }
+  }
+
+  async function loadUsers() {
+    const usersRes = await apiGet('/api/admin/users');
+    renderUsers(usersRes.users);
+  }
+
   function renderCertificates(certs) {
     const table = document.getElementById('certs-table');
-    if (!certs.length) {
-      table.innerHTML = '<tr><td class="empty">No certificates issued yet.</td></tr>';
-      return;
-    }
+    if (!certs.length) { table.innerHTML = '<tr><td class="empty">No certificates issued yet.</td></tr>'; return; }
     table.innerHTML = `
-      <tr>
-        <th>Code</th><th>Name</th><th>Topic</th><th>Score</th><th>Issued</th>
-      </tr>
+      <tr><th>Code</th><th>Name</th><th>Topic</th><th>Score</th><th>Issued</th><th>Status</th><th>Actions</th></tr>
       ${certs.map(c => `
         <tr>
           <td>${esc(c.certificate_code)}</td>
@@ -287,22 +266,28 @@
           <td>${esc(c.topic)}</td>
           <td>${c.score}/10</td>
           <td>${new Date(c.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+          <td>${c.revoked ? '<span class="badge revoked">Revoked</span>' : '<span class="badge certified">Valid</span>'}</td>
+          <td>${c.revoked ? '—' : `<button class="action-btn btn-danger" onclick="revokeCert('${esc(c.certificate_code)}')">Revoke</button>`}</td>
         </tr>
       `).join('')}
     `;
   }
 
+  async function revokeCert(code) {
+    if (!confirm(`Revoke certificate ${code}? It will fail verification checks afterward.`)) return;
+    try {
+      await apiPost(`/api/admin/certificates/${encodeURIComponent(code)}/revoke`);
+      const certsRes = await apiGet('/api/admin/certificates');
+      renderCertificates(certsRes.certificates);
+    } catch (e) { alert(e.message); }
+  }
+
   function renderContestStandingsTable(standings) {
     const table = document.getElementById('contest-standings-table');
-    if (!standings || !standings.length) {
-      table.innerHTML = '<tr><td class="empty">No team XP recorded yet for this contest.</td></tr>';
-      return;
-    }
+    if (!standings || !standings.length) { table.innerHTML = '<tr><td class="empty">No team XP recorded yet for this contest.</td></tr>'; return; }
     table.innerHTML = `
       <tr><th>Rank</th><th>Team</th><th>XP Earned</th></tr>
-      ${standings.map((s, i) => `
-        <tr><td>${i + 1}</td><td>${esc(s.name)}</td><td>${s.xpEarned}</td></tr>
-      `).join('')}
+      ${standings.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.name)}</td><td>${s.xpEarned}</td></tr>`).join('')}
     `;
   }
 
@@ -322,54 +307,115 @@
     }
   }
 
-  function setContestMsg(text, isError) {
-    const el = document.getElementById('contest-msg');
+  function renderContestHistory(contests) {
+    const table = document.getElementById('contest-history-table');
+    if (!contests.length) { table.innerHTML = '<tr><td class="empty">No contests have ended yet.</td></tr>'; return; }
+    table.innerHTML = `
+      <tr><th>Name</th><th>Started</th><th>Ended</th><th>Winner</th></tr>
+      ${contests.map(c => `
+        <tr>
+          <td>${esc(c.name)}</td>
+          <td>${new Date(c.started_at).toLocaleDateString()}</td>
+          <td>${c.ended_at ? new Date(c.ended_at).toLocaleDateString() : '—'}</td>
+          <td>${c.winner_name ? '🏆 ' + esc(c.winner_name) : '—'}</td>
+        </tr>
+      `).join('')}
+    `;
+  }
+
+  function setMsg(elId, text, isError) {
+    const el = document.getElementById(elId);
     el.textContent = text;
-    el.className = 'contest-msg ' + (isError ? 'error' : 'success');
+    el.className = 'msg ' + (isError ? 'error' : 'success');
   }
 
   async function startContest() {
     const input = document.getElementById('contest-name-input');
     const name = input.value.trim();
-    if (!name) {
-      setContestMsg('Enter a contest name first.', true);
-      return;
-    }
+    if (!name) { setMsg('contest-msg', 'Enter a contest name first.', true); return; }
     try {
       await apiPost('/api/admin/contests/start', { name });
-      setContestMsg(`Contest "${name}" started!`, false);
+      setMsg('contest-msg', `Contest "${name}" started!`, false);
       input.value = '';
       await refreshContestStatus();
-    } catch (e) {
-      setContestMsg(e.message, true);
-    }
+    } catch (e) { setMsg('contest-msg', e.message, true); }
   }
 
   async function endContest() {
     try {
       const data = await apiPost('/api/admin/contests/end');
       if (data.winner) {
-        setContestMsg(`Contest ended! Winner: ${data.winner.name} (${data.winner.xpEarned} XP). Members notified.`, false);
+        setMsg('contest-msg', `Contest ended! Winner: ${data.winner.name} (${data.winner.xpEarned} XP). Members notified.`, false);
       } else {
-        setContestMsg('Contest ended - no team had any XP earned.', false);
+        setMsg('contest-msg', 'Contest ended - no team had any XP earned.', false);
       }
       await refreshContestStatus();
-    } catch (e) {
-      setContestMsg(e.message, true);
-    }
+      const historyRes = await apiGet('/api/admin/contests/history');
+      renderContestHistory(historyRes.contests);
+    } catch (e) { setMsg('contest-msg', e.message, true); }
+  }
+
+  async function runReminders() {
+    try {
+      const data = await apiPost('/api/admin/reminders/run');
+      setMsg('reminders-msg', `Checked ${data.eligible} eligible learner(s): ${data.sent} sent, ${data.failed} failed.`, false);
+    } catch (e) { setMsg('reminders-msg', e.message, true); }
+  }
+
+  function renderTeams(teams) {
+    const container = document.getElementById('teams-list');
+    if (!teams.length) { container.innerHTML = '<div class="empty">No teams created yet.</div>'; return; }
+    container.innerHTML = teams.map(t => `
+      <div class="team-card">
+        <div class="team-header">
+          <div class="team-name">🚩 ${esc(t.name)} — ${t.totalXp} total XP</div>
+          <button class="action-btn btn-danger" onclick="deleteTeam('${t.id}')">Delete Team</button>
+        </div>
+        ${t.members.map(m => `
+          <div class="member-row">
+            <span>${esc(m.name) || esc(m.phone_number)}${m.phone_number === t.leader_phone ? ' (Leader)' : ''} - ${m.xp} XP</span>
+            ${m.phone_number === t.leader_phone ? '' : `<button class="action-btn btn-neutral" onclick="removeMember('${t.id}','${esc(m.phone_number)}')">Remove</button>`}
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+
+  async function deleteTeam(teamId) {
+    if (!confirm('Delete this team? All members will be detached.')) return;
+    try {
+      await apiDelete(`/api/admin/teams/${teamId}`);
+      await loadTeams();
+    } catch (e) { alert(e.message); }
+  }
+
+  async function removeMember(teamId, phone) {
+    if (!confirm(`Remove ${phone} from this team?`)) return;
+    try {
+      await apiDelete(`/api/admin/teams/${teamId}/members/${encodeURIComponent(phone)}`);
+      await loadTeams();
+    } catch (e) { alert(e.message); }
+  }
+
+  async function loadTeams() {
+    const teamsRes = await apiGet('/api/admin/teams');
+    renderTeams(teamsRes.teams);
   }
 
   async function loadDashboard() {
     try {
-      const [stats, usersRes, certsRes] = await Promise.all([
+      const [stats, usersRes, certsRes, historyRes] = await Promise.all([
         apiGet('/api/admin/stats'),
         apiGet('/api/admin/users'),
         apiGet('/api/admin/certificates'),
+        apiGet('/api/admin/contests/history'),
       ]);
       renderStats(stats);
       renderUsers(usersRes.users);
       renderCertificates(certsRes.certificates);
+      renderContestHistory(historyRes.contests);
       await refreshContestStatus();
+      await loadTeams();
       document.getElementById('refreshed').textContent = 'Updated ' + new Date().toLocaleTimeString();
       document.getElementById('gate').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
@@ -379,14 +425,10 @@
     }
   }
 
-  document.getElementById('key-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') tryLogin();
-  });
+  document.getElementById('key-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLogin(); });
 
   if (localStorage.getItem(KEY_STORAGE)) {
-    loadDashboard().then(ok => {
-      if (!ok) localStorage.removeItem(KEY_STORAGE);
-    });
+    loadDashboard().then(ok => { if (!ok) localStorage.removeItem(KEY_STORAGE); });
   }
 </script>
 </body>

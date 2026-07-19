@@ -34,9 +34,6 @@ async function updateUser(phone_number, fields) {
   return data;
 }
 
-/**
- * Returns the top N users by XP, for the leaderboard command (Module 5.3 Community Features).
- */
 async function getLeaderboard(limit = 5) {
   const { data, error } = await supabase
     .from('users')
@@ -58,4 +55,49 @@ async function getAllUsers() {
   return data;
 }
 
-module.exports = { createUser, getUserByPhone, updateUser, getLeaderboard, getAllUsers };
+async function resetUserProgress(phone_number) {
+  return updateUser(phone_number, {
+    current_topic: null,
+    current_lesson_number: 0,
+    skill_level: null,
+    placement_question: null,
+    final_assessment_question: null,
+    final_assessment_score: null,
+    certificate_issued: false,
+  });
+}
+
+async function setUserXp(phone_number, xp) {
+  return updateUser(phone_number, { xp });
+}
+
+async function deleteUser(phone_number) {
+  const { data: ledTeam } = await supabase
+    .from('teams')
+    .select('id, name')
+    .eq('leader_phone', phone_number)
+    .maybeSingle();
+
+  if (ledTeam) {
+    const err = new Error(`This user leads the team "${ledTeam.name}". Delete that team first.`);
+    err.code = 'IS_TEAM_LEADER';
+    throw err;
+  }
+
+  await supabase.from('contest_snapshots').delete().eq('phone_number', phone_number);
+  await supabase.from('team_members').delete().eq('phone_number', phone_number);
+
+  const { error } = await supabase.from('users').delete().eq('phone_number', phone_number);
+  if (error) throw error;
+}
+
+module.exports = {
+  createUser,
+  getUserByPhone,
+  updateUser,
+  getLeaderboard,
+  getAllUsers,
+  resetUserProgress,
+  setUserXp,
+  deleteUser,
+};

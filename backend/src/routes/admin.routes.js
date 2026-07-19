@@ -6,6 +6,7 @@ const gamificationService = require('../services/gamification.service');
 const contestsService = require('../services/contests.service');
 const whatsappService = require('../services/whatsapp.service');
 const teamsService = require('../services/teams.service');
+const remindersService = require('../services/reminders.service');
 
 const router = express.Router();
 
@@ -53,6 +54,43 @@ router.get('/users', async (req, res) => {
   }
 });
 
+router.post('/users/:phone/reset', async (req, res) => {
+  try {
+    const user = await userService.resetUserProgress(req.params.phone);
+    res.json({ user });
+  } catch (err) {
+    console.error('[admin] Failed to reset user:', err);
+    res.status(500).json({ error: 'Failed to reset user progress' });
+  }
+});
+
+router.post('/users/:phone/xp', async (req, res) => {
+  const { xp } = req.body;
+  if (typeof xp !== 'number' || xp < 0) {
+    return res.status(400).json({ error: 'xp must be a non-negative number' });
+  }
+  try {
+    const user = await userService.setUserXp(req.params.phone, xp);
+    res.json({ user });
+  } catch (err) {
+    console.error('[admin] Failed to set XP:', err);
+    res.status(500).json({ error: 'Failed to set XP' });
+  }
+});
+
+router.delete('/users/:phone', async (req, res) => {
+  try {
+    await userService.deleteUser(req.params.phone);
+    res.json({ deleted: true });
+  } catch (err) {
+    if (err.code === 'IS_TEAM_LEADER') {
+      return res.status(409).json({ error: err.message });
+    }
+    console.error('[admin] Failed to delete user:', err);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
 router.get('/certificates', async (req, res) => {
   try {
     const certificates = await certificatesService.getAllCertificates();
@@ -60,6 +98,50 @@ router.get('/certificates', async (req, res) => {
   } catch (err) {
     console.error('[admin] Failed to fetch certificates:', err);
     res.status(500).json({ error: 'Failed to fetch certificates' });
+  }
+});
+
+router.post('/certificates/:code/revoke', async (req, res) => {
+  try {
+    const cert = await certificatesService.revokeCertificate(req.params.code);
+    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+    res.json({ certificate: cert });
+  } catch (err) {
+    console.error('[admin] Failed to revoke certificate:', err);
+    res.status(500).json({ error: 'Failed to revoke certificate' });
+  }
+});
+
+router.get('/teams', async (req, res) => {
+  try {
+    const teams = await teamsService.getAllTeamsWithMembers();
+    res.json({ teams });
+  } catch (err) {
+    console.error('[admin] Failed to fetch teams:', err);
+    res.status(500).json({ error: 'Failed to fetch teams' });
+  }
+});
+
+router.delete('/teams/:teamId', async (req, res) => {
+  try {
+    await teamsService.deleteTeam(req.params.teamId);
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error('[admin] Failed to delete team:', err);
+    res.status(500).json({ error: 'Failed to delete team' });
+  }
+});
+
+router.delete('/teams/:teamId/members/:phone', async (req, res) => {
+  try {
+    await teamsService.removeMember(req.params.teamId, req.params.phone);
+    res.json({ removed: true });
+  } catch (err) {
+    if (err.code === 'IS_TEAM_LEADER') {
+      return res.status(409).json({ error: err.message });
+    }
+    console.error('[admin] Failed to remove member:', err);
+    res.status(500).json({ error: 'Failed to remove member' });
   }
 });
 
@@ -92,6 +174,16 @@ router.get('/contests/active', async (req, res) => {
   }
 });
 
+router.get('/contests/history', async (req, res) => {
+  try {
+    const contests = await contestsService.getContestHistory();
+    res.json({ contests });
+  } catch (err) {
+    console.error('[admin] Failed to fetch contest history:', err);
+    res.status(500).json({ error: 'Failed to fetch contest history' });
+  }
+});
+
 router.post('/contests/end', async (req, res) => {
   try {
     const contest = await contestsService.getActiveContest();
@@ -117,6 +209,36 @@ router.post('/contests/end', async (req, res) => {
   } catch (err) {
     console.error('[admin] Failed to end contest:', err);
     res.status(500).json({ error: 'Failed to end contest' });
+  }
+});
+
+router.post('/reminders/run', async (req, res) => {
+  try {
+    const users = await remindersService.getUsersDueForReminder();
+
+    let sent = 0;
+    let failed = 0;
+
+    for (const user of users) {
+      try {
+        await whatsappService.sendTemplateMessage(
+          user.phone_number,
+          'learning_reminder',
+          'en_US',
+          [user.name || 'there', user.current_topic]
+        );
+        await remindersService.markReminderSent(user.phone_number);
+        sent++;
+      } catch (err) {
+        console.error(`[admin] Failed to remind ${user.phone_number}:`, err.details || err);
+        failed++;
+      }
+    }
+
+    res.json({ eligible: users.length, sent, failed });
+  } catch (err) {
+    console.error('[admin] Failed to run reminders:', err);
+    res.status(500).json({ error: 'Failed to run reminders' });
   }
 });
 

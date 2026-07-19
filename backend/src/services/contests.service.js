@@ -70,7 +70,13 @@ async function endContest(contestId) {
 
   const { error } = await supabase
     .from('contests')
-    .update({ status: 'ended', ended_at: new Date().toISOString(), winner_team_id: winner?.team_id || null })
+    .update({
+      status: 'ended',
+      ended_at: new Date().toISOString(),
+      winner_team_id: winner?.team_id || null,
+      winner_name: winner?.name || null,
+      final_standings: standings,
+    })
     .eq('id', contestId);
 
   if (error) throw error;
@@ -91,4 +97,15 @@ async function endContest(contestId) {
   return { standings, winner };
 }
 
-module.exports = { startContest, getActiveContest, getContestStandings, endContest };
+async function getContestHistory() {
+  const { data, error } = await supabase
+    .from('contests')
+    .select('*')
+    .eq('status', 'ended')
+    .order('ended_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+module.exports = { startContest, getActiveContest, getContestStandings, endContest, getContestHistory };

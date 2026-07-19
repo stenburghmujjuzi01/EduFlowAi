@@ -38,4 +38,16 @@ async function getAllCertificates() {
   return data;
 }
 
-module.exports = { createCertificate, getCertificateByCode, getAllCertificates };
+async function revokeCertificate(code) {
+  const { data, error } = await supabase
+    .from('certificates')
+    .update({ revoked: true })
+    .eq('certificate_code', code.toUpperCase())
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+module.exports = { createCertificate, getCertificateByCode, getAllCertificates, revokeCertificate };
