@@ -247,6 +247,51 @@ Respond with EXACTLY one word, nothing else: BEGINNER, ELEMENTARY, INTERMEDIATE,
   return found || 'beginner';
 }
 
+const CHAT_MODES = {
+  tutor: 'a patient, encouraging tutor who explains things clearly and checks understanding',
+  study_partner: 'a friendly study partner working through problems alongside the learner',
+  quiz_master: 'a quiz master who challenges the learner with questions and tracks their answers',
+  research_assistant: 'a thorough research assistant who gives well-organized, factual answers',
+  coding_assistant: 'an expert coding assistant who explains code clearly and helps debug',
+  career_coach: 'a supportive career coach helping with skills, resumes, and career direction',
+};
+
+async function generateChatReply(mode, history, message) {
+  if (!isConfigured()) {
+    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  }
+
+  const persona = CHAT_MODES[mode] || CHAT_MODES.tutor;
+  const historyText = (history || [])
+    .map((m) => `${m.role === 'user' ? 'Learner' : 'You'}: ${m.content}`)
+    .join('\n');
+
+  const prompt = `You are ${persona}, chatting with a learner on EduFlow Ai.
+${historyText ? `Recent conversation:\n${historyText}\n` : ''}
+Learner just said: "${message}"
+Reply naturally and helpfully (plain text, no markdown headers, under 200 words unless the request needs more detail).`;
+
+  return callGemini(prompt);
+}
+
+async function generateLearningPath(goal) {
+  if (!isConfigured()) {
+    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  }
+
+  const prompt = `A learner wants to achieve this goal: "${goal}"
+Write a step-by-step learning roadmap (5-8 stages) to get there, from beginner to capable.
+Format as plain text, one stage per line, like:
+1. Stage name - one sentence on what to focus on
+Keep each line under 25 words.`;
+
+  return callGemini(prompt);
+}
+
+module.exports.generateChatReply = generateChatReply;
+module.exports.generateLearningPath = generateLearningPath;
+module.exports.CHAT_MODES = CHAT_MODES;
+
 module.exports = {
   generateLesson,
   gradeAnswer,
