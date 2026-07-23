@@ -305,3 +305,88 @@ module.exports = {
   SKILL_LEVELS,
   isConfigured,
 };
+function cleanJson(text) {
+  return text.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+}
+
+async function generateFlashcards(topic, count) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+
+  const prompt = `Create ${count || 8} flashcards for studying "${topic}".
+Respond with ONLY valid JSON, no markdown, no code fences, in exactly this shape:
+[{"front": "short question or term", "back": "concise answer or definition"}, ...]`;
+
+  const text = await callGemini(prompt);
+  const cleaned = cleanJson(text);
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    const err = new Error('Failed to parse flashcards JSON from Gemini');
+    err.details = { raw: text };
+    throw err;
+  }
+}
+
+async function generateMCQQuiz(topic, count) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+
+  const prompt = `Create a ${count || 5}-question multiple-choice quiz on "${topic}".
+Respond with ONLY valid JSON, no markdown, no code fences, in exactly this shape:
+[{"question": "...", "options": ["A","B","C","D"], "correctIndex": 0}, ...]
+Each question must have exactly 4 options, and correctIndex is the 0-based index of the correct option.`;
+
+  const text = await callGemini(prompt);
+  const cleaned = cleanJson(text);
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    const err = new Error('Failed to parse quiz JSON from Gemini');
+    err.details = { raw: text };
+    throw err;
+  }
+}
+
+async function translateText(text, targetLang) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `Translate the following text into ${targetLang}. Return ONLY the translation, nothing else.\n\n"""\n${text}\n"""`;
+  return callGemini(prompt);
+}
+
+async function checkGrammar(text) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `Proofread the following text for grammar, spelling, and clarity. Return the corrected version, followed by a short bullet list of what you changed and why.\n\n"""\n${text}\n"""`;
+  return callGemini(prompt);
+}
+
+async function writeEssay(topic, words) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `Write a well-structured essay (~${words || 300} words) on the topic: "${topic}". Plain text, no markdown headers.`;
+  return callGemini(prompt);
+}
+
+async function solveMath(problem) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `Solve this math problem step by step, showing your work clearly, then give the final answer clearly labeled: "${problem}"`;
+  return callGemini(prompt);
+}
+
+async function generateCitation(source, style) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `Format this source as a ${style || 'APA'} citation. Source details: "${source}". Return ONLY the formatted citation.`;
+  return callGemini(prompt);
+}
+
+async function summarizeText(text) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `Summarize the following text into 3-5 concise bullet points (plain text, use "- " for bullets):\n\n"""\n${text}\n"""`;
+  return callGemini(prompt);
+}
+
+module.exports.generateFlashcards = generateFlashcards;
+module.exports.generateMCQQuiz = generateMCQQuiz;
+module.exports.translateText = translateText;
+module.exports.checkGrammar = checkGrammar;
+module.exports.writeEssay = writeEssay;
+module.exports.solveMath = solveMath;
+module.exports.generateCitation = generateCitation;
+module.exports.summarizeText = summarizeText;

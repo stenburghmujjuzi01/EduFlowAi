@@ -459,6 +459,140 @@
               </div>
             </div>
 
+            <div class="content-section" id="section-library">
+              <h1>Library</h1>
+              <div class="box">
+                <h3>Lessons</h3>
+                <div id="library-lessons"></div>
+              </div>
+              <div class="box">
+                <h3>Notes</h3>
+                <div id="library-notes"></div>
+              </div>
+              <div class="box">
+                <h3>Flashcard Sets</h3>
+                <div id="library-flashcards"></div>
+              </div>
+              <div class="box">
+                <h3>Quiz History</h3>
+                <div id="library-quizzes"></div>
+              </div>
+            </div>
+
+            <div class="content-section" id="section-flashcards">
+              <h1>Flashcards</h1>
+              <div id="flashcards-list-view">
+                <div class="box">
+                  <h3>Generate a new set</h3>
+                  <div class="row-flex">
+                    <input type="text" id="flashcard-topic-input" placeholder="Topic (e.g. Cell Biology)" />
+                    <button class="btn" onclick="generateFlashcardSet()">Generate</button>
+                  </div>
+                  <div id="flashcard-gen-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+                </div>
+                <div class="box">
+                  <h3>Your Sets</h3>
+                  <div id="flashcard-sets-list"></div>
+                </div>
+              </div>
+              <div id="flashcards-review-view" style="display:none;">
+                <button class="btn-outline" onclick="exitFlashcardReview()" style="margin-bottom:14px;">Back to sets</button>
+                <div class="box" style="text-align:center;">
+                  <div id="flashcard-progress" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
+                  <div id="flashcard-card" style="min-height:120px;display:flex;align-items:center;justify-content:center;font-size:16px;padding:20px;border:1px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:14px;"></div>
+                  <div id="flashcard-controls" style="display:none;">
+                    <button class="btn-outline" onclick="answerCard(false)">Didn't know it</button>
+                    <button class="btn" onclick="answerCard(true)">Knew it</button>
+                  </div>
+                  <div id="flashcard-flip-hint" class="empty">Click the card to reveal the answer</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="content-section" id="section-quizzes">
+              <h1>Quizzes</h1>
+              <div id="quiz-setup-view">
+                <div class="box">
+                  <h3>Generate a quiz</h3>
+                  <div class="row-flex">
+                    <input type="text" id="quiz-topic-input" placeholder="Topic (e.g. World War 2)" />
+                    <button class="btn" onclick="generateQuiz()">Generate</button>
+                  </div>
+                  <div id="quiz-gen-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+                </div>
+                <div class="box">
+                  <h3>Past Attempts</h3>
+                  <div id="quiz-history-list"></div>
+                </div>
+              </div>
+              <div id="quiz-active-view" style="display:none;">
+                <div class="box">
+                  <div id="quiz-questions"></div>
+                  <button class="btn" onclick="submitQuiz()">Submit Quiz</button>
+                </div>
+              </div>
+              <div id="quiz-results-view" style="display:none;">
+                <div class="box">
+                  <h3>Results</h3>
+                  <div id="quiz-results-content"></div>
+                  <button class="btn-outline" onclick="exitQuizResults()" style="margin-top:14px;">Back</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="content-section" id="section-ai-tools">
+              <h1>AI Tools</h1>
+              <div class="box">
+                <h3>Translator</h3>
+                <textarea id="tool-translate-text" rows="3" placeholder="Text to translate"></textarea>
+                <div class="row-flex" style="margin-top:8px;">
+                  <input type="text" id="tool-translate-lang" placeholder="Target language (e.g. Spanish)" />
+                  <button class="btn" onclick="runTool('translate')">Translate</button>
+                </div>
+                <div id="tool-translate-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+              </div>
+              <div class="box">
+                <h3>Grammar Checker</h3>
+                <textarea id="tool-grammar-text" rows="3" placeholder="Text to proofread"></textarea>
+                <button class="btn" style="margin-top:8px;" onclick="runTool('grammar')">Check</button>
+                <div id="tool-grammar-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+              </div>
+              <div class="box">
+                <h3>Essay Writer</h3>
+                <div class="row-flex">
+                  <input type="text" id="tool-essay-topic" placeholder="Essay topic" />
+                  <input type="text" id="tool-essay-words" placeholder="Word count (e.g. 300)" style="max-width:140px;" />
+                  <button class="btn" onclick="runTool('essay')">Write</button>
+                </div>
+                <div id="tool-essay-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+              </div>
+              <div class="box">
+                <h3>Math Solver</h3>
+                <div class="row-flex">
+                  <input type="text" id="tool-math-problem" placeholder="e.g. Solve 2x + 5 = 17" />
+                  <button class="btn" onclick="runTool('math')">Solve</button>
+                </div>
+                <div id="tool-math-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+              </div>
+              <div class="box">
+                <h3>Citation Generator</h3>
+                <div class="row-flex">
+                  <input type="text" id="tool-citation-source" placeholder="Source details (author, title, year, publisher...)" />
+                  <select id="tool-citation-style" style="padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
+                    <option>APA</option><option>MLA</option><option>Chicago</option>
+                  </select>
+                  <button class="btn" onclick="runTool('citation')">Generate</button>
+                </div>
+                <div id="tool-citation-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+              </div>
+              <div class="box">
+                <h3>Summarizer</h3>
+                <textarea id="tool-summarize-text" rows="4" placeholder="Paste text to summarize"></textarea>
+                <button class="btn" style="margin-top:8px;" onclick="runTool('summarize')">Summarize</button>
+                <div id="tool-summarize-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+              </div>
+            </div>
+
             <div class="content-section" id="section-settings">
               <h1>Settings</h1>
               <div class="box">
@@ -594,9 +728,9 @@
       { id: 'chat', label: 'AI Chat', icon: 'chat', live: true },
       { id: 'courses', label: 'My Courses', icon: 'courses', live: true },
       { id: 'learning-paths', label: 'Learning Paths', icon: 'path', live: true },
-      { id: 'library', label: 'Library', icon: 'library', live: false },
-      { id: 'flashcards', label: 'Flashcards', icon: 'flashcards', live: false },
-      { id: 'quizzes', label: 'Quizzes', icon: 'quizzes', live: false },
+      { id: 'library', label: 'Library', icon: 'library', live: true },
+      { id: 'flashcards', label: 'Flashcards', icon: 'flashcards', live: true },
+      { id: 'quizzes', label: 'Quizzes', icon: 'quizzes', live: true },
       { id: 'assignments', label: 'Assignments', icon: 'assignments', live: false },
     ]},
     { group: 'Organize', items: [
@@ -616,7 +750,7 @@
       { id: 'community', label: 'Community', icon: 'community', live: false },
       { id: 'live-classes', label: 'Live Classes', icon: 'liveclasses', live: false },
       { id: 'career-center', label: 'Career Center', icon: 'career', live: false },
-      { id: 'ai-tools', label: 'AI Tools', icon: 'aitools', live: false },
+      { id: 'ai-tools', label: 'AI Tools', icon: 'aitools', live: true },
       { id: 'admin', label: 'Admin', icon: 'admin', live: false },
       { id: 'settings', label: 'Settings', icon: 'settings', live: true },
     ]},
@@ -668,6 +802,9 @@
     if (name === 'leaderboard') loadLeaderboard();
     if (name === 'certificates') loadCertificates();
     if (name === 'progress') loadProgressSection();
+    if (name === 'library') loadLibrary();
+    if (name === 'flashcards') loadFlashcardSets();
+    if (name === 'quizzes') loadQuizHistory();
   }
 
   // ---------- Auth screens ----------
@@ -1248,6 +1385,196 @@
   document.getElementById('login-password')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
   document.getElementById('signup-phone')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSignup(); });
   document.getElementById('phone-input')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLinkPhone(); });
+
+  // ---------- Library ----------
+  async function loadLibrary() {
+    try {
+      const { lessons, notes, flashcardSets, quizAttempts } = await apiGet('/api/web/library');
+      document.getElementById('library-lessons').innerHTML = lessons.length
+        ? lessons.map(l => `<div class="list-item"><span>${esc(l.topic)} - Lesson ${l.lesson_number}</span><span class="empty">${new Date(l.created_at).toLocaleDateString()}</span></div>`).join('')
+        : '<span class="empty">No lessons yet.</span>';
+      document.getElementById('library-notes').innerHTML = notes.length
+        ? notes.map(n => `<div class="list-item"><span>${esc(n.title)}</span></div>`).join('')
+        : '<span class="empty">No notes yet.</span>';
+      document.getElementById('library-flashcards').innerHTML = flashcardSets.length
+        ? flashcardSets.map(s => `<div class="list-item"><span>${esc(s.topic)} (${s.cardCount} cards)</span></div>`).join('')
+        : '<span class="empty">No flashcard sets yet.</span>';
+      document.getElementById('library-quizzes').innerHTML = quizAttempts.length
+        ? quizAttempts.map(a => `<div class="list-item"><span>${esc(a.topic)}</span><span>${a.score}/${a.total}</span></div>`).join('')
+        : '<span class="empty">No quiz attempts yet.</span>';
+    } catch (e) { /* silent */ }
+  }
+
+  // ---------- Flashcards ----------
+  let currentFlashcardSet = null, currentCardIndex = 0, cardRevealed = false;
+
+  async function loadFlashcardSets() {
+    try {
+      const { sets } = await apiGet('/api/web/flashcards/sets');
+      document.getElementById('flashcard-sets-list').innerHTML = sets.length
+        ? sets.map(s => `<div class="list-item"><span>${esc(s.topic)} (${s.cardCount} cards)</span><span class="row-flex"><button class="btn-outline" onclick="openFlashcardSet('${s.id}')">Review</button><button class="btn-danger" onclick="deleteFlashcardSet('${s.id}')">Delete</button></span></div>`).join('')
+        : '<span class="empty">No flashcard sets yet - generate one above.</span>';
+    } catch (e) { /* silent */ }
+  }
+
+  async function generateFlashcardSet() {
+    const topic = document.getElementById('flashcard-topic-input').value.trim();
+    const msgEl = document.getElementById('flashcard-gen-msg');
+    if (!topic) return;
+    msgEl.textContent = 'Generating flashcards...';
+    try {
+      await apiPost('/api/web/flashcards/generate', { topic, count: 8 });
+      msgEl.textContent = 'Done!';
+      document.getElementById('flashcard-topic-input').value = '';
+      loadFlashcardSets();
+    } catch (e) { msgEl.textContent = e.message; }
+  }
+
+  async function deleteFlashcardSet(id) {
+    if (!confirm('Delete this flashcard set?')) return;
+    await apiDelete('/api/web/flashcards/sets/' + id);
+    loadFlashcardSets();
+  }
+
+  async function openFlashcardSet(id) {
+    const { set } = await apiGet('/api/web/flashcards/sets/' + id);
+    currentFlashcardSet = set;
+    currentCardIndex = 0;
+    cardRevealed = false;
+    document.getElementById('flashcards-list-view').style.display = 'none';
+    document.getElementById('flashcards-review-view').style.display = 'block';
+    renderCurrentCard();
+  }
+
+  function exitFlashcardReview() {
+    document.getElementById('flashcards-list-view').style.display = 'block';
+    document.getElementById('flashcards-review-view').style.display = 'none';
+    loadFlashcardSets();
+  }
+
+  function renderCurrentCard() {
+    const cards = currentFlashcardSet.cards;
+    if (currentCardIndex >= cards.length) {
+      document.getElementById('flashcard-card').textContent = 'Review complete!';
+      document.getElementById('flashcard-controls').style.display = 'none';
+      document.getElementById('flashcard-flip-hint').style.display = 'none';
+      document.getElementById('flashcard-progress').textContent = `${cards.length}/${cards.length}`;
+      return;
+    }
+    const card = cards[currentCardIndex];
+    cardRevealed = false;
+    document.getElementById('flashcard-progress').textContent = `${currentCardIndex + 1}/${cards.length}`;
+    document.getElementById('flashcard-card').textContent = card.front;
+    document.getElementById('flashcard-card').onclick = flipCard;
+    document.getElementById('flashcard-controls').style.display = 'none';
+    document.getElementById('flashcard-flip-hint').style.display = 'block';
+  }
+
+  function flipCard() {
+    if (cardRevealed) return;
+    cardRevealed = true;
+    const card = currentFlashcardSet.cards[currentCardIndex];
+    document.getElementById('flashcard-card').textContent = card.back;
+    document.getElementById('flashcard-controls').style.display = 'block';
+    document.getElementById('flashcard-flip-hint').style.display = 'none';
+  }
+
+  async function answerCard(knewIt) {
+    const card = currentFlashcardSet.cards[currentCardIndex];
+    try { await apiPost('/api/web/flashcards/cards/' + card.id + '/review', { knewIt }); } catch (e) { /* silent */ }
+    currentCardIndex++;
+    renderCurrentCard();
+  }
+
+  // ---------- Quizzes ----------
+  let currentQuiz = null, currentQuizTopic = '';
+
+  async function loadQuizHistory() {
+    try {
+      const { attempts } = await apiGet('/api/web/quiz/history');
+      document.getElementById('quiz-history-list').innerHTML = attempts.length
+        ? attempts.map(a => `<div class="list-item"><span>${esc(a.topic)}</span><span>${a.score}/${a.total} - ${new Date(a.created_at).toLocaleDateString()}</span></div>`).join('')
+        : '<span class="empty">No quiz attempts yet.</span>';
+    } catch (e) { /* silent */ }
+  }
+
+  async function generateQuiz() {
+    const topic = document.getElementById('quiz-topic-input').value.trim();
+    const msgEl = document.getElementById('quiz-gen-msg');
+    if (!topic) return;
+    msgEl.textContent = 'Generating quiz...';
+    try {
+      const { questions } = await apiPost('/api/web/quiz/generate', { topic, count: 5 });
+      currentQuiz = questions;
+      currentQuizTopic = topic;
+      msgEl.textContent = '';
+      renderQuiz();
+      document.getElementById('quiz-setup-view').style.display = 'none';
+      document.getElementById('quiz-active-view').style.display = 'block';
+    } catch (e) { msgEl.textContent = e.message; }
+  }
+
+  function renderQuiz() {
+    const container = document.getElementById('quiz-questions');
+    container.innerHTML = currentQuiz.map((q, qi) => `
+      <div style="margin-bottom:20px;">
+        <p style="font-weight:600;font-size:14px;">${qi + 1}. ${esc(q.question)}</p>
+        ${q.options.map((opt, oi) => `
+          <label style="display:block;font-size:13.5px;padding:6px 0;cursor:pointer;">
+            <input type="radio" name="q${qi}" value="${oi}" /> ${esc(opt)}
+          </label>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+
+  async function submitQuiz() {
+    const answers = currentQuiz.map((q, qi) => {
+      const checked = document.querySelector(`input[name="q${qi}"]:checked`);
+      return checked ? Number(checked.value) : -1;
+    });
+    try {
+      const result = await apiPost('/api/web/quiz/submit', { topic: currentQuizTopic, questions: currentQuiz, answers });
+      document.getElementById('quiz-active-view').style.display = 'none';
+      document.getElementById('quiz-results-view').style.display = 'block';
+      document.getElementById('quiz-results-content').innerHTML = `
+        <p style="font-size:16px;font-weight:700;">Score: ${result.score}/${result.total}</p>
+        ${currentQuiz.map((q, i) => `
+          <div style="margin-bottom:12px;font-size:13.5px;">
+            <p>${i + 1}. ${esc(q.question)} - ${result.results[i].correct ? 'Correct' : 'Incorrect'}</p>
+            ${!result.results[i].correct ? `<p class="empty">Correct answer: ${esc(q.options[q.correctIndex])}</p>` : ''}
+          </div>
+        `).join('')}
+      `;
+    } catch (e) { alert(e.message); }
+  }
+
+  function exitQuizResults() {
+    document.getElementById('quiz-results-view').style.display = 'none';
+    document.getElementById('quiz-setup-view').style.display = 'block';
+    loadQuizHistory();
+  }
+
+  // ---------- AI Tools ----------
+  async function runTool(tool) {
+    const configs = {
+      translate: { endpoint: '/api/web/ai-tools/translate', body: () => ({ text: document.getElementById('tool-translate-text').value, targetLang: document.getElementById('tool-translate-lang').value }), resultEl: 'tool-translate-result' },
+      grammar: { endpoint: '/api/web/ai-tools/grammar', body: () => ({ text: document.getElementById('tool-grammar-text').value }), resultEl: 'tool-grammar-result' },
+      essay: { endpoint: '/api/web/ai-tools/essay', body: () => ({ topic: document.getElementById('tool-essay-topic').value, words: Number(document.getElementById('tool-essay-words').value) || 300 }), resultEl: 'tool-essay-result' },
+      math: { endpoint: '/api/web/ai-tools/math', body: () => ({ problem: document.getElementById('tool-math-problem').value }), resultEl: 'tool-math-result' },
+      citation: { endpoint: '/api/web/ai-tools/citation', body: () => ({ source: document.getElementById('tool-citation-source').value, style: document.getElementById('tool-citation-style').value }), resultEl: 'tool-citation-result' },
+      summarize: { endpoint: '/api/web/ai-tools/summarize', body: () => ({ text: document.getElementById('tool-summarize-text').value }), resultEl: 'tool-summarize-result' },
+    };
+    const cfg = configs[tool];
+    const resultEl = document.getElementById(cfg.resultEl);
+    resultEl.textContent = 'Working...';
+    try {
+      const { result } = await apiPost(cfg.endpoint, cfg.body());
+      resultEl.textContent = result;
+    } catch (e) {
+      resultEl.textContent = e.message;
+    }
+  }
 
   updatePomodoroDisplay();
 

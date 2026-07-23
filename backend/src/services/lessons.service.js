@@ -36,4 +36,15 @@ async function getLessonsForUser(user_id, topic) {
   return data;
 }
 
-module.exports = { saveLesson, getLesson, getLessonsForUser };
+async function getAllLessonsForUser(user_id) {
+  const { data, error } = await supabase
+    .from('lessons')
+    .select('topic, lesson_number, content, created_at')
+    .eq('user_id', user_id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+module.exports = { saveLesson, getLesson, getLessonsForUser, getAllLessonsForUser };
