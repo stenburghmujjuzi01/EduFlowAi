@@ -8,34 +8,15 @@ function isConfigured() {
   return Boolean(GEMINI_API_KEY);
 }
 
-// Ordered low -> high. Lesson length/depth scales up with level.
 const SKILL_LEVELS = ['beginner', 'elementary', 'intermediate', 'advanced', 'expert', 'master'];
 
 const LEVEL_GUIDANCE = {
-  beginner: {
-    words: '100-140',
-    instruction: 'Start from the absolute fundamentals. Use simple language, everyday analogies, and avoid jargon.',
-  },
-  elementary: {
-    words: '140-180',
-    instruction: 'Assume basic familiarity. Briefly recap fundamentals, then introduce a bit more nuance and terminology.',
-  },
-  intermediate: {
-    words: '180-220',
-    instruction: "Assume they know the basics already - don't over-explain fundamentals. Cover moderate depth and practical application.",
-  },
-  advanced: {
-    words: '220-260',
-    instruction: 'Skip basic definitions entirely. Go into deeper mechanisms, edge cases, and how concepts interact.',
-  },
-  expert: {
-    words: '260-300',
-    instruction: 'Write for someone with real working experience. Discuss nuance, trade-offs, and less commonly known details.',
-  },
-  master: {
-    words: '300-350',
-    instruction: 'Write the most detailed and comprehensive lesson of all levels - covering subtle distinctions, deep technical detail, and expert-level insight others would miss.',
-  },
+  beginner: { words: '100-140', instruction: 'Start from the absolute fundamentals. Use simple language, everyday analogies, and avoid jargon.' },
+  elementary: { words: '140-180', instruction: 'Assume basic familiarity. Briefly recap fundamentals, then introduce a bit more nuance and terminology.' },
+  intermediate: { words: '180-220', instruction: "Assume they know the basics already - don't over-explain fundamentals. Cover moderate depth and practical application." },
+  advanced: { words: '220-260', instruction: 'Skip basic definitions entirely. Go into deeper mechanisms, edge cases, and how concepts interact.' },
+  expert: { words: '260-300', instruction: 'Write for someone with real working experience. Discuss nuance, trade-offs, and less commonly known details.' },
+  master: { words: '300-350', instruction: 'Write the most detailed and comprehensive lesson of all levels - covering subtle distinctions, deep technical detail, and expert-level insight others would miss.' },
 };
 
 async function callGemini(prompt) {
@@ -70,10 +51,12 @@ async function callGemini(prompt) {
   return text.trim();
 }
 
+function cleanJson(text) {
+  return text.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+}
+
 async function generateLesson(topic, learnerName, lessonNumber, totalLessons, previousLessonContent, skillLevel) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const isFirst = lessonNumber === 1;
   const isLast = lessonNumber === totalLessons;
@@ -103,9 +86,7 @@ Write this lesson (${guidance.words} words) following these rules:
 }
 
 async function gradeAnswer(topic, lessonContent, learnerAnswer, learnerName) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const prompt = `You are a warm, encouraging tutor on WhatsApp, teaching a course on "${topic}".
 Here is the lesson you just taught ${learnerName}:
@@ -126,9 +107,7 @@ Give short feedback (2-3 sentences, plain text, no markdown):
 }
 
 async function generatePracticeChallenge(topic, learnerName) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const prompt = `You are a fun, encouraging tutor on WhatsApp teaching a course on "${topic}" to ${learnerName}.
 They just asked for a bonus practice challenge to test themselves.
@@ -139,9 +118,7 @@ Make it feel like a fun mini-challenge, not a formal exam question.`;
 }
 
 async function generateFinalAssessmentQuestion(topic, learnerName) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const prompt = `You are a tutor on WhatsApp who just finished teaching ${learnerName} a full course on "${topic}".
 Write one comprehensive final assessment question (40-80 words, plain text, no markdown) that requires them to
@@ -151,9 +128,7 @@ demonstrate overall understanding of the topic, not just recall one fact. This i
 }
 
 async function gradeFinalAssessment(topic, question, learnerAnswer, learnerName) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const prompt = `You are grading ${learnerName}'s final exam answer for a course on "${topic}".
 Question asked: "${question}"
@@ -163,7 +138,7 @@ Respond with ONLY valid JSON, no markdown, no code fences, in exactly this shape
 {"score": <integer 0-10>, "feedback": "<2-3 sentences of encouraging, honest feedback>"}`;
 
   const text = await callGemini(prompt);
-  const cleaned = text.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+  const cleaned = cleanJson(text);
 
   let parsed;
   try {
@@ -181,9 +156,7 @@ Respond with ONLY valid JSON, no markdown, no code fences, in exactly this shape
 }
 
 async function answerQuestion(question, topic, learnerName) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const context = topic
     ? `They're currently learning about "${topic}" with you, so relate your answer to that if it makes sense.`
@@ -198,9 +171,7 @@ Give a clear, conversational answer (under 150 words, plain text, no markdown).`
 }
 
 async function classifyMessageIntent(message) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const prompt = `A tutoring bot just asked a learner a question. The learner replied with this message:
 """
@@ -214,9 +185,7 @@ Respond with EXACTLY one word, nothing else: ANSWER or QUESTION`;
 }
 
 async function generatePlacementQuestion(topic) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const prompt = `You are creating a placement test question for a learner about to study "${topic}".
 Write ONE open-ended question (40-80 words, plain text, no markdown) whose answer would reveal
@@ -226,9 +195,7 @@ their depth of knowledge, ranging anywhere from complete beginner to expert-leve
 }
 
 async function classifySkillLevel(topic, question, answer) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const prompt = `You are assessing a learner's skill level in "${topic}" based on their answer to a placement question.
 Question: "${question}"
@@ -257,9 +224,7 @@ const CHAT_MODES = {
 };
 
 async function generateChatReply(mode, history, message) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const persona = CHAT_MODES[mode] || CHAT_MODES.tutor;
   const historyText = (history || [])
@@ -275,9 +240,7 @@ Reply naturally and helpfully (plain text, no markdown headers, under 200 words 
 }
 
 async function generateLearningPath(goal) {
-  if (!isConfigured()) {
-    throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
-  }
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const prompt = `A learner wants to achieve this goal: "${goal}"
 Write a step-by-step learning roadmap (5-8 stages) to get there, from beginner to capable.
@@ -286,27 +249,6 @@ Format as plain text, one stage per line, like:
 Keep each line under 25 words.`;
 
   return callGemini(prompt);
-}
-
-module.exports.generateChatReply = generateChatReply;
-module.exports.generateLearningPath = generateLearningPath;
-module.exports.CHAT_MODES = CHAT_MODES;
-
-module.exports = {
-  generateLesson,
-  gradeAnswer,
-  generatePracticeChallenge,
-  generateFinalAssessmentQuestion,
-  gradeFinalAssessment,
-  answerQuestion,
-  classifyMessageIntent,
-  generatePlacementQuestion,
-  classifySkillLevel,
-  SKILL_LEVELS,
-  isConfigured,
-};
-function cleanJson(text) {
-  return text.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
 }
 
 async function generateFlashcards(topic, count) {
@@ -431,15 +373,31 @@ ${resumeText}
   return callGemini(prompt);
 }
 
-module.exports.generateAssignmentPrompt = generateAssignmentPrompt;
-module.exports.gradeAssignment = gradeAssignment;
-module.exports.generateCareerRoadmap = generateCareerRoadmap;
-module.exports.reviewResume = reviewResume;
-module.exports.generateFlashcards = generateFlashcards;
-module.exports.generateMCQQuiz = generateMCQQuiz;
-module.exports.translateText = translateText;
-module.exports.checkGrammar = checkGrammar;
-module.exports.writeEssay = writeEssay;
-module.exports.solveMath = solveMath;
-module.exports.generateCitation = generateCitation;
-module.exports.summarizeText = summarizeText;
+module.exports = {
+  generateLesson,
+  gradeAnswer,
+  generatePracticeChallenge,
+  generateFinalAssessmentQuestion,
+  gradeFinalAssessment,
+  answerQuestion,
+  classifyMessageIntent,
+  generatePlacementQuestion,
+  classifySkillLevel,
+  SKILL_LEVELS,
+  generateChatReply,
+  generateLearningPath,
+  CHAT_MODES,
+  generateFlashcards,
+  generateMCQQuiz,
+  translateText,
+  checkGrammar,
+  writeEssay,
+  solveMath,
+  generateCitation,
+  summarizeText,
+  generateAssignmentPrompt,
+  gradeAssignment,
+  generateCareerRoadmap,
+  reviewResume,
+  isConfigured,
+};
