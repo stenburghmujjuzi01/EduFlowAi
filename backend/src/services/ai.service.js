@@ -382,6 +382,59 @@ async function summarizeText(text) {
   return callGemini(prompt);
 }
 
+async function generateAssignmentPrompt(topic) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `Create one practical assignment prompt for a learner studying "${topic}".
+It should require a written response (60-150 words expected), not just a one-line answer.
+Return ONLY the assignment prompt text, plain text, no markdown.`;
+  return callGemini(prompt);
+}
+
+async function gradeAssignment(topic, assignmentPrompt, submission) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `You are grading a learner's assignment submission for a course on "${topic}".
+Assignment: "${assignmentPrompt}"
+Their submission: "${submission}"
+
+Respond with ONLY valid JSON, no markdown, no code fences, in exactly this shape:
+{"score": <integer 0-10>, "feedback": "<3-4 sentences of specific, constructive feedback>"}`;
+
+  const text = await callGemini(prompt);
+  const cleaned = cleanJson(text);
+  try {
+    const parsed = JSON.parse(cleaned);
+    return { score: Math.max(0, Math.min(10, Number(parsed.score) || 0)), feedback: parsed.feedback || '' };
+  } catch (e) {
+    const err = new Error('Failed to parse assignment grading JSON');
+    err.details = { raw: text };
+    throw err;
+  }
+}
+
+async function generateCareerRoadmap(interest) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `A learner is interested in a career related to: "${interest}"
+Write a practical career roadmap covering: 1) 3-4 realistic job titles to target, 2) key skills to build, 3) suggested first steps.
+Plain text, organized with simple line breaks, no markdown headers, under 250 words.`;
+  return callGemini(prompt);
+}
+
+async function reviewResume(resumeText) {
+  if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
+  const prompt = `Review this resume text and give constructive feedback: what's strong, what's weak, and 3 specific improvements.
+Plain text, no markdown headers, under 250 words.
+
+Resume:
+"""
+${resumeText}
+"""`;
+  return callGemini(prompt);
+}
+
+module.exports.generateAssignmentPrompt = generateAssignmentPrompt;
+module.exports.gradeAssignment = gradeAssignment;
+module.exports.generateCareerRoadmap = generateCareerRoadmap;
+module.exports.reviewResume = reviewResume;
 module.exports.generateFlashcards = generateFlashcards;
 module.exports.generateMCQQuiz = generateMCQQuiz;
 module.exports.translateText = translateText;

@@ -593,6 +593,129 @@
               </div>
             </div>
 
+            <div class="content-section" id="section-assignments">
+              <h1>Assignments</h1>
+              <div id="assignments-list-view">
+                <div class="box">
+                  <h3>Generate an assignment</h3>
+                  <div class="row-flex">
+                    <input type="text" id="assignment-topic-input" placeholder="Topic (e.g. Marketing Basics)" />
+                    <button class="btn" onclick="generateAssignment()">Generate</button>
+                  </div>
+                  <div id="assignment-gen-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+                </div>
+                <div class="box"><h3>Your Assignments</h3><div id="assignments-list"></div></div>
+              </div>
+              <div id="assignment-detail-view" style="display:none;">
+                <button class="btn-outline" onclick="exitAssignmentDetail()" style="margin-bottom:14px;">Back</button>
+                <div class="box">
+                  <h3 id="assignment-detail-topic"></h3>
+                  <p id="assignment-detail-prompt" style="font-size:14px;"></p>
+                  <div id="assignment-submit-area">
+                    <textarea id="assignment-submission-input" rows="5" placeholder="Write your response..."></textarea>
+                    <button class="btn" style="margin-top:8px;" onclick="submitAssignment()">Submit</button>
+                  </div>
+                  <div id="assignment-result-area" style="display:none;">
+                    <p style="font-weight:700;" id="assignment-score"></p>
+                    <p id="assignment-feedback" style="font-size:14px;"></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="content-section" id="section-community">
+              <h1>Community</h1>
+              <div id="community-list-view">
+                <div class="box">
+                  <h3>Start a discussion</h3>
+                  <input type="text" id="community-title-input" placeholder="Title" style="margin-bottom:8px;" />
+                  <textarea id="community-body-input" rows="3" placeholder="What's on your mind?"></textarea>
+                  <button class="btn" style="margin-top:8px;" onclick="createCommunityPost()">Post</button>
+                </div>
+                <div class="box"><h3>Discussions</h3><div id="community-posts-list"></div></div>
+              </div>
+              <div id="community-detail-view" style="display:none;">
+                <button class="btn-outline" onclick="exitCommunityDetail()" style="margin-bottom:14px;">Back</button>
+                <div class="box">
+                  <h3 id="community-detail-title"></h3>
+                  <p style="font-size:12px;color:var(--muted);" id="community-detail-meta"></p>
+                  <p style="font-size:14px;" id="community-detail-body"></p>
+                </div>
+                <div class="box">
+                  <h3>Replies</h3>
+                  <div id="community-replies-list" style="margin-bottom:14px;"></div>
+                  <textarea id="community-reply-input" rows="2" placeholder="Write a reply..."></textarea>
+                  <button class="btn" style="margin-top:8px;" onclick="submitCommunityReply()">Reply</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="content-section" id="section-live-classes">
+              <h1>Live Classes</h1>
+              <div class="box">
+                <h3>Schedule a class</h3>
+                <div class="row-flex">
+                  <input type="text" id="liveclass-title-input" placeholder="Class title" />
+                  <button class="btn" onclick="createLiveClass()">Create Room</button>
+                </div>
+                <p class="empty" style="margin-top:8px;">Powered by Jitsi Meet - free, no account needed to join.</p>
+              </div>
+              <div class="box"><h3>Available Rooms</h3><div id="live-classes-list"></div></div>
+              <div class="box" id="jitsi-frame-box" style="display:none;">
+                <button class="btn-outline" onclick="closeJitsi()" style="margin-bottom:10px;">Close</button>
+                <iframe id="jitsi-frame" style="width:100%;height:500px;border:none;border-radius:8px;" allow="camera; microphone; fullscreen; display-capture"></iframe>
+              </div>
+            </div>
+
+            <div class="content-section" id="section-career-center">
+              <h1>Career Center</h1>
+              <div class="box">
+                <h3>Career Roadmap</h3>
+                <div class="row-flex">
+                  <input type="text" id="career-interest-input" placeholder="e.g. Data Science, UX Design" />
+                  <button class="btn" onclick="generateCareerRoadmap()">Generate</button>
+                </div>
+                <div id="career-roadmap-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+              </div>
+              <div class="box">
+                <h3>Resume Review</h3>
+                <textarea id="career-resume-input" rows="6" placeholder="Paste your resume text here..."></textarea>
+                <button class="btn" style="margin-top:8px;" onclick="reviewResume()">Get Feedback</button>
+                <div id="career-resume-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+              </div>
+            </div>
+
+            <div class="content-section" id="section-admin">
+              <h1>Instructor Tools</h1>
+              <div id="instructor-builder-view">
+                <div class="box">
+                  <h3>Build a Custom Quiz</h3>
+                  <input type="text" id="custom-quiz-title-input" placeholder="Quiz title" style="margin-bottom:10px;" />
+                  <div id="custom-quiz-questions-builder"></div>
+                  <button class="btn-outline" onclick="addCustomQuizQuestion()" style="margin-top:8px;">Add Question</button>
+                  <button class="btn" style="margin-top:8px;margin-left:8px;" onclick="saveCustomQuiz()">Save & Get Share Code</button>
+                  <div id="custom-quiz-save-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+                </div>
+                <div class="box"><h3>Your Quizzes</h3><div id="my-custom-quizzes-list"></div></div>
+                <div class="box">
+                  <h3>Take a Shared Quiz</h3>
+                  <div class="row-flex">
+                    <input type="text" id="join-quiz-code-input" placeholder="Enter share code" />
+                    <button class="btn" onclick="loadSharedQuiz()">Load</button>
+                  </div>
+                </div>
+              </div>
+              <div id="shared-quiz-take-view" style="display:none;">
+                <button class="btn-outline" onclick="exitSharedQuiz()" style="margin-bottom:14px;">Back</button>
+                <div class="box">
+                  <h3 id="shared-quiz-title"></h3>
+                  <div id="shared-quiz-questions"></div>
+                  <button class="btn" onclick="submitSharedQuiz()">Submit</button>
+                  <div id="shared-quiz-result" style="margin-top:12px;font-weight:700;"></div>
+                </div>
+              </div>
+            </div>
+
             <div class="content-section" id="section-settings">
               <h1>Settings</h1>
               <div class="box">
@@ -731,7 +854,7 @@
       { id: 'library', label: 'Library', icon: 'library', live: true },
       { id: 'flashcards', label: 'Flashcards', icon: 'flashcards', live: true },
       { id: 'quizzes', label: 'Quizzes', icon: 'quizzes', live: true },
-      { id: 'assignments', label: 'Assignments', icon: 'assignments', live: false },
+      { id: 'assignments', label: 'Assignments', icon: 'assignments', live: true },
     ]},
     { group: 'Organize', items: [
       { id: 'notes', label: 'Notes', icon: 'notes', live: true },
@@ -747,11 +870,11 @@
       { id: 'certificates', label: 'Certificates', icon: 'certificates', live: true },
     ]},
     { group: 'More', items: [
-      { id: 'community', label: 'Community', icon: 'community', live: false },
-      { id: 'live-classes', label: 'Live Classes', icon: 'liveclasses', live: false },
-      { id: 'career-center', label: 'Career Center', icon: 'career', live: false },
+      { id: 'community', label: 'Community', icon: 'community', live: true },
+      { id: 'live-classes', label: 'Live Classes', icon: 'liveclasses', live: true },
+      { id: 'career-center', label: 'Career Center', icon: 'career', live: true },
       { id: 'ai-tools', label: 'AI Tools', icon: 'aitools', live: true },
-      { id: 'admin', label: 'Admin', icon: 'admin', live: false },
+      { id: 'admin', label: 'Instructor Tools', icon: 'admin', live: true },
       { id: 'settings', label: 'Settings', icon: 'settings', live: true },
     ]},
   ];
@@ -805,6 +928,10 @@
     if (name === 'library') loadLibrary();
     if (name === 'flashcards') loadFlashcardSets();
     if (name === 'quizzes') loadQuizHistory();
+    if (name === 'assignments') loadAssignments();
+    if (name === 'community') loadCommunityPosts();
+    if (name === 'live-classes') loadLiveClasses();
+    if (name === 'admin') loadMyCustomQuizzes();
   }
 
   // ---------- Auth screens ----------
@@ -1574,6 +1701,261 @@
     } catch (e) {
       resultEl.textContent = e.message;
     }
+  }
+
+  // ---------- Assignments ----------
+  let currentAssignment = null;
+
+  async function loadAssignments() {
+    try {
+      const { assignments } = await apiGet('/api/web/assignments');
+      document.getElementById('assignments-list').innerHTML = assignments.length
+        ? assignments.map(a => `<div class="list-item"><span>${esc(a.topic)}${a.score != null ? ' - ' + a.score + '/10' : ' - not submitted'}</span><button class="btn-outline" onclick="openAssignment('${a.id}')">Open</button></div>`).join('')
+        : '<span class="empty">No assignments yet - generate one above.</span>';
+      window.__assignments = assignments;
+    } catch (e) { /* silent */ }
+  }
+
+  async function generateAssignment() {
+    const topic = document.getElementById('assignment-topic-input').value.trim();
+    const msgEl = document.getElementById('assignment-gen-msg');
+    if (!topic) return;
+    msgEl.textContent = 'Generating assignment...';
+    try {
+      await apiPost('/api/web/assignments/generate', { topic });
+      msgEl.textContent = 'Done!';
+      document.getElementById('assignment-topic-input').value = '';
+      loadAssignments();
+    } catch (e) { msgEl.textContent = e.message; }
+  }
+
+  function openAssignment(id) {
+    const a = window.__assignments.find(x => x.id === id);
+    currentAssignment = a;
+    document.getElementById('assignments-list-view').style.display = 'none';
+    document.getElementById('assignment-detail-view').style.display = 'block';
+    document.getElementById('assignment-detail-topic').textContent = a.topic;
+    document.getElementById('assignment-detail-prompt').textContent = a.prompt;
+    if (a.score != null) {
+      document.getElementById('assignment-submit-area').style.display = 'none';
+      document.getElementById('assignment-result-area').style.display = 'block';
+      document.getElementById('assignment-score').textContent = `Score: ${a.score}/10`;
+      document.getElementById('assignment-feedback').textContent = a.feedback;
+    } else {
+      document.getElementById('assignment-submit-area').style.display = 'block';
+      document.getElementById('assignment-result-area').style.display = 'none';
+      document.getElementById('assignment-submission-input').value = '';
+    }
+  }
+
+  function exitAssignmentDetail() {
+    document.getElementById('assignments-list-view').style.display = 'block';
+    document.getElementById('assignment-detail-view').style.display = 'none';
+    loadAssignments();
+  }
+
+  async function submitAssignment() {
+    const submission = document.getElementById('assignment-submission-input').value.trim();
+    if (!submission) return;
+    try {
+      const { assignment } = await apiPost('/api/web/assignments/' + currentAssignment.id + '/submit', { submission });
+      document.getElementById('assignment-submit-area').style.display = 'none';
+      document.getElementById('assignment-result-area').style.display = 'block';
+      document.getElementById('assignment-score').textContent = `Score: ${assignment.score}/10`;
+      document.getElementById('assignment-feedback').textContent = assignment.feedback;
+    } catch (e) { alert(e.message); }
+  }
+
+  // ---------- Community ----------
+  let currentCommunityPostId = null;
+
+  async function loadCommunityPosts() {
+    try {
+      const { posts } = await apiGet('/api/web/community/posts');
+      document.getElementById('community-posts-list').innerHTML = posts.length
+        ? posts.map(p => `<div class="list-item"><span>${esc(p.title)} <span class="empty">by ${esc(p.author_name)}</span></span><button class="btn-outline" onclick="openCommunityPost('${p.id}')">${p.replyCount} replies</button></div>`).join('')
+        : '<span class="empty">No discussions yet - start one above.</span>';
+    } catch (e) { /* silent */ }
+  }
+
+  async function createCommunityPost() {
+    const title = document.getElementById('community-title-input').value.trim();
+    const body = document.getElementById('community-body-input').value.trim();
+    if (!title || !body) return;
+    try {
+      await apiPost('/api/web/community/posts', { title, body });
+      document.getElementById('community-title-input').value = '';
+      document.getElementById('community-body-input').value = '';
+      loadCommunityPosts();
+    } catch (e) { alert(e.message); }
+  }
+
+  async function openCommunityPost(id) {
+    currentCommunityPostId = id;
+    const { post } = await apiGet('/api/web/community/posts/' + id);
+    document.getElementById('community-list-view').style.display = 'none';
+    document.getElementById('community-detail-view').style.display = 'block';
+    document.getElementById('community-detail-title').textContent = post.title;
+    document.getElementById('community-detail-meta').textContent = `by ${post.author_name} - ${new Date(post.created_at).toLocaleString()}`;
+    document.getElementById('community-detail-body').textContent = post.body;
+    document.getElementById('community-replies-list').innerHTML = post.replies.length
+      ? post.replies.map(r => `<div class="list-item"><span><strong>${esc(r.author_name)}:</strong> ${esc(r.body)}</span></div>`).join('')
+      : '<span class="empty">No replies yet.</span>';
+  }
+
+  function exitCommunityDetail() {
+    document.getElementById('community-list-view').style.display = 'block';
+    document.getElementById('community-detail-view').style.display = 'none';
+    loadCommunityPosts();
+  }
+
+  async function submitCommunityReply() {
+    const body = document.getElementById('community-reply-input').value.trim();
+    if (!body) return;
+    try {
+      await apiPost('/api/web/community/posts/' + currentCommunityPostId + '/replies', { body });
+      document.getElementById('community-reply-input').value = '';
+      openCommunityPost(currentCommunityPostId);
+    } catch (e) { alert(e.message); }
+  }
+
+  // ---------- Live Classes ----------
+  async function loadLiveClasses() {
+    try {
+      const { classes } = await apiGet('/api/web/live-classes');
+      document.getElementById('live-classes-list').innerHTML = classes.length
+        ? classes.map(c => `<div class="list-item"><span>${esc(c.title)}</span><button class="btn-outline" onclick="joinJitsi('${c.room_name}')">Join</button></div>`).join('')
+        : '<span class="empty">No rooms yet - create one above.</span>';
+    } catch (e) { /* silent */ }
+  }
+
+  async function createLiveClass() {
+    const title = document.getElementById('liveclass-title-input').value.trim();
+    if (!title) return;
+    try {
+      await apiPost('/api/web/live-classes', { title });
+      document.getElementById('liveclass-title-input').value = '';
+      loadLiveClasses();
+    } catch (e) { alert(e.message); }
+  }
+
+  function joinJitsi(roomName) {
+    document.getElementById('jitsi-frame').src = `https://meet.jit.si/${roomName}`;
+    document.getElementById('jitsi-frame-box').style.display = 'block';
+  }
+  function closeJitsi() {
+    document.getElementById('jitsi-frame').src = '';
+    document.getElementById('jitsi-frame-box').style.display = 'none';
+  }
+
+  // ---------- Career Center ----------
+  async function generateCareerRoadmap() {
+    const interest = document.getElementById('career-interest-input').value.trim();
+    if (!interest) return;
+    const resultEl = document.getElementById('career-roadmap-result');
+    resultEl.textContent = 'Generating...';
+    try {
+      const { roadmap } = await apiPost('/api/web/career/roadmap', { interest });
+      resultEl.textContent = roadmap;
+    } catch (e) { resultEl.textContent = e.message; }
+  }
+
+  async function reviewResume() {
+    const resumeText = document.getElementById('career-resume-input').value.trim();
+    if (!resumeText) return;
+    const resultEl = document.getElementById('career-resume-result');
+    resultEl.textContent = 'Reviewing...';
+    try {
+      const { feedback } = await apiPost('/api/web/career/resume-review', { resumeText });
+      resultEl.textContent = feedback;
+    } catch (e) { resultEl.textContent = e.message; }
+  }
+
+  // ---------- Instructor Tools (custom quiz builder) ----------
+  let customQuizQuestions = [];
+
+  function addCustomQuizQuestion() {
+    customQuizQuestions.push({ question: '', options: ['', '', '', ''], correctIndex: 0 });
+    renderCustomQuizBuilder();
+  }
+
+  function renderCustomQuizBuilder() {
+    const container = document.getElementById('custom-quiz-questions-builder');
+    container.innerHTML = customQuizQuestions.map((q, qi) => `
+      <div class="box" style="margin-bottom:10px;">
+        <input type="text" placeholder="Question ${qi + 1}" value="${esc(q.question)}" oninput="updateCustomQuestion(${qi}, 'question', this.value)" style="margin-bottom:8px;" />
+        ${q.options.map((opt, oi) => `
+          <div class="row-flex" style="margin-bottom:6px;">
+            <input type="radio" name="correct${qi}" ${q.correctIndex === oi ? 'checked' : ''} onchange="updateCustomQuestion(${qi}, 'correctIndex', ${oi})" />
+            <input type="text" placeholder="Option ${oi + 1}" value="${esc(opt)}" oninput="updateCustomOption(${qi}, ${oi}, this.value)" />
+          </div>
+        `).join('')}
+        <button class="btn-danger" onclick="removeCustomQuestion(${qi})">Remove Question</button>
+      </div>
+    `).join('');
+  }
+
+  function updateCustomQuestion(qi, field, value) { customQuizQuestions[qi][field] = value; }
+  function updateCustomOption(qi, oi, value) { customQuizQuestions[qi].options[oi] = value; }
+  function removeCustomQuestion(qi) { customQuizQuestions.splice(qi, 1); renderCustomQuizBuilder(); }
+
+  async function saveCustomQuiz() {
+    const title = document.getElementById('custom-quiz-title-input').value.trim();
+    const msgEl = document.getElementById('custom-quiz-save-msg');
+    if (!title || !customQuizQuestions.length) { msgEl.textContent = 'Add a title and at least one question.'; return; }
+    try {
+      const { quiz } = await apiPost('/api/web/custom-quizzes', { title, questions: customQuizQuestions });
+      msgEl.textContent = `Saved! Share code: ${quiz.share_code}`;
+      customQuizQuestions = [];
+      document.getElementById('custom-quiz-title-input').value = '';
+      renderCustomQuizBuilder();
+      loadMyCustomQuizzes();
+    } catch (e) { msgEl.textContent = e.message; }
+  }
+
+  async function loadMyCustomQuizzes() {
+    try {
+      const { quizzes } = await apiGet('/api/web/custom-quizzes/mine');
+      document.getElementById('my-custom-quizzes-list').innerHTML = quizzes.length
+        ? quizzes.map(q => `<div class="list-item"><span>${esc(q.title)}</span><span>Code: <strong>${esc(q.share_code)}</strong></span></div>`).join('')
+        : '<span class="empty">You haven\'t created any quizzes yet.</span>';
+    } catch (e) { /* silent */ }
+  }
+
+  let sharedQuiz = null;
+  async function loadSharedQuiz() {
+    const code = document.getElementById('join-quiz-code-input').value.trim();
+    if (!code) return;
+    try {
+      const { quiz } = await apiGet('/api/web/custom-quizzes/by-code/' + code);
+      sharedQuiz = quiz;
+      document.getElementById('instructor-builder-view').style.display = 'none';
+      document.getElementById('shared-quiz-take-view').style.display = 'block';
+      document.getElementById('shared-quiz-title').textContent = quiz.title;
+      document.getElementById('shared-quiz-result').textContent = '';
+      document.getElementById('shared-quiz-questions').innerHTML = quiz.questions.map((q, qi) => `
+        <div style="margin-bottom:16px;">
+          <p style="font-weight:600;font-size:14px;">${qi + 1}. ${esc(q.question)}</p>
+          ${q.options.map((opt, oi) => `<label style="display:block;font-size:13.5px;padding:5px 0;"><input type="radio" name="sq${qi}" value="${oi}"/> ${esc(opt)}</label>`).join('')}
+        </div>
+      `).join('');
+    } catch (e) { alert(e.message); }
+  }
+
+  function exitSharedQuiz() {
+    document.getElementById('instructor-builder-view').style.display = 'block';
+    document.getElementById('shared-quiz-take-view').style.display = 'none';
+  }
+
+  async function submitSharedQuiz() {
+    const answers = sharedQuiz.questions.map((q, qi) => {
+      const checked = document.querySelector(`input[name="sq${qi}"]:checked`);
+      return checked ? Number(checked.value) : -1;
+    });
+    try {
+      const result = await apiPost('/api/web/custom-quizzes/' + sharedQuiz.id + '/submit', { answers });
+      document.getElementById('shared-quiz-result').textContent = `Score: ${result.score}/${result.total}`;
+    } catch (e) { alert(e.message); }
   }
 
   updatePomodoroDisplay();

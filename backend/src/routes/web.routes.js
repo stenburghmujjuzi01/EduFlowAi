@@ -13,6 +13,10 @@ const flashcardsService = require('../services/flashcards.service');
 const quizService = require('../services/quiz.service');
 const lessonsService = require('../services/lessons.service');
 const { supabase } = require('../config/supabase');
+const assignmentsService = require('../services/assignments.service');
+const communityService = require('../services/community.service');
+const liveClassesService = require('../services/liveclasses.service');
+const customQuizService = require('../services/customquiz.service');
 
 const router = express.Router();
 
@@ -498,5 +502,101 @@ router.post('/ai-tools/summarize', async (req, res) => {
     res.status(500).json({ error: 'Summarize failed right now.' });
   }
 });
+
+// Assignments Routes
+router.get('/assignments', async (req, res) => {
+  try {
+    res.json({ result: 'Get assignments' });
+  } catch (err) {
+    console.error('[web] Get assignments failed:', err);
+    res.status(500).json({ error: 'Failed to fetch assignments.' });
+  }
+});
+
+router.post('/assignments', async (req, res) => {
+  try {
+    res.json({ result: 'Create assignment' });
+  } catch (err) {
+    console.error('[web] Create assignment failed:', err);
+    res.status(500).json({ error: 'Failed to create assignment.' });
+  }
+});
+
+// Community Routes
+router.get('/community', async (req, res) => {
+  try {
+    res.json({ result: 'Get community posts' });
+  } catch (err) {
+    console.error('[web] Get community posts failed:', err);
+    res.status(500).json({ error: 'Failed to fetch community posts.' });
+  }
+});
+
+router.post('/community', async (req, res) => {
+  try {
+    res.json({ result: 'Create community post' });
+  } catch (err) {
+    console.error('[web] Create community post failed:', err);
+    res.status(500).json({ error: 'Failed to create community post.' });
+  }
+});
+
+// Live Classes Routes
+router.get('/live-classes', async (req, res) => {
+  try {
+    res.json({ result: 'Get live classes' });
+  } catch (err) {
+    console.error('[web] Get live classes failed:', err);
+    res.status(500).json({ error: 'Failed to fetch live classes.' });
+  }
+});
+
+router.post('/live-classes', async (req, res) => {
+  try {
+    res.json({ result: 'Create live class' });
+  } catch (err) {
+    console.error('[web] Create live class failed:', err);
+    res.status(500).json({ error: 'Failed to create live class.' });
+  }
+});
+
+// Career Center Routes
+router.get('/career-center', async (req, res) => {
+  try {
+    res.json({ result: 'Get career resources' });
+  } catch (err) {
+    console.error('[web] Get career resources failed:', err);
+    res.status(500).json({ error: 'Failed to fetch career resources.' });
+  }
+});
+
+router.post('/career-center', async (req, res) => {
+  try {
+    res.json({ result: 'Create career resource' });
+  } catch (err) {
+    console.error('[web] Create career resource failed:', err);
+    res.status(500).json({ error: 'Failed to create career resource.' });
+  }
+});
+
+// Instructor Tools Routes
+router.get('/instructor-tools', async (req, res) => {
+  try {
+    res.json({ result: 'Get instructor tools' });
+  } catch (err) {
+    console.error('[web] Get instructor tools failed:', err);
+    res.status(500).json({ error: 'Failed to fetch instructor tools.' });
+  }
+});
+
+router.post('/instructor-tools', async (req, res) => {
+  try {
+    res.json({ result: 'Create instructor tool' });
+  } catch (err) {
+    console.error('[web] Create instructor tool failed:', err);
+    res.status(500).json({ error: 'Failed to create instructor tool.' });
+  }
+});
+
 
 module.exports = router;
