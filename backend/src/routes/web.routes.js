@@ -12,11 +12,11 @@ const certificatePdfService = require('../services/certificate-pdf.service');
 const flashcardsService = require('../services/flashcards.service');
 const quizService = require('../services/quiz.service');
 const lessonsService = require('../services/lessons.service');
-const { supabase } = require('../config/supabase');
 const assignmentsService = require('../services/assignments.service');
 const communityService = require('../services/community.service');
 const liveClassesService = require('../services/liveclasses.service');
 const customQuizService = require('../services/customquiz.service');
+const { supabase } = require('../config/supabase');
 
 const router = express.Router();
 
@@ -503,100 +503,218 @@ router.post('/ai-tools/summarize', async (req, res) => {
   }
 });
 
-// Assignments Routes
+// --- Assignments ---
+
+router.post('/assignments/generate', async (req, res) => {
+  const { topic } = req.body;
+  if (!topic) return res.status(400).json({ error: 'topic is required' });
+  try {
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    const prompt = await aiService.generateAssignmentPrompt(topic);
+    const assignment = await assignmentsService.createAssignment(user.id, topic, prompt);
+    res.json({ assignment });
+  } catch (err) {
+    console.error('[web] Failed to generate assignment:', err.details || err);
+    res.status(500).json({ error: 'Failed to generate an assignment right now.' });
+  }
+});
+
 router.get('/assignments', async (req, res) => {
   try {
-    res.json({ result: 'Get assignments' });
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    res.json({ assignments: await assignmentsService.listAssignments(user.id) });
   } catch (err) {
-    console.error('[web] Get assignments failed:', err);
-    res.status(500).json({ error: 'Failed to fetch assignments.' });
+    console.error('[web] Failed to fetch assignments:', err);
+    res.status(500).json({ error: 'Failed to fetch assignments' });
   }
 });
 
-router.post('/assignments', async (req, res) => {
+router.post('/assignments/:id/submit', async (req, res) => {
+  const { submission } = req.body;
+  if (!submission) return res.status(400).json({ error: 'submission is required' });
   try {
-    res.json({ result: 'Create assignment' });
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    const assignment = await assignmentsService.getAssignment(user.id, req.params.id);
+    if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
+
+    const { score, feedback } = await aiService.gradeAssignment(assignment.topic, assignment.prompt, submission);
+    const updated = await assignmentsService.submitAssignment(assignment.id, submission, score, feedback);
+    await gamificationService.awardXp(user, score * 2);
+    res.json({ assignment: updated });
   } catch (err) {
-    console.error('[web] Create assignment failed:', err);
-    res.status(500).json({ error: 'Failed to create assignment.' });
+    console.error('[web] Failed to submit assignment:', err.details || err);
+    res.status(500).json({ error: 'Failed to grade your submission right now.' });
   }
 });
 
-// Community Routes
-router.get('/community', async (req, res) => {
+// --- Community ---
+
+router.get('/community/posts', async (req, res) => {
   try {
-    res.json({ result: 'Get community posts' });
+    res.json({ posts: await communityService.listPosts() });
   } catch (err) {
-    console.error('[web] Get community posts failed:', err);
-    res.status(500).json({ error: 'Failed to fetch community posts.' });
+    console.error('[web] Failed to fetch community posts:', err);
+    res.status(500).json({ error: 'Failed to fetch community posts' });
   }
 });
 
-router.post('/community', async (req, res) => {
+router.post('/community/posts', async (req, res) => {
+  const { title, body } = req.body;
+  if (!title || !body) return res.status(400).json({ error: 'title and body are required' });
   try {
-    res.json({ result: 'Create community post' });
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    const post = await communityService.createPost(user.id, user.name || 'Anonymous', title, body);
+    res.json({ post });
   } catch (err) {
-    console.error('[web] Create community post failed:', err);
-    res.status(500).json({ error: 'Failed to create community post.' });
+    console.error('[web] Failed to create post:', err);
+    res.status(500).json({ error: 'Failed to create post' });
   }
 });
 
-// Live Classes Routes
+router.get('/community/posts/:id', async (req, res) => {
+  try {
+    const post = await communityService.getPost(req.params.id);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    res.json({ post });
+  } catch (err) {
+    console.error('[web] Failed to fetch post:', err);
+    res.status(500).json({ error: 'Failed to fetch post' });
+  }
+});
+
+router.post('/community/posts/:id/replies', async (req, res) => {
+  const { body } = req.body;
+  if (!body) return res.status(400).json({ error: 'body is required' });
+  try {
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    const reply = await communityService.createReply(req.params.id, user.id, user.name || 'Anonymous', body);
+    res.json({ reply });
+  } catch (err) {
+    console.error('[web] Failed to create reply:', err);
+    res.status(500).json({ error: 'Failed to create reply' });
+  }
+});
+
+// --- Live Classes (free Jitsi Meet rooms) ---
+
 router.get('/live-classes', async (req, res) => {
   try {
-    res.json({ result: 'Get live classes' });
+    res.json({ classes: await liveClassesService.listClasses() });
   } catch (err) {
-    console.error('[web] Get live classes failed:', err);
-    res.status(500).json({ error: 'Failed to fetch live classes.' });
+    console.error('[web] Failed to fetch live classes:', err);
+    res.status(500).json({ error: 'Failed to fetch live classes' });
   }
 });
 
 router.post('/live-classes', async (req, res) => {
+  const { title, scheduled_at } = req.body;
+  if (!title) return res.status(400).json({ error: 'title is required' });
   try {
-    res.json({ result: 'Create live class' });
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    const liveClass = await liveClassesService.createClass(user.id, title, scheduled_at);
+    res.json({ liveClass });
   } catch (err) {
-    console.error('[web] Create live class failed:', err);
-    res.status(500).json({ error: 'Failed to create live class.' });
+    console.error('[web] Failed to create live class:', err);
+    res.status(500).json({ error: 'Failed to create live class' });
   }
 });
 
-// Career Center Routes
-router.get('/career-center', async (req, res) => {
+// --- Career Center ---
+
+router.post('/career/roadmap', async (req, res) => {
+  const { interest } = req.body;
+  if (!interest) return res.status(400).json({ error: 'interest is required' });
   try {
-    res.json({ result: 'Get career resources' });
+    res.json({ roadmap: await aiService.generateCareerRoadmap(interest) });
   } catch (err) {
-    console.error('[web] Get career resources failed:', err);
-    res.status(500).json({ error: 'Failed to fetch career resources.' });
+    console.error('[web] Failed to generate career roadmap:', err.details || err);
+    res.status(500).json({ error: 'Failed to generate a roadmap right now.' });
   }
 });
 
-router.post('/career-center', async (req, res) => {
+router.post('/career/resume-review', async (req, res) => {
+  const { resumeText } = req.body;
+  if (!resumeText) return res.status(400).json({ error: 'resumeText is required' });
   try {
-    res.json({ result: 'Create career resource' });
+    res.json({ feedback: await aiService.reviewResume(resumeText) });
   } catch (err) {
-    console.error('[web] Create career resource failed:', err);
-    res.status(500).json({ error: 'Failed to create career resource.' });
+    console.error('[web] Failed to review resume:', err.details || err);
+    res.status(500).json({ error: 'Failed to review resume right now.' });
   }
 });
 
-// Instructor Tools Routes
-router.get('/instructor-tools', async (req, res) => {
+// --- Instructor Tools (custom quiz builder + sharing) ---
+
+router.post('/custom-quizzes', async (req, res) => {
+  const { title, questions } = req.body;
+  if (!title || !Array.isArray(questions) || !questions.length) {
+    return res.status(400).json({ error: 'title and a non-empty questions array are required' });
+  }
   try {
-    res.json({ result: 'Get instructor tools' });
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    const quiz = await customQuizService.createQuiz(user.id, title, questions);
+    res.json({ quiz });
   } catch (err) {
-    console.error('[web] Get instructor tools failed:', err);
-    res.status(500).json({ error: 'Failed to fetch instructor tools.' });
+    console.error('[web] Failed to create custom quiz:', err);
+    res.status(500).json({ error: 'Failed to create custom quiz' });
   }
 });
 
-router.post('/instructor-tools', async (req, res) => {
+router.get('/custom-quizzes/mine', async (req, res) => {
   try {
-    res.json({ result: 'Create instructor tool' });
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    res.json({ quizzes: await customQuizService.listMyQuizzes(user.id) });
   } catch (err) {
-    console.error('[web] Create instructor tool failed:', err);
-    res.status(500).json({ error: 'Failed to create instructor tool.' });
+    console.error('[web] Failed to fetch your quizzes:', err);
+    res.status(500).json({ error: 'Failed to fetch your quizzes' });
   }
 });
 
+router.get('/custom-quizzes/by-code/:code', async (req, res) => {
+  try {
+    const quiz = await customQuizService.getQuizByCode(req.params.code);
+    if (!quiz) return res.status(404).json({ error: 'Quiz not found for that code' });
+    res.json({ quiz });
+  } catch (err) {
+    console.error('[web] Failed to fetch quiz by code:', err);
+    res.status(500).json({ error: 'Failed to fetch quiz' });
+  }
+});
+
+router.post('/custom-quizzes/:id/submit', async (req, res) => {
+  const { answers } = req.body;
+  if (!Array.isArray(answers)) return res.status(400).json({ error: 'answers array is required' });
+  try {
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+
+    const { data: quiz, error } = await supabase
+      .from('custom_quizzes')
+      .select('*')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+    let score = 0;
+    quiz.questions.forEach((q, i) => { if (answers[i] === q.correctIndex) score++; });
+
+    await customQuizService.saveAttempt(quiz.id, user.id, score, quiz.questions.length);
+    await gamificationService.awardXp(user, score * 2);
+
+    res.json({ score, total: quiz.questions.length });
+  } catch (err) {
+    console.error('[web] Failed to submit custom quiz:', err);
+    res.status(500).json({ error: 'Failed to submit quiz' });
+  }
+});
 
 module.exports = router;
