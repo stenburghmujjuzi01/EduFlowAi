@@ -905,11 +905,22 @@
           <div id="right-sidebar">
             <button id="right-sidebar-toggle" onclick="toggleRightSidebar()" title="Collapse panel"></button>
             <div id="right-sidebar-rail">
+              <button class="rail-icon-btn" data-widget="widget-chat-quick" onclick="expandRailWidget(this)" title="AI Chat"></button>
               <button class="rail-icon-btn" data-widget="widget-progress" onclick="expandRailWidget(this)" title="Learning Progress"></button>
               <button class="rail-icon-btn" data-widget="widget-course" onclick="expandRailWidget(this)" title="Current Course"></button>
               <button class="rail-icon-btn" data-widget="widget-tasks" onclick="expandRailWidget(this)" title="Upcoming Tasks"></button>
               <button class="rail-icon-btn" data-widget="pomodoro-display" onclick="expandRailWidget(this)" title="Pomodoro Timer"></button>
               <button class="rail-icon-btn" data-widget="calc-display" onclick="expandRailWidget(this)" title="Calculator"></button>
+            </div>
+            <div class="widget-box" id="widget-chat-quick">
+              <div class="widget-header" onclick="toggleWidget(this)"><h4 style="margin:0;">AI Chat</h4><span class="chevron"></span></div>
+              <div class="widget-body">
+                <div id="widget-chat-quick-preview" style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">Ask EduFlow Ai anything.</div>
+                <div class="row-flex">
+                  <input type="text" id="widget-chat-quick-input" placeholder="Quick question..." />
+                  <button class="btn" onclick="sendQuickChat()">Ask</button>
+                </div>
+              </div>
             </div>
             <div class="widget-box">
               <div class="widget-header" onclick="toggleWidget(this)"><h4 style="margin:0;">Learning Progress</h4><span class="chevron"></span></div>
@@ -1052,8 +1063,8 @@
   // ---------- Navigation config ----------
   const NAV_SECTIONS = [
     { group: 'Learn', items: [
-      { id: 'chat', label: 'AI Chat', icon: 'chat', live: true },
       { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', live: true },
+      { id: 'chat', label: 'AI Chat', icon: 'chat', live: true },
       { id: 'courses', label: 'My Courses', icon: 'courses', live: true },
       { id: 'learning-paths', label: 'Learning Paths', icon: 'path', live: true },
       { id: 'library', label: 'Library', icon: 'library', live: true },
@@ -1322,7 +1333,7 @@
     document.getElementById('floating-chat-btn').innerHTML = I('chat', 22);
     document.getElementById('floating-new-course-icon').innerHTML = I('plus', 16);
     document.getElementById('right-sidebar-toggle').innerHTML = I('panel', 14);
-    const railIcons = { 'widget-progress': 'progress', 'widget-course': 'courses', 'widget-tasks': 'planner', 'pomodoro-display': 'timer', 'calc-display': 'calc' };
+    const railIcons = { 'widget-chat-quick': 'chat', 'widget-progress': 'progress', 'widget-course': 'courses', 'widget-tasks': 'planner', 'pomodoro-display': 'timer', 'calc-display': 'calc' };
     document.querySelectorAll('.rail-icon-btn').forEach(btn => { btn.innerHTML = I(railIcons[btn.dataset.widget] || 'dashboard', 17); });
     document.querySelectorAll('.widget-header .chevron').forEach(el => el.innerHTML = I('chevron', 14));
     document.querySelectorAll('.nav-section-label .chevron').forEach(el => el.innerHTML = I('chevron', 14));
@@ -1639,6 +1650,26 @@
     const r = window.__searchResults[i];
     if (r) r.action();
     document.getElementById('search-results').classList.remove('visible');
+  }
+
+  // Right-sidebar "AI Chat" quick-access widget: fires a real request through
+  // the same chat endpoint, shows a short preview inline, and the full
+  // exchange is also saved into the normal chat history.
+  async function sendQuickChat() {
+    const input = document.getElementById('widget-chat-quick-input');
+    const preview = document.getElementById('widget-chat-quick-preview');
+    const text = input.value.trim();
+    if (!text) return;
+    preview.textContent = 'Thinking...';
+    input.value = '';
+    try {
+      const mode = document.getElementById('mode-switcher').value;
+      const { reply } = await apiPost('/api/web/chat', { message: text, mode });
+      preview.innerHTML = `${esc(reply.slice(0, 140))}${reply.length > 140 ? '&hellip;' : ''} <span style="color:var(--accent);cursor:pointer;" onclick="showSection('chat')">Open full chat &rarr;</span>`;
+      loadChatHistory();
+    } catch (e) {
+      preview.textContent = 'Something went wrong - try again.';
+    }
   }
 
   // ---------- Calendar / Notifications ----------
@@ -1964,7 +1995,15 @@
     renderPlannerList();
   }
 
-  function toDateKey(d) { return d.toISOString().slice(0, 10); }
+  // IMPORTANT: use LOCAL date parts here, not toISOString() (which converts to
+  // UTC first). For timezones ahead of UTC, that conversion rolled dates back
+  // by a day and put task dots on the wrong calendar cell.
+  function toDateKey(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
 
   function renderCalendarGrid() {
     const label = document.getElementById('calendar-month-label');
@@ -2038,9 +2077,17 @@
   }
   async function createTask() {
     const title = document.getElementById('task-title-input').value.trim();
-    const due = document.getElementById('task-due-input').value;
+    const due = document.getElementById('task-due-input').value; // "YYYY-MM-DD" or ''
     if (!title) return;
-    await apiPost('/api/web/planner', { title, due_at: due ? new Date(due).toISOString() : null });
+    // A bare "YYYY-MM-DD" string is parsed by JS as UTC midnight, not local
+    // midnight - for timezones west of UTC that silently shifts the task to
+    // the previous day. Build the date from local parts instead.
+    let due_at = null;
+    if (due) {
+      const [y, m, d] = due.split('-').map(Number);
+      due_at = new Date(y, m - 1, d, 9, 0, 0).toISOString();
+    }
+    await apiPost('/api/web/planner', { title, due_at });
     document.getElementById('task-title-input').value = '';
     showToast('Task scheduled.');
     loadPlanner();
