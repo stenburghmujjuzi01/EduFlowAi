@@ -229,7 +229,7 @@
   .msg-row { display: flex; gap: 10px; }
   .msg-row.user { flex-direction: row-reverse; }
   .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; hyphens: none; }
-  .msg-row.user .msg-bubble { background: var(--bubble-user); }
+  .msg-row.user .msg-bubble { background: var(--bubble-user); width: fit-content; max-width: 75%; margin-left: auto; }
   .msg-row.assistant .msg-bubble { background: var(--bubble-ai); border: 1px solid var(--border); }
   .msg-actions { display: flex; gap: 8px; margin-top: 6px; }
   .msg-actions button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 11px; padding: 2px 4px; border-radius: 4px; transition: transform 0.12s ease, color 0.12s ease; }
@@ -1908,6 +1908,7 @@
       const box = document.getElementById('chat-messages');
       box.innerHTML = '';
       history.forEach(m => appendMessage(m.role, m.content, false));
+      scrollChatToBottom(false);
       // Suggestions are a cold-start aid only - once there's already a
       // conversation, they'd just be clutter, so skip rendering them.
       const suggestBox = document.getElementById('suggested-prompts');
@@ -1931,7 +1932,20 @@
         </div>` : ''}
       </div>`;
     box.appendChild(row);
-    box.scrollTop = box.scrollHeight;
+    scrollChatToBottom();
+  }
+
+  // The scrollable element is #chat-scroll (the parent), not #chat-messages
+  // itself - #chat-messages has no overflow set, so scrolling it directly was
+  // a no-op. requestAnimationFrame lets the browser finish layout for the
+  // just-added bubble before we measure scrollHeight, so it lands correctly
+  // even right after a long reply streams in.
+  function scrollChatToBottom(smooth) {
+    const scroller = document.getElementById('chat-scroll');
+    if (!scroller) return;
+    requestAnimationFrame(() => {
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: smooth === false ? 'auto' : 'smooth' });
+    });
   }
 
   // Small shared "success" pulse so any remark action gives the user
