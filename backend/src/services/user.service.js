@@ -102,6 +102,18 @@ async function getUserByAuthId(auth_user_id) {
   return data;
 }
 
+async function updateUserByAuthId(auth_user_id, fields) {
+  const { data, error } = await supabase
+    .from('users')
+    .update(fields)
+    .eq('auth_user_id', auth_user_id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 async function linkAuthToPhone(auth_user_id, phone_number) {
   const existing = await getUserByPhone(phone_number);
 
@@ -134,5 +146,6 @@ module.exports = {
   setUserXp,
   deleteUser,
   getUserByAuthId,
+  updateUserByAuthId,
   linkAuthToPhone,
 };

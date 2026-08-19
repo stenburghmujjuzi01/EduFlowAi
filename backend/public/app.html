@@ -114,6 +114,17 @@
   }
   .pulsate-account { animation: pulse-ring 1.8s ease-out infinite; border-radius: 50%; }
 
+  #guest-banner {
+    display: none; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px;
+    background: var(--accent-dim); color: #1a1404; font-size: 12.5px; flex-shrink: 0;
+  }
+  #guest-banner.visible { display: flex; }
+  #guest-banner .btn { padding: 6px 14px; font-size: 12px; }
+  .nav-item.locked { opacity: 0.5; cursor: pointer; }
+  .nav-item .lock-icon { margin-left: auto; display: flex; opacity: 0.7; }
+  .widget-guest-lock { font-size: 12px; color: var(--muted); }
+  .widget-guest-lock a { color: var(--accent); cursor: pointer; }
+
   #app-body { display: flex; flex: 1; min-height: 0; }
 
   #sidebar { width: 240px; min-width: 240px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: width 0.15s ease, min-width 0.15s ease; overflow: hidden; }
@@ -302,7 +313,7 @@
 </head>
 <body>
 
-  <div id="login-screen" class="screen auth-screen visible">
+  <div id="login-screen" class="screen auth-screen">
     <div class="brand-lockup">EduFlow <span>Ai</span></div>
     <div class="auth-box">
       <div class="field-wrap"><label class="field-label">Email</label><input type="email" id="login-email" placeholder="you@example.com" /></div>
@@ -315,6 +326,7 @@
       </div>
       <button class="submit-btn" onclick="handleLogin()">Log In</button>
       <div class="switch-link">Don't have an account? <a onclick="showScreen('signup-screen')">Sign up</a></div>
+      <div class="switch-link"><a onclick="continueAsGuest()">Continue browsing without an account</a></div>
       <div class="auth-msg" id="login-msg"></div>
     </div>
   </div>
@@ -334,6 +346,7 @@
       <p style="font-size:12px;color:var(--muted);margin:-6px 0 14px 0;">Already used EduFlow Ai on WhatsApp? Enter that same number to bring in your existing progress.</p>
       <button class="submit-btn" onclick="handleSignup()">Create Account</button>
       <div class="switch-link">Already have an account? <a onclick="showScreen('login-screen')">Log in</a></div>
+      <div class="switch-link"><a onclick="continueAsGuest()">Continue browsing without an account</a></div>
       <div class="auth-msg" id="signup-msg"></div>
     </div>
   </div>
@@ -348,7 +361,14 @@
     </div>
   </div>
 
-  <div id="app-screen" class="screen">
+  <div id="app-screen" class="screen visible">
+    <div id="guest-banner">
+      <span>You're browsing as a guest with limited access. Sign up free to unlock every AI tool and save your progress.</span>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn-outline" style="padding:6px 14px;font-size:12px;" onclick="showScreen('login-screen')">Log in</button>
+        <button class="btn" onclick="showScreen('signup-screen')">Sign up free</button>
+      </div>
+    </div>
     <div id="navbar">
       <div class="nav-logo" onclick="showSection('dashboard')">EduFlow <span>Ai</span></div>
       <div id="search-wrap">
@@ -887,22 +907,24 @@
                   <input type="checkbox" id="settings-sound-toggle" onchange="localStorage.setItem('eduflow_notif_sound', this.checked)" /> Notification sound
                 </label>
               </div>
-              <div class="box">
+              <div class="box" id="settings-account-box">
                 <h3>Account</h3>
-                <div class="field-wrap"><label class="field-label">Display name</label><input type="text" id="settings-name-input" placeholder="Your name" /></div>
-                <div class="field-wrap"><label class="field-label">WhatsApp number</label><input type="text" id="settings-phone-input" placeholder="e.g. 256700000000" /></div>
-                <button class="btn" onclick="saveAccountDetails(this)">Save changes</button>
-                <div id="settings-account-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
-                <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-                <p style="font-size:13px;" id="settings-email"></p>
-                <button class="btn-outline" onclick="handleChangePassword()">Change password</button>
+                <div id="settings-account-fields">
+                  <div class="field-wrap"><label class="field-label">Display name</label><input type="text" id="settings-name-input" placeholder="Your name" /></div>
+                  <div class="field-wrap"><label class="field-label">WhatsApp number</label><input type="text" id="settings-phone-input" placeholder="e.g. 256700000000" /></div>
+                  <button class="btn" onclick="saveAccountDetails(this)">Save changes</button>
+                  <div id="settings-account-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+                  <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+                  <p style="font-size:13px;" id="settings-email"></p>
+                  <button class="btn-outline" onclick="handleChangePassword()">Change password</button>
+                </div>
               </div>
               <div class="box">
                 <h3>Data</h3>
                 <p class="empty" style="margin:0 0 10px;">Your chat draft and preferences are stored locally on this device.</p>
                 <button class="btn-outline" onclick="localStorage.removeItem('eduflow_chat_draft'); showToast('Chat draft cleared.');">Clear saved draft</button>
               </div>
-              <div class="box">
+              <div class="box" id="settings-logout-box">
                 <h3>Log out</h3>
                 <button class="btn-outline" onclick="handleLogout()">Log out</button>
               </div>
@@ -1018,6 +1040,18 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="guest-gate-modal">
+    <div class="modal-box" style="width:320px;text-align:center;">
+      <button class="modal-close" onclick="closeModal('guest-gate-modal')">&times;</button>
+      <h3 id="guest-gate-title">Sign up to unlock this</h3>
+      <p style="font-size:13px;color:var(--muted);" id="guest-gate-body">This feature is only available to registered users. Create a free account to unlock every AI tool and save your progress.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+        <button class="btn" onclick="closeModal('guest-gate-modal');showScreen('signup-screen')">Sign up free</button>
+        <button class="btn-outline" onclick="closeModal('guest-gate-modal');showScreen('login-screen')">I already have an account</button>
+      </div>
+    </div>
+  </div>
+
 <script>
   const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoaXpwcHNoaGVrbWF3cXl5b3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwOTQxMzMsImV4cCI6MjA5ODY3MDEzM30.2y52JNtKOUGxhwTAmTNsbNhe1Dw-awL_zl7ZRljS5s8';
@@ -1067,6 +1101,7 @@
     timer: svg('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>'),
     calc: svg('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M7 12h1M11 12h1M15 12h1M7 16h1M11 16h1M15 16h1"/>'),
     plus: svg('<path d="M12 5v14M5 12h14"/>', 16),
+    lock: svg('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 13),
   };
   function I(name, size) { return ICONS[name] ? ICONS[name].replace(/width="\d+" height="\d+"/, `width="${size||18}" height="${size||18}"`) : ''; }
 
@@ -1134,10 +1169,6 @@
     });
   }
 
-  function handleNavClick(id, live) {
-    showSection(id);
-  }
-
   function showSection(name) {
     document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
     const target = document.getElementById('section-' + name);
@@ -1170,6 +1201,7 @@
     if (name === 'community') loadCommunityPosts();
     if (name === 'live-classes') loadLiveClasses();
     if (name === 'admin') loadMyCustomQuizzes();
+    if (name === 'settings') renderSettingsGuestState();
   }
 
   // ---------- Auth screens ----------
@@ -1227,7 +1259,9 @@
 
   async function handleLogout() {
     await sb.auth.signOut();
-    showScreen('login-screen');
+    currentUser = null;
+    currentUserEmail = '';
+    bootGuestMode();
   }
 
   // ---------- API helpers ----------
@@ -1308,25 +1342,134 @@
   }
 
   let currentUser = null;
+  let isGuestMode = false;
+  let chromeInitialized = false;
 
   async function afterAuth() {
     const me = await apiGet('/api/web/me');
     if (me.needsPhoneLink) { showScreen('phone-link-screen'); return; }
+    isGuestMode = false;
     currentUser = me.user;
     const { data: { session } } = await sb.auth.getSession();
     currentUserEmail = session.user.email;
     document.getElementById('sidebar-email').textContent = session.user.email;
     document.getElementById('settings-email').textContent = session.user.email;
+    document.getElementById('guest-banner').classList.remove('visible');
     initChrome();
-    renderAccountInfo();
+    renderSidebarFooter();
     renderDashboard(currentUser);
     showScreen('app-screen');
     showSection('dashboard');
   }
 
+  // ---------- Guest (unregistered visitor) mode ----------
+  // The AI chat is the landing page for anyone without an account. They get a
+  // real, working chat (rate-limited server-side) plus a handful of
+  // read-only/no-account-needed tools; everything else is visibly locked and
+  // funnels into sign up / log in rather than silently failing.
+  function continueAsGuest() { bootGuestMode(); }
+
+  function bootGuestMode() {
+    isGuestMode = true;
+    document.getElementById('guest-banner').classList.add('visible');
+    if (!chromeInitialized) initChrome();
+    renderSidebarFooter();
+    applyGuestLocks();
+    showScreen('app-screen');
+    showSection('chat');
+  }
+
+  function renderSettingsGuestState() {
+    const fields = document.getElementById('settings-account-fields');
+    const logoutBox = document.getElementById('settings-logout-box');
+    if (isGuestMode) {
+      fields.innerHTML = `
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">You're browsing as a guest, so there's no account to manage yet - name, WhatsApp number and password all live on a free account.</p>
+        <button class="btn" onclick="showScreen('signup-screen')">Sign up free</button>
+        <button class="btn-outline" style="margin-left:8px;" onclick="showScreen('login-screen')">Log in</button>`;
+      logoutBox.style.display = 'none';
+    } else {
+      logoutBox.style.display = '';
+      if (!document.getElementById('settings-name-input')) {
+        fields.innerHTML = `
+          <div class="field-wrap"><label class="field-label">Display name</label><input type="text" id="settings-name-input" placeholder="Your name" /></div>
+          <div class="field-wrap"><label class="field-label">WhatsApp number</label><input type="text" id="settings-phone-input" placeholder="e.g. 256700000000" /></div>
+          <button class="btn" onclick="saveAccountDetails(this)">Save changes</button>
+          <div id="settings-account-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+          <p style="font-size:13px;" id="settings-email">${esc(currentUserEmail)}</p>
+          <button class="btn-outline" onclick="handleChangePassword()">Change password</button>`;
+        renderAccountInfo();
+      }
+    }
+  }
+
+  function guestGate(title, body) {
+    document.getElementById('guest-gate-title').textContent = title || 'Sign up to unlock this';
+    document.getElementById('guest-gate-body').textContent = body || 'This feature is only available to registered users. Create a free account to unlock every AI tool and save your progress.';
+    openModal('guest-gate-modal');
+  }
+
+  // Nav items other than Chat/Settings need an account - grey them out and
+  // route clicks into the sign-up prompt instead of a broken/empty page.
+  function applyGuestLocks() {
+    document.querySelectorAll('.nav-item').forEach(el => {
+      const id = el.dataset.section;
+      const locked = isGuestMode && id !== 'chat' && id !== 'settings';
+      el.classList.toggle('locked', locked);
+      if (locked && !el.querySelector('.lock-icon')) {
+        const span = document.createElement('span');
+        span.className = 'lock-icon';
+        span.innerHTML = I('lock', 13);
+        el.appendChild(span);
+      }
+    });
+    ['widget-progress', 'widget-course', 'widget-tasks'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && isGuestMode) el.innerHTML = '<div class="widget-guest-lock">Sign up to unlock this. <a onclick="guestGate()">Create free account</a></div>';
+    });
+    const profileBtn = document.getElementById('profile-btn');
+    profileBtn.classList.toggle('pulsate-account', isGuestMode);
+    profileBtn.onclick = isGuestMode ? () => showScreen('login-screen') : () => togglePopover('account-popover');
+    ['calendar-btn', 'notif-btn', 'messages-btn'].forEach(id => {
+      document.getElementById(id).onclick = isGuestMode
+        ? () => guestGate('Sign up to unlock this', 'Calendar, notifications and messages are saved to your account - create a free one to turn these on.')
+        : (id === 'calendar-btn' ? () => togglePopover('calendar-popover') : id === 'notif-btn' ? () => togglePopover('notif-popover') : () => alert('Private messaging is coming soon.'));
+    });
+  }
+
+  function renderSidebarFooter() {
+    const footer = document.querySelector('.sidebar-footer');
+    if (isGuestMode) {
+      footer.innerHTML = `
+        <div class="email" style="margin-bottom:8px;">Browsing as guest</div>
+        <div style="display:flex;gap:6px;">
+          <button class="logout-btn" style="flex:1;" onclick="showScreen('login-screen')">Log in</button>
+          <button class="btn" style="flex:1;padding:7px 10px;font-size:12.5px;" onclick="showScreen('signup-screen')">Sign up</button>
+        </div>`;
+    } else {
+      footer.innerHTML = `
+        <div class="email" id="sidebar-email">${esc(currentUserEmail)}</div>
+        <button class="logout-btn" onclick="handleLogout()">
+          <span class="logout-text">Log out</span>
+          <span class="account-avatar" id="sidebar-footer-avatar" style="width:22px;height:22px;font-size:10.5px;display:none;"></span>
+        </button>`;
+      renderAccountInfo();
+    }
+  }
+
+  function handleNavClick(id, live) {
+    if (isGuestMode && id !== 'chat' && id !== 'settings') {
+      guestGate('Sign up to unlock this', `${document.querySelector('.nav-item[data-section="' + id + '"] .label')?.textContent || 'This section'} is only available to registered users - it's quick and free to set up.`);
+      return;
+    }
+    showSection(id);
+  }
+
   let currentUserEmail = '';
 
   function initChrome() {
+    chromeInitialized = true;
     buildSidebar();
     document.getElementById('search-icon').innerHTML = I('search', 16);
     document.getElementById('calendar-btn').innerHTML = I('calendar');
@@ -1357,7 +1500,7 @@
 
     buildCalculator();
     initTheme();
-    loadCalendarAndNotifs();
+    if (!isGuestMode) loadCalendarAndNotifs();
     renderSuggestedPrompts();
     initSettingsLanguageMirror();
     initVoiceSelection();
@@ -1365,7 +1508,7 @@
     document.getElementById('chat-textarea').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
     });
-    loadChatHistory();
+    if (!isGuestMode) loadChatHistory();
     initWhiteboard();
   }
 
@@ -1673,10 +1816,24 @@
     preview.textContent = 'Thinking...';
     input.value = '';
     try {
-      const mode = document.getElementById('mode-switcher').value;
-      const { reply } = await apiPost('/api/web/chat', { message: text, mode });
-      preview.innerHTML = `${esc(reply.slice(0, 140))}${reply.length > 140 ? '&hellip;' : ''} <span style="color:var(--accent);cursor:pointer;" onclick="showSection('chat')">Open full chat &rarr;</span>`;
-      loadChatHistory();
+      if (isGuestMode) {
+        const res = await fetch('/api/web/guest/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 429) {
+          preview.textContent = data.message || "You've used today's free guest messages.";
+          guestGate("You've reached today's guest limit", data.message);
+          return;
+        }
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        preview.innerHTML = `${esc(data.reply.slice(0, 140))}${data.reply.length > 140 ? '&hellip;' : ''} <span style="color:var(--accent);cursor:pointer;" onclick="showSection('chat')">Open full chat &rarr;</span>`;
+      } else {
+        const mode = document.getElementById('mode-switcher').value;
+        const { reply } = await apiPost('/api/web/chat', { message: text, mode });
+        preview.innerHTML = `${esc(reply.slice(0, 140))}${reply.length > 140 ? '&hellip;' : ''} <span style="color:var(--accent);cursor:pointer;" onclick="showSection('chat')">Open full chat &rarr;</span>`;
+        loadChatHistory();
+      }
     } catch (e) {
       preview.textContent = 'Something went wrong - try again.';
     }
@@ -1886,9 +2043,25 @@
     const sendBtn = document.getElementById('chat-send-btn');
     const signal = beginGeneration('chat', sendBtn);
     try {
-      const { reply } = await apiPost('/api/web/chat', { message: text, mode }, signal);
-      appendMessage('assistant', reply);
-      if (voiceOutputEnabled) speak(reply);
+      if (isGuestMode) {
+        const res = await fetch('/api/web/guest/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }), signal,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 429) {
+          appendMessage('assistant', data.message || "You've used today's free guest messages.");
+          guestGate("You've reached today's guest limit", data.message || 'Sign up free to keep chatting and unlock every AI tool.');
+          return;
+        }
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        appendMessage('assistant', data.reply);
+        if (voiceOutputEnabled) speak(data.reply);
+      } else {
+        const { reply } = await apiPost('/api/web/chat', { message: text, mode }, signal);
+        appendMessage('assistant', reply);
+        if (voiceOutputEnabled) speak(reply);
+      }
     } catch (e) {
       if (e.name === 'AbortError') { appendMessage('assistant', 'Stopped.'); }
       else { appendMessage('assistant', 'Sorry, something went wrong. Try again.'); }
@@ -1925,7 +2098,7 @@
     if (!SR) { alert('Voice input is not supported in this browser.'); return; }
     if (recognizing) { recognition.stop(); return; }
     recognition = new SR();
-    recognition.lang = 'en-US';
+    recognition.lang = localStorage.getItem('eduflow_voice_input_lang') || 'en-US';
     recognition.onresult = (e) => { document.getElementById('chat-textarea').value += e.results[0][0].transcript; };
     recognition.onend = () => { recognizing = false; };
     recognition.start();
@@ -1935,10 +2108,38 @@
   function toggleVoiceOutput() {
     voiceOutputEnabled = !voiceOutputEnabled;
     document.getElementById('voice-out-btn').style.color = voiceOutputEnabled ? 'var(--accent)' : '';
+    // First time voice output is turned on, if the user hasn't picked a
+    // read-back voice yet, ask once - otherwise they're stuck with whatever
+    // the browser defaults to until they dig into Settings themselves.
+    if (voiceOutputEnabled && !localStorage.getItem('eduflow_voice_chosen')) {
+      promptFirstTimeVoiceChoice();
+    }
+  }
+  function promptFirstTimeVoiceChoice() {
+    if (!window.speechSynthesis) return;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return; // voice list not loaded yet - settings page will still let them pick later
+    const names = voices.slice(0, 6).map((v, i) => `${i + 1}. ${v.name} (${v.lang})`).join('\n');
+    const choice = prompt(`Choose a read-back voice (enter a number), or Cancel to decide later in Settings:\n\n${names}`);
+    const idx = parseInt(choice, 10) - 1;
+    if (choice !== null && voices[idx]) {
+      setPreferredVoice(voices[idx].voiceURI);
+      const select = document.getElementById('settings-voice-select');
+      if (select) select.value = voices[idx].voiceURI;
+    } else {
+      // They ignored it - mark as "asked" so we don't nag again; they can
+      // still change it any time from Settings, per the original request.
+      localStorage.setItem('eduflow_voice_chosen', '1');
+    }
   }
   function speak(text) {
     if (!window.speechSynthesis) return;
     const u = new SpeechSynthesisUtterance(text);
+    const savedVoiceURI = localStorage.getItem('eduflow_voice_uri');
+    if (savedVoiceURI) {
+      const match = window.speechSynthesis.getVoices().find(v => v.voiceURI === savedVoiceURI);
+      if (match) u.voice = match;
+    }
     window.speechSynthesis.speak(u);
   }
 
@@ -2691,7 +2892,9 @@
   (async () => {
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
-      try { await afterAuth(); } catch (e) { showScreen('login-screen'); }
+      try { await afterAuth(); } catch (e) { bootGuestMode(); }
+    } else {
+      bootGuestMode();
     }
   })();
 </script>

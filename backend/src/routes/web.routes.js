@@ -20,6 +20,48 @@ const { supabase } = require('../config/supabase');
 
 const router = express.Router();
 
+// --- Guest (unauthenticated) chat ---
+// Registered BEFORE requireWebAuth below, so unregistered visitors can use a
+// limited AI Chat on the landing page. No user record, no saved history -
+// just a simple per-IP daily cap to discourage abuse, since there's no
+// account to rate-limit against. Counts reset if the server restarts/redeploys.
+const guestMessageCounts = new Map(); // key -> { count, resetAt }
+const GUEST_DAILY_LIMIT = 8;
+
+function getGuestKey(req) {
+  return req.ip || req.headers['x-forwarded-for'] || 'unknown-guest';
+}
+
+router.post('/guest/chat', async (req, res) => {
+  const { message } = req.body;
+  if (!message || typeof message !== 'string') return res.status(400).json({ error: 'message is required' });
+  if (message.length > 2000) return res.status(400).json({ error: 'Message is too long.' });
+
+  const key = getGuestKey(req);
+  const now = Date.now();
+  let entry = guestMessageCounts.get(key);
+  if (!entry || entry.resetAt <= now) {
+    entry = { count: 0, resetAt: now + 24 * 60 * 60 * 1000 };
+    guestMessageCounts.set(key, entry);
+  }
+  if (entry.count >= GUEST_DAILY_LIMIT) {
+    return res.status(429).json({
+      error: 'guest_limit_reached',
+      message: "You've used today's free guest messages. Sign up free to keep chatting and unlock every AI tool.",
+    });
+  }
+  entry.count += 1;
+
+  try {
+    const reply = await aiService.generateChatReply('tutor', [], message);
+    res.json({ reply, remaining: Math.max(0, GUEST_DAILY_LIMIT - entry.count) });
+  } catch (err) {
+    console.error('[web] Guest chat failed:', err.details || err);
+    res.status(500).json({ error: 'Failed to get a response right now. Try again in a moment.' });
+  }
+});
+
+
 router.use(requireWebAuth);
 
 async function getProfile(req) {
@@ -67,6 +109,34 @@ router.get('/me', async (req, res) => {
   } catch (err) {
     console.error('[web] Failed to fetch profile:', err);
     res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+// Update display name and/or WhatsApp-linked phone number from the account panel.
+router.patch('/me', async (req, res) => {
+  const { name, phone_number } = req.body;
+  const fields = {};
+  if (typeof name === 'string') fields.name = name.trim() || null;
+  if (typeof phone_number === 'string' && phone_number.trim()) {
+    fields.phone_number = phone_number.replace(/[^\d]/g, '');
+  }
+  if (!Object.keys(fields).length) return res.status(400).json({ error: 'Nothing to update' });
+  try {
+    const existing = await getProfile(req);
+    if (!existing) return res.status(400).json({ error: 'Profile not linked yet' });
+
+    if (fields.phone_number && fields.phone_number !== existing.phone_number) {
+      const conflict = await userService.getUserByPhone(fields.phone_number);
+      if (conflict && conflict.auth_user_id && conflict.auth_user_id !== req.authUserId) {
+        return res.status(409).json({ error: 'That WhatsApp number is already linked to a different account.' });
+      }
+    }
+
+    const user = await userService.updateUserByAuthId(req.authUserId, fields);
+    res.json({ user });
+  } catch (err) {
+    console.error('[web] Failed to update profile:', err);
+    res.status(500).json({ error: 'Failed to save account changes' });
   }
 });
 
