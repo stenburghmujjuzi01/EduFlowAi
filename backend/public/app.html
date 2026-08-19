@@ -86,8 +86,9 @@
     background: var(--red); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center;
     justify-content: center; line-height: 1; box-shadow: 0 0 0 2px var(--sidebar-bg);
   }
+  .popover-trigger { position: relative; display: inline-flex; }
   .popover {
-    position: absolute; top: 46px; right: 0; background: var(--surface); border: 1px solid var(--border);
+    position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface); border: 1px solid var(--border);
     border-radius: 10px; width: 260px; padding: 10px; display: none; z-index: 30; font-size: 13px;
   }
   .popover.visible { display: block; }
@@ -161,11 +162,12 @@
   }
   .rail-icon-btn:hover { color: var(--text); border-color: var(--accent-dim); }
   #right-sidebar-toggle {
-    position: absolute; top: 0; left: -28px; background: var(--surface); border: 1px solid var(--border);
+    background: var(--surface); border: 1px solid var(--border);
     border-radius: 8px; width: 26px; height: 26px; cursor: pointer; color: var(--muted); display: flex;
-    align-items: center; justify-content: center;
+    align-items: center; justify-content: center; flex-shrink: 0;
   }
-  #right-sidebar.collapsed #right-sidebar-toggle { position: static; margin: 0 0 6px 0; }
+  #right-sidebar-toggle-row { display: flex; justify-content: flex-end; padding: 0 4px 6px; }
+  #right-sidebar.collapsed #right-sidebar-toggle-row { justify-content: center; padding: 0 0 6px; }
   #right-sidebar-toggle:hover { color: var(--text); }
   .widget-box .widget-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 0; }
   .widget-box .widget-header .chevron { transition: transform 0.15s ease; display: flex; }
@@ -356,14 +358,18 @@
       </div>
       <select id="mode-switcher" title="AI Mode"></select>
       <div class="nav-spacer"></div>
-      <button class="nav-icon-btn" id="calendar-btn" onclick="togglePopover('calendar-popover')" title="Calendar"></button>
-      <div class="popover" id="calendar-popover">
-        <div class="popover-title">Today</div>
-        <div id="calendar-content"></div>
-        <div class="account-pop-link" style="margin-top:6px;" onclick="showSection('planner');togglePopover('calendar-popover')">Open full calendar</div>
+      <div class="popover-trigger">
+        <button class="nav-icon-btn" id="calendar-btn" onclick="togglePopover('calendar-popover')" title="Calendar"></button>
+        <div class="popover" id="calendar-popover">
+          <div class="popover-title">Today</div>
+          <div id="calendar-content"></div>
+          <div class="account-pop-link" style="margin-top:6px;" onclick="showSection('planner');togglePopover('calendar-popover')">Open full calendar</div>
+        </div>
       </div>
-      <button class="nav-icon-btn" id="notif-btn" onclick="togglePopover('notif-popover')" title="Notifications"></button>
-      <div class="popover" id="notif-popover"><div class="popover-title">Notifications</div><div id="notif-content"></div></div>
+      <div class="popover-trigger">
+        <button class="nav-icon-btn" id="notif-btn" onclick="togglePopover('notif-popover')" title="Notifications"></button>
+        <div class="popover" id="notif-popover"><div class="popover-title">Notifications</div><div id="notif-content"></div></div>
+      </div>
       <button class="nav-icon-btn" id="messages-btn" title="Messages (coming soon)" onclick="alert('Private messaging is coming soon.')"></button>
       <select id="language-select" title="Language" onchange="handleLanguageChange()">
         <option value="en">English</option>
@@ -380,8 +386,9 @@
         <option value="lg">Luganda</option>
       </select>
       <button class="nav-icon-btn" id="theme-btn" onclick="cycleTheme()" title="Theme"></button>
-      <button class="nav-icon-btn" id="profile-btn" onclick="togglePopover('account-popover')" title="Account"></button>
-      <div class="popover" id="account-popover">
+      <div class="popover-trigger">
+        <button class="nav-icon-btn" id="profile-btn" onclick="togglePopover('account-popover')" title="Account"></button>
+        <div class="popover" id="account-popover">
         <div class="account-pop-header">
           <div class="account-avatar" id="account-avatar-lg"></div>
           <div style="min-width:0;">
@@ -413,6 +420,7 @@
         <div class="account-pop-link" onclick="showSection('progress');togglePopover('account-popover')">Progress</div>
         <div class="account-pop-link" onclick="handleChangePassword()">Change password</div>
         <div class="account-pop-link" style="color:var(--red)" onclick="handleLogout()">Logout</div>
+      </div>
       </div>
     </div>
 
@@ -903,7 +911,9 @@
           </div>
 
           <div id="right-sidebar">
-            <button id="right-sidebar-toggle" onclick="toggleRightSidebar()" title="Collapse panel"></button>
+            <div id="right-sidebar-toggle-row">
+              <button id="right-sidebar-toggle" onclick="toggleRightSidebar()" title="Collapse panel"></button>
+            </div>
             <div id="right-sidebar-rail">
               <button class="rail-icon-btn" data-widget="widget-chat-quick" onclick="expandRailWidget(this)" title="AI Chat"></button>
               <button class="rail-icon-btn" data-widget="widget-progress" onclick="expandRailWidget(this)" title="Learning Progress"></button>
@@ -1063,8 +1073,8 @@
   // ---------- Navigation config ----------
   const NAV_SECTIONS = [
     { group: 'Learn', items: [
-      { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', live: true },
       { id: 'chat', label: 'AI Chat', icon: 'chat', live: true },
+      { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', live: true },
       { id: 'courses', label: 'My Courses', icon: 'courses', live: true },
       { id: 'learning-paths', label: 'Learning Paths', icon: 'path', live: true },
       { id: 'library', label: 'Library', icon: 'library', live: true },
