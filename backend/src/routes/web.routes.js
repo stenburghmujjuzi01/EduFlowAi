@@ -86,6 +86,66 @@ router.post('/link-phone', async (req, res) => {
   }
 });
 
+// --- Platform-wide search ---
+// Searches across everything the user has actually created or said: chat
+// history, notes, planner tasks, flashcard sets, assignments and
+// certificates. Each table is queried directly (ILIKE, case-insensitive)
+// rather than relying on whatever happens to be cached in the browser, so a
+// word said in a chat weeks ago is still found.
+router.get('/search', async (req, res) => {
+  const q = (req.query.q || '').toString().trim();
+  if (!q) return res.json({ results: [] });
+  if (q.length > 200) return res.status(400).json({ error: 'Search query is too long' });
+
+  try {
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+
+    const like = `%${q}%`;
+    const [chats, notes, tasks, flashcardSets, assignments, certs] = await Promise.all([
+      supabase.from('chat_messages').select('id, role, content, mode, created_at')
+        .eq('user_id', user.id).ilike('content', like)
+        .order('created_at', { ascending: false }).limit(10),
+      supabase.from('notes').select('id, title, content')
+        .eq('user_id', user.id).or(`title.ilike.${like},content.ilike.${like}`).limit(10),
+      supabase.from('planner_tasks').select('id, title, due_at, done')
+        .eq('user_id', user.id).ilike('title', like).limit(10),
+      supabase.from('flashcard_sets').select('id, topic')
+        .eq('user_id', user.id).ilike('topic', like).limit(10),
+      supabase.from('assignments').select('id, topic')
+        .eq('user_id', user.id).ilike('topic', like).limit(10),
+      supabase.from('certificates').select('id, topic, score, certificate_code')
+        .eq('user_id', user.id).ilike('topic', like).limit(10),
+    ]);
+
+    const results = [];
+    (chats.data || []).forEach((m) => results.push({
+      type: 'chat', label: m.content.length > 80 ? m.content.slice(0, 80) + '…' : m.content,
+      meta: `Chat · ${m.mode || 'tutor'}`, section: 'chat',
+    }));
+    (notes.data || []).forEach((n) => results.push({
+      type: 'note', label: n.title, meta: 'Note', section: 'notes',
+    }));
+    (tasks.data || []).forEach((t) => results.push({
+      type: 'task', label: t.title, meta: t.done ? 'Task · done' : 'Task', section: 'planner',
+    }));
+    (flashcardSets.data || []).forEach((s) => results.push({
+      type: 'flashcards', label: s.topic, meta: 'Flashcard set', section: 'flashcards',
+    }));
+    (assignments.data || []).forEach((a) => results.push({
+      type: 'assignment', label: a.topic, meta: 'Assignment', section: 'assignments',
+    }));
+    (certs.data || []).forEach((c) => results.push({
+      type: 'certificate', label: c.topic, meta: `Certificate · ${c.score}/10`, section: 'certificates',
+    }));
+
+    res.json({ results });
+  } catch (err) {
+    console.error('[web] Search failed:', err);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
 router.get('/me', async (req, res) => {
   try {
     const user = await getProfile(req);

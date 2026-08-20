@@ -228,8 +228,8 @@
   #chat-messages { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; min-height: 200px; }
   .msg-row { display: flex; gap: 10px; }
   .msg-row.user { flex-direction: row-reverse; }
-  .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; hyphens: none; }
-  .msg-row.user .msg-bubble { background: var(--bubble-user); width: fit-content; max-width: 75%; margin-left: auto; }
+  .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: normal; word-break: normal; hyphens: none; }
+  .msg-row.user .msg-bubble { background: var(--bubble-user); max-width: 75%; margin-left: auto; }
   .msg-row.assistant .msg-bubble { background: var(--bubble-ai); border: 1px solid var(--border); }
   .msg-actions { display: flex; gap: 8px; margin-top: 6px; }
   .msg-actions button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 11px; padding: 2px 4px; border-radius: 4px; transition: transform 0.12s ease, color 0.12s ease; }
@@ -264,13 +264,12 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 50; transition: transform 0.15s ease, opacity 0.15s ease;
   }
   #floating-chat-btn.hidden-floating { transform: scale(0.6); opacity: 0; pointer-events: none; }
-  #floating-new-course-btn {
-    position: fixed; bottom: 24px; right: 24px; height: 48px; padding: 0 18px 0 16px; border-radius: 999px;
-    background: var(--accent); color: #1a1404; border: none; cursor: pointer; display: none; align-items: center;
-    gap: 8px; font-weight: 600; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 50;
-    transition: transform 0.15s ease, opacity 0.15s ease;
+  #new-course-nav-btn {
+    display: none; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 12px; border-radius: 999px;
+    background: var(--accent); color: #1a1404; border: none; cursor: pointer; font-weight: 600; font-size: 12.5px;
+    flex-shrink: 0;
   }
-  #floating-new-course-btn.visible-floating { display: flex; }
+  #new-course-nav-btn.visible-nav { display: flex; }
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;
     align-items: center; justify-content: center;
@@ -377,6 +376,9 @@
         <div id="search-results"></div>
       </div>
       <select id="mode-switcher" title="AI Mode"></select>
+      <button id="new-course-nav-btn" onclick="startNewCourse()" title="Start a new course">
+        <span id="new-course-nav-icon"></span> Start new course
+      </button>
       <div class="nav-spacer"></div>
       <div class="popover-trigger">
         <button class="nav-icon-btn" id="calendar-btn" onclick="togglePopover('calendar-popover')" title="Calendar"></button>
@@ -955,20 +957,20 @@
               </div>
             </div>
             <div class="widget-box">
-              <div class="widget-header" onclick="toggleWidget(this)"><h4 style="margin:0;">Learning Progress</h4><span class="chevron"></span></div>
-              <div class="widget-body"><div id="widget-progress" style="font-size:13px;"></div></div>
+              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Learning Progress</h4><span class="chevron"></span></div>
+              <div class="widget-body collapsed"><div id="widget-progress" style="font-size:13px;"></div></div>
             </div>
             <div class="widget-box">
-              <div class="widget-header" onclick="toggleWidget(this)"><h4 style="margin:0;">Current Course</h4><span class="chevron"></span></div>
-              <div class="widget-body"><div id="widget-course" style="font-size:13px;"></div></div>
+              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Current Course</h4><span class="chevron"></span></div>
+              <div class="widget-body collapsed"><div id="widget-course" style="font-size:13px;"></div></div>
             </div>
             <div class="widget-box">
-              <div class="widget-header" onclick="toggleWidget(this)"><h4 style="margin:0;">Upcoming Tasks</h4><span class="chevron"></span></div>
-              <div class="widget-body"><div id="widget-tasks" style="font-size:13px;"></div></div>
+              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Upcoming Tasks</h4><span class="chevron"></span></div>
+              <div class="widget-body collapsed"><div id="widget-tasks" style="font-size:13px;"></div></div>
             </div>
             <div class="widget-box">
-              <div class="widget-header" onclick="toggleWidget(this)"><h4 style="margin:0;">Pomodoro Timer</h4><span class="chevron"></span></div>
-              <div class="widget-body">
+              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Pomodoro Timer</h4><span class="chevron"></span></div>
+              <div class="widget-body collapsed">
                 <div id="pomodoro-display">25:00</div>
                 <div class="pomodoro-controls">
                   <button class="btn-outline" onclick="pomodoroStart()">Start</button>
@@ -978,8 +980,8 @@
               </div>
             </div>
             <div class="widget-box">
-              <div class="widget-header" onclick="toggleWidget(this)"><h4 style="margin:0;">Calculator</h4><span class="chevron"></span></div>
-              <div class="widget-body">
+              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Calculator</h4><span class="chevron"></span></div>
+              <div class="widget-body collapsed">
                 <div id="calc-display">0</div>
                 <div id="calc-grid"></div>
               </div>
@@ -991,9 +993,6 @@
   </div>
 
   <button id="floating-chat-btn" onclick="showSection('chat')" title="Open AI Chat"></button>
-  <button id="floating-new-course-btn" onclick="startNewCourse()" title="Start a new course">
-    <span id="floating-new-course-icon"></span> Start new course
-  </button>
   <div id="toast-stack"></div>
 
   <div class="modal-overlay" id="help-modal">
@@ -1179,15 +1178,15 @@
     document.getElementById('main-content').classList.toggle('chat-mode', name === 'chat');
 
     // The floating chat launcher only makes sense outside the chat window;
-    // inside it, a "Start new course" shortcut takes its place instead.
+    // inside it, the navbar "Start new course" button takes its place instead.
     const floatingChatBtn = document.getElementById('floating-chat-btn');
-    const floatingCourseBtn = document.getElementById('floating-new-course-btn');
+    const newCourseBtn = document.getElementById('new-course-nav-btn');
     if (name === 'chat') {
       floatingChatBtn.classList.add('hidden-floating');
-      floatingCourseBtn.classList.add('visible-floating');
+      newCourseBtn.classList.add('visible-nav');
     } else {
       floatingChatBtn.classList.remove('hidden-floating');
-      floatingCourseBtn.classList.remove('visible-floating');
+      newCourseBtn.classList.remove('visible-nav');
     }
     if (name === 'notes') loadNotes();
     if (name === 'planner') loadPlanner();
@@ -1484,7 +1483,7 @@
     document.getElementById('voice-out-btn').innerHTML = I('speaker');
     document.getElementById('imagegen-btn').innerHTML = I('image');
     document.getElementById('floating-chat-btn').innerHTML = I('chat', 22);
-    document.getElementById('floating-new-course-icon').innerHTML = I('plus', 16);
+    document.getElementById('new-course-nav-icon').innerHTML = I('plus', 15);
     document.getElementById('right-sidebar-toggle').innerHTML = I('panel', 14);
     const railIcons = { 'widget-chat-quick': 'chat', 'widget-progress': 'progress', 'widget-course': 'courses', 'widget-tasks': 'planner', 'pomodoro-display': 'timer', 'calc-display': 'calc' };
     document.querySelectorAll('.rail-icon-btn').forEach(btn => { btn.innerHTML = I(railIcons[btn.dataset.widget] || 'dashboard', 17); });
@@ -1515,8 +1514,15 @@
   function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
   function toggleNavGroup(headerEl) {
-    headerEl.classList.toggle('closed');
-    headerEl.nextElementSibling.classList.toggle('collapsed');
+    const wasClosed = headerEl.classList.contains('closed');
+    document.querySelectorAll('.nav-section-label').forEach(h => {
+      h.classList.add('closed');
+      if (h.nextElementSibling) h.nextElementSibling.classList.add('collapsed');
+    });
+    if (wasClosed) {
+      headerEl.classList.remove('closed');
+      headerEl.nextElementSibling.classList.remove('collapsed');
+    }
   }
 
   function toggleRightSidebar() {
@@ -1525,7 +1531,8 @@
   }
 
   // Clicking an icon in the collapsed right-sidebar rail expands the panel
-  // and scrolls straight to (and opens) the relevant widget.
+  // and opens just that widget (closing the others, same accordion rule as
+  // clicking a widget header directly).
   function expandRailWidget(btn) {
     const panel = document.getElementById('right-sidebar');
     panel.classList.remove('collapsed');
@@ -1533,17 +1540,31 @@
     const target = document.getElementById(targetId);
     if (!target) return;
     const box = target.closest('.widget-box');
-    if (box) {
-      const header = box.querySelector('.widget-header');
-      const body = box.querySelector('.widget-body');
-      if (header && header.classList.contains('closed')) { header.classList.remove('closed'); body.classList.remove('collapsed'); }
-      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    const header = box && box.querySelector('.widget-header');
+    if (header) { openOnlyWidget(header); box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
+
+  // Only one widget open at a time in the right sidebar, matching the left
+  // sidebar's group behavior - opening one closes whichever else was open.
+  function openOnlyWidget(headerEl) {
+    document.querySelectorAll('.widget-header').forEach(h => {
+      h.classList.add('closed');
+      if (h.nextElementSibling) h.nextElementSibling.classList.add('collapsed');
+    });
+    headerEl.classList.remove('closed');
+    headerEl.nextElementSibling.classList.remove('collapsed');
   }
 
   function toggleWidget(headerEl) {
-    headerEl.classList.toggle('closed');
-    headerEl.nextElementSibling.classList.toggle('collapsed');
+    const wasClosed = headerEl.classList.contains('closed');
+    document.querySelectorAll('.widget-header').forEach(h => {
+      h.classList.add('closed');
+      if (h.nextElementSibling) h.nextElementSibling.classList.add('collapsed');
+    });
+    if (wasClosed) {
+      headerEl.classList.remove('closed');
+      headerEl.nextElementSibling.classList.remove('collapsed');
+    }
   }
 
   function togglePopover(id) {
@@ -1783,26 +1804,48 @@
   // ---------- Search (client-side over loaded data) ----------
   let notesCache = [];
   let chatHistoryCache = [];
+  // ---------- Platform-wide search ----------
+  // Hits a real backend endpoint that queries chat history, notes, tasks,
+  // flashcard sets, assignments and certificates directly - not just
+  // whatever happens to be cached in the browser - so it can find something
+  // said in a chat weeks ago, not just what's currently on screen.
+  let searchDebounceTimer = null;
   function handleSearch() {
-    const q = document.getElementById('search-input').value.trim().toLowerCase();
+    const q = document.getElementById('search-input').value.trim();
     const resultsEl = document.getElementById('search-results');
-    if (!q) { resultsEl.classList.remove('visible'); return; }
-    const results = [];
-    notesCache.forEach(n => { if (n.title.toLowerCase().includes(q)) results.push({ label: n.title, meta: 'Note', action: () => showSection('notes') }); });
-    chatHistoryCache.forEach(m => { if (m.content.toLowerCase().includes(q)) results.push({ label: m.content.slice(0, 60), meta: 'Chat history', action: () => showSection('chat') }); });
-    if (currentUser && currentUser.current_topic && currentUser.current_topic.toLowerCase().includes(q)) {
-      results.push({ label: currentUser.current_topic, meta: 'Course', action: () => showSection('courses') });
+    clearTimeout(searchDebounceTimer);
+
+    if (isGuestMode) {
+      resultsEl.innerHTML = '<div class="search-result-item" onclick="closeSearchAndGate()">Sign up to search your chats, notes and tasks</div>';
+      resultsEl.classList.add('visible');
+      return;
     }
-    resultsEl.innerHTML = results.length
-      ? results.slice(0, 8).map((r, i) => `<div class="search-result-item" onclick="searchResultClick(${i})"><div>${esc(r.label)}</div><div class="meta">${r.meta}</div></div>`).join('')
-      : '<div class="search-result-item">No results</div>';
-    window.__searchResults = results;
+    if (!q) { resultsEl.classList.remove('visible'); return; }
+
+    resultsEl.innerHTML = '<div class="search-result-item empty">Searching…</div>';
     resultsEl.classList.add('visible');
+
+    searchDebounceTimer = setTimeout(async () => {
+      try {
+        const { results } = await apiGet('/api/web/search?q=' + encodeURIComponent(q));
+        window.__searchResults = results;
+        resultsEl.innerHTML = results.length
+          ? results.slice(0, 12).map((r, i) => `<div class="search-result-item" onclick="searchResultClick(${i})"><div>${esc(r.label)}</div><div class="meta">${esc(r.meta)}</div></div>`).join('')
+          : '<div class="search-result-item empty">No results</div>';
+      } catch (e) {
+        resultsEl.innerHTML = '<div class="search-result-item empty">Search failed - try again</div>';
+      }
+    }, 300);
+  }
+  function closeSearchAndGate() {
+    document.getElementById('search-results').classList.remove('visible');
+    guestGate('Sign up to search', 'Searching your chats, notes and tasks needs an account so there\'s something to search.');
   }
   function searchResultClick(i) {
-    const r = window.__searchResults[i];
-    if (r) r.action();
+    const r = (window.__searchResults || [])[i];
+    if (r) showSection(r.section);
     document.getElementById('search-results').classList.remove('visible');
+    document.getElementById('search-input').value = '';
   }
 
   // Right-sidebar "AI Chat" quick-access widget: fires a real request through
