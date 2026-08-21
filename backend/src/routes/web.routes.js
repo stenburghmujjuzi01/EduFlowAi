@@ -214,6 +214,24 @@ router.get('/chat/history', async (req, res) => {
   }
 });
 
+// Powers the per-mode chat history + search panel next to the mode switcher.
+// Scoped to one mode at a time and optionally narrowed by a keyword, so
+// "search this mode's history" never leaks results from other modes.
+router.get('/chat/mode-history', async (req, res) => {
+  const mode = (req.query.mode || '').toString().trim();
+  const q = (req.query.q || '').toString().trim();
+  if (!mode) return res.status(400).json({ error: 'mode is required' });
+  try {
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    const messages = await chatService.getModeMessages(user.id, mode, q);
+    res.json({ messages });
+  } catch (err) {
+    console.error('[web] Failed to fetch mode chat history:', err);
+    res.status(500).json({ error: 'Failed to fetch mode chat history' });
+  }
+});
+
 router.post('/chat', async (req, res) => {
   const { message, mode } = req.body;
   if (!message) return res.status(400).json({ error: 'message is required' });

@@ -270,6 +270,25 @@
     flex-shrink: 0;
   }
   #new-course-nav-btn.visible-nav { display: flex; }
+
+  #course-mode-toggle {
+    height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 12.5px; flex-shrink: 0; cursor: pointer;
+  }
+  #mode-history-btn { flex-shrink: 0; }
+  .mode-history-item { padding: 8px 6px; border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: pointer; }
+  .mode-history-item:hover { background: var(--bg); }
+  .mode-history-item:last-child { border-bottom: none; }
+  .mode-history-item .role-tag { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
+  /* Deliberately NOT filled/solid like the other nav pills - an outlined,
+     lower-emphasis look signals this is a separate, "step outside" action
+     rather than another primary call-to-action competing with Start new course. */
+  #new-chat-nav-btn {
+    display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 12px; border-radius: 999px;
+    background: transparent; color: var(--accent); border: 1.5px dashed var(--accent); cursor: pointer;
+    font-weight: 600; font-size: 12.5px; flex-shrink: 0;
+  }
+  #new-chat-nav-btn:hover { background: var(--accent-dim); color: #1a1404; }
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;
     align-items: center; justify-content: center;
@@ -376,6 +395,21 @@
         <div id="search-results"></div>
       </div>
       <select id="mode-switcher" title="AI Mode"></select>
+      <select id="course-mode-toggle" title="New course or continue previous" onchange="handleCourseModeToggle()">
+        <option value="continue">Continue previous</option>
+        <option value="new">New course</option>
+      </select>
+      <div class="popover-trigger">
+        <button class="nav-icon-btn" id="mode-history-btn" onclick="openModeHistoryPanel()" title="Chat history for this mode"></button>
+        <div class="popover" id="mode-history-popover" style="width:290px;">
+          <div class="popover-title" id="mode-history-title">History</div>
+          <input type="text" id="mode-history-search" placeholder="Search this mode's history..." oninput="searchModeHistory()" style="width:100%;padding:7px 9px;font-size:12.5px;margin-bottom:8px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);" />
+          <div id="mode-history-results"></div>
+        </div>
+      </div>
+      <button id="new-chat-nav-btn" onclick="startFreshChat()" title="Start a chat outside your course history">
+        <span id="new-chat-nav-icon"></span> New Chat
+      </button>
       <button id="new-course-nav-btn" onclick="startNewCourse()" title="Start a new course">
         <span id="new-course-nav-icon"></span> Start new course
       </button>
@@ -1484,6 +1518,8 @@
     document.getElementById('imagegen-btn').innerHTML = I('image');
     document.getElementById('floating-chat-btn').innerHTML = I('chat', 22);
     document.getElementById('new-course-nav-icon').innerHTML = I('plus', 15);
+    document.getElementById('new-chat-nav-icon').innerHTML = I('chat', 14);
+    document.getElementById('mode-history-btn').innerHTML = I('timer', 16);
     document.getElementById('right-sidebar-toggle').innerHTML = I('panel', 14);
     const railIcons = { 'widget-chat-quick': 'chat', 'widget-progress': 'progress', 'widget-course': 'courses', 'widget-tasks': 'planner', 'pomodoro-display': 'timer', 'calc-display': 'calc' };
     document.querySelectorAll('.rail-icon-btn').forEach(btn => { btn.innerHTML = I(railIcons[btn.dataset.widget] || 'dashboard', 17); });
@@ -1495,6 +1531,12 @@
       .map(m => `<option value="${m}">${m.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())}</option>`).join('');
     modeSel.addEventListener('change', () => {
       document.getElementById('chat-mode-title').textContent = modeSel.options[modeSel.selectedIndex].text;
+      // Switching modes always means "I'm working in this mode now" -
+      // reset to Continue and pull up that mode's own history, and drop
+      // out of any freeform New Chat session since a real mode was picked.
+      freshChatSessionActive = false;
+      document.getElementById('course-mode-toggle').value = 'continue';
+      if (!isGuestMode) loadModeContinuation(modeSel.value);
     });
 
     buildCalculator();
@@ -1944,6 +1986,93 @@
     ta.select();
   }
 
+  // ---------- Per-mode continue / new-course toggle ----------
+  // "Continue previous" pulls that specific mode's recent messages back into
+  // the window; "New course" just clears the window for a visibly fresh
+  // start (the old messages aren't deleted - they're still in that mode's
+  // history panel and searchable there).
+  function handleCourseModeToggle() {
+    const mode = document.getElementById('mode-switcher').value;
+    const choice = document.getElementById('course-mode-toggle').value;
+    if (choice === 'new') {
+      document.getElementById('chat-messages').innerHTML = '';
+      showToast('Starting a new session in this mode - your previous chats are still saved and searchable via the history icon.');
+    } else {
+      loadModeContinuation(mode);
+    }
+  }
+
+  async function loadModeContinuation(mode) {
+    if (isGuestMode) return;
+    try {
+      const { messages } = await apiGet('/api/web/chat/mode-history?mode=' + encodeURIComponent(mode));
+      const box = document.getElementById('chat-messages');
+      box.innerHTML = '';
+      [...messages].reverse().forEach(m => appendMessage(m.role, m.content, false));
+      scrollChatToBottom(false);
+    } catch (e) { /* silent */ }
+  }
+
+  // ---------- Per-mode chat history + search panel ----------
+  let modeHistoryDebounce = null;
+  function openModeHistoryPanel() {
+    if (isGuestMode) {
+      guestGate('Sign up to view chat history', 'Chat history per mode is saved to your account - create a free one to turn this on.');
+      return;
+    }
+    const mode = document.getElementById('mode-switcher').value;
+    const modeLabel = document.getElementById('mode-switcher').selectedOptions[0].text;
+    document.getElementById('mode-history-title').textContent = modeLabel + ' history';
+    document.getElementById('mode-history-search').value = '';
+    togglePopover('mode-history-popover');
+    if (document.getElementById('mode-history-popover').classList.contains('visible')) {
+      fetchModeHistory(mode, '');
+    }
+  }
+  function searchModeHistory() {
+    clearTimeout(modeHistoryDebounce);
+    const mode = document.getElementById('mode-switcher').value;
+    const q = document.getElementById('mode-history-search').value.trim();
+    modeHistoryDebounce = setTimeout(() => fetchModeHistory(mode, q), 250);
+  }
+  async function fetchModeHistory(mode, q) {
+    const resultsEl = document.getElementById('mode-history-results');
+    resultsEl.innerHTML = '<div class="mode-history-item">Loading…</div>';
+    try {
+      const url = '/api/web/chat/mode-history?mode=' + encodeURIComponent(mode) + (q ? '&q=' + encodeURIComponent(q) : '');
+      const { messages } = await apiGet(url);
+      window.__modeHistory = messages;
+      resultsEl.innerHTML = messages.length
+        ? messages.map((m, i) => `<div class="mode-history-item" onclick="useModeHistoryItem(${i})"><div class="role-tag">${m.role === 'user' ? 'You' : 'EduFlow Ai'}</div>${esc(m.content.length > 90 ? m.content.slice(0, 90) + '…' : m.content)}</div>`).join('')
+        : '<div class="mode-history-item" style="color:var(--muted);cursor:default;">Nothing here yet.</div>';
+    } catch (e) {
+      resultsEl.innerHTML = '<div class="mode-history-item" style="color:var(--muted);cursor:default;">Couldn\'t load history.</div>';
+    }
+  }
+  function useModeHistoryItem(i) {
+    const m = (window.__modeHistory || [])[i];
+    if (!m) return;
+    const ta = document.getElementById('chat-textarea');
+    ta.value = m.content;
+    ta.focus();
+    togglePopover('mode-history-popover');
+    showSection('chat');
+  }
+
+  // ---------- Distinct "New Chat" (outside learning-mode history) ----------
+  let freshChatSessionActive = false;
+  function startFreshChat() {
+    freshChatSessionActive = true;
+    document.getElementById('chat-messages').innerHTML = '';
+    document.getElementById('chat-textarea').value = '';
+    localStorage.removeItem('eduflow_chat_draft');
+    showSection('chat');
+    if (!localStorage.getItem('eduflow_new_chat_notified')) {
+      showToast('This is a fresh chat outside your course history - your regular mode conversations stay separate and untouched.', 5000);
+      localStorage.setItem('eduflow_new_chat_notified', '1');
+    }
+  }
+
   async function loadChatHistory() {
     try {
       const { history } = await apiGet('/api/web/chat/history');
@@ -2096,7 +2225,7 @@
       const suggestBox = document.getElementById('suggested-prompts');
       if (suggestBox) suggestBox.innerHTML = '';
     }
-    const mode = document.getElementById('mode-switcher').value;
+    const mode = freshChatSessionActive ? 'general' : document.getElementById('mode-switcher').value;
     const sendBtn = document.getElementById('chat-send-btn');
     const signal = beginGeneration('chat', sendBtn);
     try {
