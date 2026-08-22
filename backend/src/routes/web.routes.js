@@ -214,21 +214,74 @@ router.get('/chat/history', async (req, res) => {
   }
 });
 
-// Powers the per-mode chat history + search panel next to the mode switcher.
-// Scoped to one mode at a time and optionally narrowed by a keyword, so
-// "search this mode's history" never leaks results from other modes.
-router.get('/chat/mode-history', async (req, res) => {
+// Records the start of a new session in one mode - called right before the
+// first real message of that session, so no empty/abandoned sessions get
+// recorded if the user toggles "new" and never actually sends anything.
+router.post('/chat/session', async (req, res) => {
+  const mode = (req.body.mode || '').toString().trim();
+  const heading = (req.body.heading || '').toString().trim().slice(0, 200);
+  if (!mode || !heading) return res.status(400).json({ error: 'mode and heading are required' });
+  try {
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    await chatService.saveSessionMarker(user.id, mode, heading);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[web] Failed to save session marker:', err);
+    res.status(500).json({ error: 'Failed to save session marker' });
+  }
+});
+
+// "Continue previous" - the most recent session's messages for one mode
+// (falls back to that mode's general recent history if it predates the
+// session-marker feature).
+router.get('/chat/mode-continue', async (req, res) => {
+  const mode = (req.query.mode || '').toString().trim();
+  if (!mode) return res.status(400).json({ error: 'mode is required' });
+  try {
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    const messages = await chatService.getModeContinuationMessages(user.id, mode);
+    res.json({ messages });
+  } catch (err) {
+    console.error('[web] Failed to fetch mode continuation:', err);
+    res.status(500).json({ error: 'Failed to fetch mode continuation' });
+  }
+});
+
+// Powers the per-mode history search field next to the mode switcher.
+// Returns session HEADINGS only (never raw message text), scoped to one
+// mode - matching the request that history search stay confined to
+// whichever mode is selected, and not reveal message content in results.
+router.get('/chat/mode-sessions', async (req, res) => {
   const mode = (req.query.mode || '').toString().trim();
   const q = (req.query.q || '').toString().trim();
   if (!mode) return res.status(400).json({ error: 'mode is required' });
   try {
     const user = await getProfile(req);
     if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
-    const messages = await chatService.getModeMessages(user.id, mode, q);
+    const sessions = await chatService.getModeSessions(user.id, mode, q);
+    res.json({ sessions });
+  } catch (err) {
+    console.error('[web] Failed to fetch mode sessions:', err);
+    res.status(500).json({ error: 'Failed to fetch mode sessions' });
+  }
+});
+
+// Full message list for one specific past session (clicking a heading in
+// the history panel resumes that exact session).
+router.get('/chat/mode-session-messages', async (req, res) => {
+  const mode = (req.query.mode || '').toString().trim();
+  const sessionId = (req.query.sessionId || '').toString().trim();
+  if (!mode || !sessionId) return res.status(400).json({ error: 'mode and sessionId are required' });
+  try {
+    const user = await getProfile(req);
+    if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    const messages = await chatService.getSessionMessages(user.id, mode, sessionId);
     res.json({ messages });
   } catch (err) {
-    console.error('[web] Failed to fetch mode chat history:', err);
-    res.status(500).json({ error: 'Failed to fetch mode chat history' });
+    console.error('[web] Failed to fetch session messages:', err);
+    res.status(500).json({ error: 'Failed to fetch session messages' });
   }
 });
 
