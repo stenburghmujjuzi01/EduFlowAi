@@ -53,7 +53,7 @@
   }
   #navbar .nav-logo { font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; }
   #navbar .nav-logo span { color: var(--accent); }
-  #search-wrap { flex: 1; max-width: 480px; position: relative; }
+  #search-wrap { flex: 1; min-width: 220px; max-width: 480px; position: relative; }
   #search-wrap input {
     width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
     padding: 8px 12px 8px 32px; border-radius: 8px; font-size: 13px;
@@ -264,42 +264,51 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 50; transition: transform 0.15s ease, opacity 0.15s ease;
   }
   #floating-chat-btn.hidden-floating { transform: scale(0.6); opacity: 0; pointer-events: none; }
-  /* ---------- Mode switcher hover slide-out ---------- */
-  .mode-switcher-wrap { position: relative; flex-shrink: 0; }
+  /* ---------- Mode switcher: unified box that expands on hover ----------
+     The continue/new toggle lives INSIDE the same bordered box as the
+     select (revealed by growing rightward from the arrow), not as a
+     separate floating popup - so it visually reads as one control. */
+  .mode-switcher-wrap {
+    display: flex; align-items: center; height: 36px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface); flex-shrink: 0; overflow: hidden;
+  }
+  .mode-switcher-wrap select { border: none; background: none; height: 100%; padding: 0 6px 0 10px; color: var(--text); }
+  .mode-switcher-arrow { display: flex; align-items: center; padding: 0 2px; color: var(--muted); flex-shrink: 0; transition: transform 0.15s ease; transform: rotate(-90deg); }
+  .mode-switcher-wrap:hover .mode-switcher-arrow,
+  .mode-switcher-wrap:focus-within .mode-switcher-arrow { transform: rotate(0deg); color: var(--accent); }
   .mode-slideout {
-    position: absolute; top: 0; left: 100%; margin-left: 8px; display: flex; align-items: center; gap: 6px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 5px;
-    white-space: nowrap; z-index: 26; opacity: 0; pointer-events: none; transform: translateX(-6px);
-    transition: opacity 0.15s ease, transform 0.15s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    display: flex; align-items: center; gap: 6px; max-width: 0; overflow: hidden; opacity: 0;
+    transition: max-width 0.2s ease, opacity 0.2s ease; white-space: nowrap;
   }
   .mode-switcher-wrap:hover .mode-slideout,
   .mode-switcher-wrap:focus-within .mode-slideout {
-    opacity: 1; pointer-events: auto; transform: translateX(0);
+    max-width: 260px; opacity: 1; padding-right: 6px;
   }
   .mode-slide-option {
-    height: 30px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg);
-    color: var(--muted); font-size: 12px; cursor: pointer;
+    height: 26px; padding: 0 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--muted); font-size: 11.5px; cursor: pointer; flex-shrink: 0;
   }
   .mode-slide-option.active { background: var(--accent-dim); color: #1a1404; border-color: var(--accent-dim); font-weight: 600; }
-  .mode-slide-start {
-    height: 30px; padding: 0 12px; border-radius: 7px; border: none; background: var(--accent); color: #1a1404;
-    font-weight: 600; font-size: 12px; cursor: pointer;
+
+  /* Independent, always-visible button - label changes with the selected
+     mode, but it lives on its own in the navbar, not inside the switcher. */
+  #mode-start-nav-btn {
+    display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 12px; border-radius: 999px;
+    background: var(--accent); color: #1a1404; border: none; cursor: pointer; font-weight: 600; font-size: 12.5px;
+    flex-shrink: 0; white-space: nowrap;
   }
 
-  /* ---------- Per-mode history search (inline, in navbar) ---------- */
-  .mode-history-search-wrap {
-    display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; border-radius: 8px;
-    border: 1px solid var(--border); background: var(--surface); flex-shrink: 0; max-width: 190px;
+  /* ---------- Per-mode history search popup (icon-triggered) ---------- */
+  #mode-history-popover input {
+    width: 100%; padding: 9px 12px; font-size: 13px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); margin-bottom: 10px;
   }
-  .mode-history-search-wrap input {
-    border: none; background: none; font-size: 12.5px; color: var(--text); width: 100%; padding: 0;
+  #mode-history-popover input:focus { outline: none; border-color: var(--accent-dim); }
+  .mode-history-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; font-size: 13px; cursor: pointer;
   }
-  .mode-history-search-wrap input:focus { outline: none; }
-  .mode-history-search-wrap .icon-slot { color: var(--muted); flex-shrink: 0; display: flex; }
-  .mode-history-item { padding: 8px 6px; border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: pointer; }
   .mode-history-item:hover { background: var(--bg); }
-  .mode-history-item:last-child { border-bottom: none; }
-  .mode-history-item .role-tag { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
+  .mode-history-item .hist-icon { flex-shrink: 0; display: flex; color: var(--muted); }
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;
     align-items: center; justify-content: center;
@@ -405,18 +414,21 @@
         <input type="text" id="search-input" placeholder="Search courses, notes, chat..." oninput="handleSearch()" onfocus="handleSearch()" />
         <div id="search-results"></div>
       </div>
-      <div class="mode-switcher-wrap">
+      <div class="mode-switcher-wrap" id="mode-switcher-wrap">
         <select id="mode-switcher" title="AI Mode"></select>
+        <span class="mode-switcher-arrow" id="mode-switcher-arrow"></span>
         <div class="mode-slideout" id="mode-slideout">
           <button class="mode-slide-option active" data-choice="continue" id="mode-slide-continue-btn" onclick="selectCourseChoice('continue')"></button>
           <button class="mode-slide-option" data-choice="new" id="mode-slide-new-btn" onclick="selectCourseChoice('new')"></button>
-          <button class="mode-slide-start" id="mode-slide-start-btn" onclick="triggerModeStart()"></button>
         </div>
       </div>
-      <div class="mode-history-search-wrap popover-trigger">
-        <span class="icon-slot" id="mode-history-icon"></span>
-        <input type="text" id="mode-history-inline-search" placeholder="Search Tutor history..." oninput="searchModeHistory()" onfocus="openModeHistoryPanel()" />
-        <div class="popover" id="mode-history-popover" style="width:270px;">
+      <button id="mode-start-nav-btn" onclick="triggerModeStart()">
+        <span id="mode-start-nav-icon"></span> <span id="mode-start-nav-label">Start new course</span>
+      </button>
+      <div class="popover-trigger">
+        <button class="nav-icon-btn" id="mode-history-btn" onclick="openModeHistoryPanel()" title="Chat history for this mode"></button>
+        <div class="popover" id="mode-history-popover" style="width:300px;">
+          <input type="text" id="mode-history-inline-search" placeholder="Search Tutor history..." oninput="searchModeHistory()" />
           <div id="mode-history-results"></div>
         </div>
       </div>
@@ -1516,7 +1528,9 @@
     document.getElementById('voice-out-btn').innerHTML = I('speaker');
     document.getElementById('imagegen-btn').innerHTML = I('image');
     document.getElementById('floating-chat-btn').innerHTML = I('chat', 22);
-    document.getElementById('mode-history-icon').innerHTML = I('search', 14);
+    document.getElementById('mode-switcher-arrow').innerHTML = I('chevron', 12);
+    document.getElementById('mode-start-nav-icon').innerHTML = I('plus', 14);
+    document.getElementById('mode-history-btn').innerHTML = I('search', 16);
     document.getElementById('right-sidebar-toggle').innerHTML = I('panel', 14);
     const railIcons = { 'widget-chat-quick': 'chat', 'widget-progress': 'progress', 'widget-course': 'courses', 'widget-tasks': 'planner', 'pomodoro-display': 'timer', 'calc-display': 'calc' };
     document.querySelectorAll('.rail-icon-btn').forEach(btn => { btn.innerHTML = I(railIcons[btn.dataset.widget] || 'dashboard', 17); });
@@ -1994,9 +2008,10 @@
     const choice = courseChoicePerMode[mode] || 'continue';
     document.getElementById('mode-slide-continue-btn').textContent = ux.cont;
     document.getElementById('mode-slide-new-btn').textContent = ux.fresh;
-    document.getElementById('mode-slide-start-btn').textContent = ux.start;
     document.getElementById('mode-slide-continue-btn').classList.toggle('active', choice === 'continue');
     document.getElementById('mode-slide-new-btn').classList.toggle('active', choice === 'new');
+    document.getElementById('mode-start-nav-label').textContent = ux.start;
+    document.getElementById('mode-start-nav-btn').title = ux.start;
     const modeLabel = document.getElementById('mode-switcher').selectedOptions[0].text;
     document.getElementById('mode-history-inline-search').placeholder = 'Search ' + modeLabel + ' history...';
   }
@@ -2015,8 +2030,10 @@
     }
   }
 
-  // The mode-specific CTA inside the slide-out - prefills a mode-appropriate
-  // starter prompt and treats it the same as picking "new" for that mode.
+  // Independent, always-visible button - prefills a mode-appropriate starter
+  // prompt. Its label (set by refreshModeSlideout) changes with whichever
+  // mode is currently selected, but the button itself is not tucked inside
+  // the mode switcher's hover panel.
   function triggerModeStart() {
     const mode = document.getElementById('mode-switcher').value;
     const ux = MODE_UX[mode] || MODE_UX.tutor;
@@ -2055,7 +2072,7 @@
     } catch (e) { /* silent */ }
   }
 
-  // ---------- Per-mode history search (inline navbar field) ----------
+  // ---------- Per-mode history search popup (icon-triggered) ----------
   // Shows session HEADINGS only - never raw message text - matching how
   // ChatGPT's own history search surfaces titles rather than message
   // excerpts. Clicking a heading resumes that whole session.
@@ -2065,9 +2082,13 @@
       guestGate('Sign up to view chat history', 'Chat history per mode is saved to your account - create a free one to turn this on.');
       return;
     }
-    const mode = document.getElementById('mode-switcher').value;
-    if (!document.getElementById('mode-history-popover').classList.contains('visible')) togglePopover('mode-history-popover');
-    fetchModeHistory(mode, document.getElementById('mode-history-inline-search').value.trim());
+    togglePopover('mode-history-popover');
+    if (document.getElementById('mode-history-popover').classList.contains('visible')) {
+      const mode = document.getElementById('mode-switcher').value;
+      document.getElementById('mode-history-inline-search').value = '';
+      document.getElementById('mode-history-inline-search').focus();
+      fetchModeHistory(mode, '');
+    }
   }
   function searchModeHistory() {
     clearTimeout(modeHistoryDebounce);
@@ -2084,7 +2105,7 @@
       const { sessions } = await apiGet(url);
       window.__modeSessions = sessions;
       resultsEl.innerHTML = sessions.length
-        ? sessions.map((s, i) => `<div class="mode-history-item" onclick="useModeSessionItem(${i})">${esc(s.heading)}</div>`).join('')
+        ? sessions.map((s, i) => `<div class="mode-history-item" onclick="useModeSessionItem(${i})"><span class="hist-icon">${I('chat', 15)}</span>${esc(s.heading)}</div>`).join('')
         : '<div class="mode-history-item" style="color:var(--muted);cursor:default;">Nothing here yet.</div>';
     } catch (e) {
       resultsEl.innerHTML = '<div class="mode-history-item" style="color:var(--muted);cursor:default;">Couldn\'t load history.</div>';

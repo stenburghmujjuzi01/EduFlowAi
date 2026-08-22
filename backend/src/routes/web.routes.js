@@ -293,7 +293,7 @@ router.post('/chat', async (req, res) => {
     const user = await getProfile(req);
     if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
 
-    const history = await chatService.getRecentMessages(user.id);
+    const history = await chatService.getModeContinuationMessages(user.id, mode);
     const reply = await aiService.generateChatReply(mode, history, message);
 
     await chatService.saveMessage(user.id, 'user', message, mode);
