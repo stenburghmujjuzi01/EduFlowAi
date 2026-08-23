@@ -21,6 +21,13 @@
     --bubble-user: #eef1f6; --bubble-ai: #ffffff;
   }
   * { box-sizing: border-box; }
+  @keyframes btn-bounce {
+    0% { transform: scale(1); }
+    35% { transform: scale(0.93); }
+    65% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+  }
+  button:not(:disabled):active { animation: btn-bounce 0.28s ease; }
   html, body { height: 100%; margin: 0; overflow: hidden; }
   body { background: var(--bg); color: var(--text); font-family: var(--font); }
   button, input, textarea, select { font-family: var(--font); }
@@ -231,6 +238,19 @@
   .msg-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: normal; word-break: normal; hyphens: none; }
   .msg-row.user .msg-bubble { background: var(--bubble-user); max-width: 75%; margin-left: auto; }
   .msg-row.assistant .msg-bubble { background: var(--bubble-ai); border: 1px solid var(--border); }
+  .code-block {
+    display: block; margin: 8px 0; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);
+    background: var(--bg); white-space: normal;
+  }
+  .code-block-header {
+    display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;
+    background: var(--surface); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .code-copy-btn { background: none; border: none; color: var(--muted); cursor: pointer; display: flex; padding: 2px; border-radius: 4px; }
+  .code-copy-btn:hover { color: var(--text); }
+  .code-block pre { margin: 0; padding: 10px 12px; overflow-x: auto; }
+  .code-block code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 12.5px; white-space: pre; color: var(--text); }
+  .msg-text-segment { white-space: pre-wrap; }
   .msg-actions { display: flex; gap: 8px; margin-top: 6px; }
   .msg-actions button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 11px; padding: 2px 4px; border-radius: 4px; transition: transform 0.12s ease, color 0.12s ease; }
   .msg-actions button:hover { color: var(--text); }
@@ -264,29 +284,33 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 50; transition: transform 0.15s ease, opacity 0.15s ease;
   }
   #floating-chat-btn.hidden-floating { transform: scale(0.6); opacity: 0; pointer-events: none; }
-  /* ---------- Mode switcher: unified box that expands on hover ----------
-     The continue/new toggle lives INSIDE the same bordered box as the
-     select (revealed by growing rightward from the arrow), not as a
-     separate floating popup - so it visually reads as one control. */
-  .mode-switcher-wrap {
+  /* ---------- Modes container: one pill per mode, each with its own
+     hover slideout ----------
+     Everything (pills + whichever slideout is open) stays clipped inside
+     this single bordered box - it scrolls horizontally rather than letting
+     any slideout escape outside the container's edges. */
+  .modes-container {
     display: flex; align-items: center; height: 36px; border: 1px solid var(--border); border-radius: 8px;
-    background: var(--surface); flex-shrink: 0; overflow: hidden;
+    background: var(--surface); flex-shrink: 0; overflow-x: auto; overflow-y: hidden; max-width: 360px;
+    scrollbar-width: thin;
   }
-  .mode-switcher-wrap select { border: none; background: none; height: 100%; padding: 0 6px 0 10px; color: var(--text); }
-  .mode-switcher-arrow { display: flex; align-items: center; padding: 0 2px; color: var(--muted); flex-shrink: 0; transition: transform 0.15s ease; transform: rotate(-90deg); }
-  .mode-switcher-wrap:hover .mode-switcher-arrow,
-  .mode-switcher-wrap:focus-within .mode-switcher-arrow { transform: rotate(0deg); color: var(--accent); }
-  .mode-slideout {
-    display: flex; align-items: center; gap: 6px; max-width: 0; overflow: hidden; opacity: 0;
-    transition: max-width 0.2s ease, opacity 0.2s ease; white-space: nowrap;
+  .mode-pill-wrap { position: relative; display: flex; align-items: center; flex-shrink: 0; }
+  .mode-pill {
+    height: 28px; margin: 0 2px; padding: 0 10px; border: none; border-radius: 6px; background: none;
+    color: var(--muted); font-size: 12px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
   }
-  .mode-switcher-wrap:hover .mode-slideout,
-  .mode-switcher-wrap:focus-within .mode-slideout {
-    max-width: 260px; opacity: 1; padding-right: 6px;
+  .mode-pill.active { background: var(--accent-dim); color: #1a1404; font-weight: 600; }
+  .mode-pill-slideout {
+    display: flex; align-items: center; gap: 4px; max-width: 0; overflow: hidden; opacity: 0;
+    transition: max-width 0.2s ease, opacity 0.2s ease; white-space: nowrap; flex-shrink: 0;
+  }
+  .mode-pill-wrap:hover .mode-pill-slideout,
+  .mode-pill-wrap:focus-within .mode-pill-slideout {
+    max-width: 220px; opacity: 1; padding-right: 4px;
   }
   .mode-slide-option {
-    height: 26px; padding: 0 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg);
-    color: var(--muted); font-size: 11.5px; cursor: pointer; flex-shrink: 0;
+    height: 24px; padding: 0 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--muted); font-size: 11px; cursor: pointer; flex-shrink: 0;
   }
   .mode-slide-option.active { background: var(--accent-dim); color: #1a1404; border-color: var(--accent-dim); font-weight: 600; }
 
@@ -414,13 +438,11 @@
         <input type="text" id="search-input" placeholder="Search courses, notes, chat..." oninput="handleSearch()" onfocus="handleSearch()" />
         <div id="search-results"></div>
       </div>
-      <div class="mode-switcher-wrap" id="mode-switcher-wrap">
-        <select id="mode-switcher" title="AI Mode"></select>
-        <span class="mode-switcher-arrow" id="mode-switcher-arrow"></span>
-        <div class="mode-slideout" id="mode-slideout">
-          <button class="mode-slide-option active" data-choice="continue" id="mode-slide-continue-btn" onclick="selectCourseChoice('continue')"></button>
-          <button class="mode-slide-option" data-choice="new" id="mode-slide-new-btn" onclick="selectCourseChoice('new')"></button>
-        </div>
+      <div class="modes-container" id="modes-container">
+        <select id="mode-switcher" title="AI Mode" style="display:none;"></select>
+        <!-- Pills populated by buildModesContainer() - one per mode, each with
+             its own hover-revealed continue/new slideout, all clipped within
+             this single bordered box so nothing renders outside it. -->
       </div>
       <button id="mode-start-nav-btn" onclick="triggerModeStart()">
         <span id="mode-start-nav-icon"></span> <span id="mode-start-nav-label">Start new course</span>
@@ -475,8 +497,9 @@
           <label>Profile picture</label>
           <div class="row-flex">
             <button class="btn-outline" onclick="document.getElementById('avatar-file-input').click()">Upload photo</button>
-            <button class="btn-outline" onclick="clearAvatar()">Use email avatar</button>
+            <button class="btn-outline" onclick="useEmailAvatar()">Use email profile photo</button>
           </div>
+          <div id="avatar-remove-link" style="font-size:11.5px;color:var(--muted);cursor:pointer;margin-top:6px;display:none;" onclick="clearAvatar()">Remove photo</div>
           <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)" />
         </div>
         <div class="account-pop-section">
@@ -490,9 +513,6 @@
         <button class="btn" style="width:100%;margin-bottom:6px;" onclick="saveAccountDetails(this)">Save</button>
         <div id="account-pop-msg" style="font-size:11.5px;color:var(--muted);margin-bottom:6px;"></div>
         <hr style="border:none;border-top:1px solid var(--border);margin:8px 0;" />
-        <div class="account-pop-link" onclick="showSection('settings');togglePopover('account-popover')">Settings</div>
-        <div class="account-pop-link" onclick="showSection('certificates');togglePopover('account-popover')">Certificates</div>
-        <div class="account-pop-link" onclick="showSection('progress');togglePopover('account-popover')">Progress</div>
         <div class="account-pop-link" onclick="handleChangePassword()">Change password</div>
         <div class="account-pop-link" style="color:var(--red)" onclick="handleLogout()">Logout</div>
       </div>
@@ -1154,6 +1174,8 @@
     calc: svg('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M7 12h1M11 12h1M15 12h1M7 16h1M11 16h1M15 16h1"/>'),
     plus: svg('<path d="M12 5v14M5 12h14"/>', 16),
     lock: svg('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 13),
+    copy: svg('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>', 13),
+    check: svg('<path d="M20 6L9 17l-5-5"/>', 13),
   };
   function I(name, size) { return ICONS[name] ? ICONS[name].replace(/width="\d+" height="\d+"/, `width="${size||18}" height="${size||18}"`) : ''; }
 
@@ -1257,15 +1279,42 @@
     input.type = input.type === 'password' ? 'text' : 'password';
   }
 
+  // Wraps a promise with a hard timeout so a stalled network call surfaces
+  // as an error the user can retry, instead of leaving the page looking
+  // permanently frozen with no feedback at all.
+  function withTimeout(promise, ms, label) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error((label || 'Request') + ' timed out. Check your connection and try again.')), ms)),
+    ]);
+  }
+
+  function setBtnBusy(btnEl, busyText) {
+    if (!btnEl) return () => {};
+    const original = btnEl.textContent;
+    btnEl.textContent = busyText;
+    btnEl.disabled = true;
+    return () => { btnEl.textContent = original; btnEl.disabled = false; };
+  }
+
   async function handleLogin() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
     const msgEl = document.getElementById('login-msg');
+    const btnEl = document.querySelector('#login-screen .submit-btn');
+    msgEl.style.color = 'var(--red)';
     msgEl.textContent = '';
     if (!email || !password) { msgEl.textContent = 'Enter both email and password.'; return; }
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { msgEl.textContent = error.message; return; }
-    await afterAuth();
+    const restore = setBtnBusy(btnEl, 'Logging in…');
+    try {
+      const { error } = await withTimeout(sb.auth.signInWithPassword({ email, password }), 15000, 'Login');
+      if (error) { msgEl.textContent = error.message; return; }
+      await withTimeout(afterAuth(), 15000, 'Loading your account');
+    } catch (e) {
+      msgEl.textContent = e.message || 'Something went wrong - please try again.';
+    } finally {
+      restore();
+    }
   }
 
   async function handleSignup() {
@@ -1273,31 +1322,44 @@
     const password = document.getElementById('signup-password').value;
     const phone = document.getElementById('signup-phone').value.trim();
     const msgEl = document.getElementById('signup-msg');
+    const btnEl = document.querySelector('#signup-screen .submit-btn');
     msgEl.style.color = 'var(--red)';
     msgEl.textContent = '';
     if (!email || !password || !phone) { msgEl.textContent = 'Fill in all fields.'; return; }
 
-    const { data, error } = await sb.auth.signUp({ email, password });
-    if (error) { msgEl.textContent = error.message; return; }
-    if (!data.session) {
-      msgEl.style.color = 'var(--green)';
-      msgEl.textContent = 'Check your email to confirm your account, then log in.';
-      return;
-    }
+    const restore = setBtnBusy(btnEl, 'Creating account…');
     try {
-      await apiPost('/api/web/link-phone', { phone_number: phone });
-      await afterAuth();
-    } catch (e) { msgEl.textContent = e.message; }
+      const { data, error } = await withTimeout(sb.auth.signUp({ email, password }), 15000, 'Signup');
+      if (error) { msgEl.textContent = error.message; return; }
+      if (!data.session) {
+        msgEl.style.color = 'var(--green)';
+        msgEl.textContent = 'Check your email to confirm your account, then log in.';
+        return;
+      }
+      await withTimeout(apiPost('/api/web/link-phone', { phone_number: phone }), 15000, 'Saving your details');
+      await withTimeout(afterAuth(), 15000, 'Loading your account');
+    } catch (e) {
+      msgEl.textContent = e.message || 'Something went wrong - please try again.';
+    } finally {
+      restore();
+    }
   }
 
   async function handleLinkPhone() {
     const phone = document.getElementById('phone-input').value.trim();
     const msgEl = document.getElementById('phone-msg');
+    const btnEl = document.querySelector('#phone-link-screen .submit-btn');
+    msgEl.style.color = 'var(--red)';
     if (!phone) { msgEl.textContent = 'Enter a phone number.'; return; }
+    const restore = setBtnBusy(btnEl, 'Continuing…');
     try {
-      await apiPost('/api/web/link-phone', { phone_number: phone });
-      await afterAuth();
-    } catch (e) { msgEl.textContent = e.message; }
+      await withTimeout(apiPost('/api/web/link-phone', { phone_number: phone }), 15000, 'Saving your details');
+      await withTimeout(afterAuth(), 15000, 'Loading your account');
+    } catch (e) {
+      msgEl.textContent = e.message || 'Something went wrong - please try again.';
+    } finally {
+      restore();
+    }
   }
 
   async function handleLogout() {
@@ -1475,6 +1537,14 @@
     const profileBtn = document.getElementById('profile-btn');
     profileBtn.classList.toggle('pulsate-account', isGuestMode);
     profileBtn.onclick = isGuestMode ? () => showScreen('login-screen') : () => togglePopover('account-popover');
+    if (isGuestMode) {
+      // A visitor is treated as unrecognized until they actually log in -
+      // show the plain account icon even if a saved avatar exists in this
+      // browser from a previous logged-in session.
+      profileBtn.innerHTML = I('user');
+      const footerAvatar = document.getElementById('sidebar-footer-avatar');
+      if (footerAvatar) footerAvatar.style.display = 'none';
+    }
     ['calendar-btn', 'notif-btn', 'messages-btn'].forEach(id => {
       document.getElementById(id).onclick = isGuestMode
         ? () => guestGate('Sign up to unlock this', 'Calendar, notifications and messages are saved to your account - create a free one to turn these on.')
@@ -1528,7 +1598,6 @@
     document.getElementById('voice-out-btn').innerHTML = I('speaker');
     document.getElementById('imagegen-btn').innerHTML = I('image');
     document.getElementById('floating-chat-btn').innerHTML = I('chat', 22);
-    document.getElementById('mode-switcher-arrow').innerHTML = I('chevron', 12);
     document.getElementById('mode-start-nav-icon').innerHTML = I('plus', 14);
     document.getElementById('mode-history-btn').innerHTML = I('search', 16);
     document.getElementById('right-sidebar-toggle').innerHTML = I('panel', 14);
@@ -1546,6 +1615,7 @@
       const choice = courseChoicePerMode[modeSel.value] || 'continue';
       if (choice === 'continue' && !isGuestMode) loadModeContinuation(modeSel.value);
     });
+    buildModesContainer();
     refreshModeSlideout();
 
     buildCalculator();
@@ -1675,6 +1745,7 @@
 
     const avatarHtml = avatar ? `<img src="${avatar}" />` : esc(initials(name || currentUserEmail));
     document.getElementById('account-avatar-lg').innerHTML = avatarHtml;
+    document.getElementById('avatar-remove-link').style.display = avatar ? 'block' : 'none';
 
     // Replace the plain account icon in the navbar, and the sidebar-footer
     // logout icon when collapsed, with the chosen profile picture / initial.
@@ -1696,6 +1767,37 @@
       showToast('Profile picture updated.');
     };
     reader.readAsDataURL(file);
+  }
+
+  async function sha256Hex(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Pulls in the real photo tied to the user's email via Gravatar (a free,
+  // no-signup-required service - if their email has a Gravatar photo set,
+  // this is it; if not, falls back cleanly to their initials).
+  async function useEmailAvatar() {
+    if (!currentUserEmail) return;
+    showToast('Looking up your email profile photo…');
+    try {
+      const hash = await sha256Hex(currentUserEmail.trim().toLowerCase());
+      const url = `https://www.gravatar.com/avatar/${hash}?s=200&d=404`;
+      const img = new Image();
+      img.onload = () => {
+        localStorage.setItem('eduflow_avatar', url);
+        renderAccountInfo();
+        showToast('Using your email profile photo.');
+      };
+      img.onerror = () => {
+        showToast("No profile photo is set up for this email - showing your initial instead.");
+        localStorage.removeItem('eduflow_avatar');
+        renderAccountInfo();
+      };
+      img.src = url;
+    } catch (e) {
+      showToast('Could not look up your email profile photo right now.');
+    }
   }
   function clearAvatar() {
     localStorage.removeItem('eduflow_avatar');
@@ -2002,14 +2104,64 @@
   // abandoned sessions if they just toggled "new" and changed their mind.
   const pendingNewSession = {};
 
+  const MODE_ORDER = ['tutor', 'coding_assistant', 'study_partner', 'quiz_master', 'research_assistant', 'career_coach'];
+
+  // Builds one pill + its own independent hover slideout per mode, all
+  // inside the single .modes-container box - clicking a pill switches mode
+  // (via the hidden native select, so every existing .value/.change read
+  // elsewhere in the app keeps working untouched); clicking a slideout
+  // option switches to that mode AND applies the continue/new choice.
+  function buildModesContainer() {
+    const container = document.getElementById('modes-container');
+    container.innerHTML = MODE_ORDER.map(m => {
+      const ux = MODE_UX[m];
+      const label = m.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+      return `
+        <div class="mode-pill-wrap" data-mode="${m}">
+          <button class="mode-pill" onclick="selectMode('${m}')">${label}</button>
+          <div class="mode-pill-slideout">
+            <button class="mode-slide-option" data-choice="continue" onclick="selectModeAndChoice('${m}','continue')">${ux.cont}</button>
+            <button class="mode-slide-option" data-choice="new" onclick="selectModeAndChoice('${m}','new')">${ux.fresh}</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function selectMode(mode) {
+    const modeSel = document.getElementById('mode-switcher');
+    if (modeSel.value === mode) return;
+    modeSel.value = mode;
+    modeSel.dispatchEvent(new Event('change'));
+  }
+
+  function selectModeAndChoice(mode, choice) {
+    selectMode(mode);
+    courseChoicePerMode[mode] = choice;
+    refreshModeSlideout();
+    if (choice === 'new') {
+      document.getElementById('chat-messages').innerHTML = '';
+      pendingNewSession[mode] = true;
+      showToast('Starting fresh - your previous ' + MODE_UX[mode].cont.toLowerCase() + ' is still saved and searchable.');
+    } else {
+      pendingNewSession[mode] = false;
+      if (!isGuestMode) loadModeContinuation(mode);
+    }
+  }
+
   function refreshModeSlideout() {
     const mode = document.getElementById('mode-switcher').value;
     const ux = MODE_UX[mode] || MODE_UX.tutor;
     const choice = courseChoicePerMode[mode] || 'continue';
-    document.getElementById('mode-slide-continue-btn').textContent = ux.cont;
-    document.getElementById('mode-slide-new-btn').textContent = ux.fresh;
-    document.getElementById('mode-slide-continue-btn').classList.toggle('active', choice === 'continue');
-    document.getElementById('mode-slide-new-btn').classList.toggle('active', choice === 'new');
+
+    document.querySelectorAll('.mode-pill-wrap').forEach(wrap => {
+      const isActive = wrap.dataset.mode === mode;
+      wrap.querySelector('.mode-pill').classList.toggle('active', isActive);
+      const wrapChoice = courseChoicePerMode[wrap.dataset.mode] || 'continue';
+      wrap.querySelectorAll('.mode-slide-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.choice === wrapChoice);
+      });
+    });
+
     document.getElementById('mode-start-nav-label').textContent = ux.start;
     document.getElementById('mode-start-nav-btn').title = ux.start;
     const modeLabel = document.getElementById('mode-switcher').selectedOptions[0].text;
@@ -2053,11 +2205,18 @@
   // mode, right before the first real message of that session goes out -
   // this is what lets the history panel show clean session titles (like
   // ChatGPT's sidebar) instead of a raw dump of every message ever sent.
-  async function ensureSessionMarker(mode) {
+  // The heading is drawn from the actual first message so sessions get
+  // unique, topic-relevant names instead of a repeated generic label; the
+  // date/time is tracked separately via created_at and shown alongside it.
+  async function ensureSessionMarker(mode, firstMessageText) {
     if (!pendingNewSession[mode] || isGuestMode) return;
     pendingNewSession[mode] = false;
-    const modeLabel = (document.querySelector(`#mode-switcher option[value="${mode}"]`) || {}).textContent || mode;
-    const heading = `${modeLabel} session · ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+    let heading = (firstMessageText || '').trim().replace(/\s+/g, ' ');
+    heading = heading.length > 60 ? heading.slice(0, 60).trim() + '…' : heading;
+    if (!heading) {
+      const modeLabel = (document.querySelector(`#mode-switcher option[value="${mode}"]`) || {}).textContent || mode;
+      heading = `${modeLabel} session`;
+    }
     try { await apiPost('/api/web/chat/session', { mode, heading }); } catch (e) { /* non-critical */ }
   }
 
@@ -2096,6 +2255,13 @@
     const q = document.getElementById('mode-history-inline-search').value.trim();
     modeHistoryDebounce = setTimeout(() => fetchModeHistory(mode, q), 250);
   }
+  function formatSessionTimestamp(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' +
+      d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+
   async function fetchModeHistory(mode, q) {
     if (isGuestMode) return;
     const resultsEl = document.getElementById('mode-history-results');
@@ -2105,7 +2271,13 @@
       const { sessions } = await apiGet(url);
       window.__modeSessions = sessions;
       resultsEl.innerHTML = sessions.length
-        ? sessions.map((s, i) => `<div class="mode-history-item" onclick="useModeSessionItem(${i})"><span class="hist-icon">${I('chat', 15)}</span>${esc(s.heading)}</div>`).join('')
+        ? sessions.map((s, i) => `<div class="mode-history-item" onclick="useModeSessionItem(${i})">
+            <span class="hist-icon">${I('chat', 15)}</span>
+            <div style="min-width:0;">
+              <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.heading)}</div>
+              <div style="font-size:11px;color:var(--muted);">${esc(formatSessionTimestamp(s.created_at))}</div>
+            </div>
+          </div>`).join('')
         : '<div class="mode-history-item" style="color:var(--muted);cursor:default;">Nothing here yet.</div>';
     } catch (e) {
       resultsEl.innerHTML = '<div class="mode-history-item" style="color:var(--muted);cursor:default;">Couldn\'t load history.</div>';
@@ -2147,9 +2319,13 @@
     const box = document.getElementById('chat-messages');
     const row = document.createElement('div');
     row.className = 'msg-row ' + role;
+    // data-raw carries the original, unmodified text (URI-encoded so it's
+    // always safe as an attribute value) - Copy/Export/etc. read from this
+    // rather than the rendered HTML, so inline code-block chrome (labels,
+    // copy buttons) never leaks into what actually gets copied.
     row.innerHTML = `
       <div>
-        <div class="msg-bubble">${esc(content)}</div>
+        <div class="msg-bubble" data-raw="${encodeURIComponent(content)}">${renderMessageContent(content)}</div>
         ${role === 'assistant' ? `<div class="msg-actions">
           <button onclick="copyMessage(this)" title="Copy">Copy</button>
           <button onclick="regenerateLast(this)" title="Regenerate">Regenerate</button>
@@ -2160,6 +2336,44 @@
       </div>`;
     box.appendChild(row);
     scrollChatToBottom();
+  }
+
+  // Splits message content on fenced ```code``` blocks so each one renders
+  // with its own copy button at the edge of that section - but everything
+  // still lives inside the ONE message bubble, not as separate messages.
+  function renderMessageContent(content) {
+    const regex = /```(\w*)\n?([\s\S]*?)```/g;
+    const parts = [];
+    let lastIndex = 0, match;
+    while ((match = regex.exec(content)) !== null) {
+      if (match.index > lastIndex) parts.push({ type: 'text', value: content.slice(lastIndex, match.index) });
+      parts.push({ type: 'code', lang: match[1], value: match[2].replace(/\n$/, '') });
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < content.length) parts.push({ type: 'text', value: content.slice(lastIndex) });
+    if (!parts.length) parts.push({ type: 'text', value: content });
+
+    return parts.map(p => {
+      if (p.type === 'code') {
+        return `<div class="code-block">
+          <div class="code-block-header">
+            <span>${esc(p.lang || 'code')}</span>
+            <button class="code-copy-btn" onclick="copyCodeBlock(this)" title="Copy code">${I('copy', 13)}</button>
+          </div>
+          <pre><code>${esc(p.value)}</code></pre>
+        </div>`;
+      }
+      return p.value ? `<span class="msg-text-segment">${esc(p.value)}</span>` : '';
+    }).join('');
+  }
+
+  function copyCodeBlock(btn) {
+    const code = btn.closest('.code-block').querySelector('code');
+    navigator.clipboard.writeText(code.textContent);
+    const original = btn.innerHTML;
+    btn.innerHTML = I('check', 13);
+    btn.classList.add('action-confirmed');
+    setTimeout(() => { btn.innerHTML = original; btn.classList.remove('action-confirmed'); }, 1200);
   }
 
   // The scrollable element is #chat-scroll (the parent), not #chat-messages
@@ -2185,7 +2399,8 @@
   }
 
   function bubbleTextFor(btn) {
-    return btn.closest('div').parentElement.querySelector('.msg-bubble').textContent;
+    const bubble = btn.closest('div').parentElement.querySelector('.msg-bubble');
+    return bubble.dataset.raw ? decodeURIComponent(bubble.dataset.raw) : bubble.textContent;
   }
 
   function copyMessage(btn) {
@@ -2281,7 +2496,7 @@
       if (suggestBox) suggestBox.innerHTML = '';
     }
     const mode = document.getElementById('mode-switcher').value;
-    if (!isRegenerate && !isGuestMode) await ensureSessionMarker(mode);
+    if (!isRegenerate && !isGuestMode) await ensureSessionMarker(mode, text);
     const sendBtn = document.getElementById('chat-send-btn');
     const signal = beginGeneration('chat', sendBtn);
     try {
