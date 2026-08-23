@@ -1457,8 +1457,15 @@
     currentUser = me.user;
     const { data: { session } } = await sb.auth.getSession();
     currentUserEmail = session.user.email;
-    document.getElementById('sidebar-email').textContent = session.user.email;
-    document.getElementById('settings-email').textContent = session.user.email;
+    // Guest mode may have already swapped out the sidebar footer / settings
+    // account fields (which contain these ids) with guest-CTA markup, so
+    // these elements might not exist yet at this point - guard against that
+    // rather than crashing; renderSidebarFooter() below recreates the
+    // sidebar one properly either way.
+    const sidebarEmailEl = document.getElementById('sidebar-email');
+    if (sidebarEmailEl) sidebarEmailEl.textContent = session.user.email;
+    const settingsEmailEl = document.getElementById('settings-email');
+    if (settingsEmailEl) settingsEmailEl.textContent = session.user.email;
     document.getElementById('guest-banner').classList.remove('visible');
     initChrome();
     applyGuestLocks();
