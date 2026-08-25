@@ -4,6 +4,25 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>EduFlow Ai</title>
+<script>
+  // Applies the theme immediately, before any other script - all color
+  // variables live inside [data-theme="..."] selectors with nothing in the
+  // unscoped :root, so until this attribute is set the page renders with no
+  // colors at all. Previously this only happened deep inside the async
+  // guest/login boot sequence, so if ANYTHING earlier in that chain threw,
+  // theming silently never applied until the user manually toggled it.
+  // Running this synchronously, standalone, at the very top of <head> makes
+  // correct theming completely independent of the rest of the app's JS.
+  (function () {
+    try {
+      const saved = localStorage.getItem('eduflow_theme') || 'system';
+      const actual = saved === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : saved;
+      document.documentElement.setAttribute('data-theme', actual);
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
 <style>
@@ -136,7 +155,10 @@
 
   #sidebar { width: 240px; min-width: 240px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: width 0.15s ease, min-width 0.15s ease; overflow: hidden; }
   #sidebar.collapsed { width: 56px; min-width: 56px; }
-  .sidebar-top { padding: 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: flex-end; }
+  .sidebar-top { padding: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .sidebar-top-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  #sidebar.collapsed .sidebar-top-label { display: none; }
+  #sidebar.collapsed .sidebar-top { justify-content: center; }
   .collapse-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 6px; }
   .collapse-btn:hover { background: var(--bg); color: var(--text); }
   .nav-list { flex: 1; overflow-y: auto; padding: 8px; }
@@ -163,6 +185,12 @@
   #sidebar.collapsed .logout-btn .logout-text { display: none; }
   #sidebar.collapsed .logout-btn { border: none; padding: 0; background: none; }
   #sidebar.collapsed #sidebar-footer-avatar { display: flex !important; }
+  .guest-footer-collapsed-btn {
+    display: none; width: 100%; height: 36px; align-items: center; justify-content: center; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--accent); cursor: pointer;
+  }
+  #sidebar.collapsed .guest-footer-full { display: none; }
+  #sidebar.collapsed .guest-footer-collapsed-btn { display: flex; }
 
   #main-content { flex: 1; overflow-y: auto; padding: 28px 32px 40px; height: 100%; }
   #main-content.chat-mode { overflow: hidden; padding: 0; display: flex; }
@@ -284,33 +312,31 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 50; transition: transform 0.15s ease, opacity 0.15s ease;
   }
   #floating-chat-btn.hidden-floating { transform: scale(0.6); opacity: 0; pointer-events: none; }
-  /* ---------- Modes container: one pill per mode, each with its own
-     hover slideout ----------
-     Everything (pills + whichever slideout is open) stays clipped inside
-     this single bordered box - it scrolls horizontally rather than letting
-     any slideout escape outside the container's edges. */
-  .modes-container {
+  /* ---------- Mode switcher: one compact box, expands on hover ----------
+     A native <select> keeps this compact (no horizontal scrolling needed to
+     reach every mode, unlike a row of pills would). The continue/new toggle
+     lives INSIDE the same bordered box, revealed by growing rightward from
+     an arrow - genuinely part of one container, not a separate floating
+     popup positioned outside it. */
+  .mode-switcher-wrap {
     display: flex; align-items: center; height: 36px; border: 1px solid var(--border); border-radius: 8px;
-    background: var(--surface); flex-shrink: 0; overflow-x: auto; overflow-y: hidden; max-width: 360px;
-    scrollbar-width: thin;
+    background: var(--surface); flex-shrink: 0; overflow: hidden;
   }
-  .mode-pill-wrap { position: relative; display: flex; align-items: center; flex-shrink: 0; }
-  .mode-pill {
-    height: 28px; margin: 0 2px; padding: 0 10px; border: none; border-radius: 6px; background: none;
-    color: var(--muted); font-size: 12px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  .mode-switcher-wrap select { border: none; background: none; height: 100%; padding: 0 6px 0 10px; color: var(--text); max-width: 140px; }
+  .mode-switcher-arrow { display: flex; align-items: center; padding: 0 2px; color: var(--muted); flex-shrink: 0; transition: transform 0.15s ease; transform: rotate(-90deg); }
+  .mode-switcher-wrap:hover .mode-switcher-arrow,
+  .mode-switcher-wrap:focus-within .mode-switcher-arrow { transform: rotate(0deg); color: var(--accent); }
+  .mode-slideout {
+    display: flex; align-items: center; gap: 6px; max-width: 0; overflow: hidden; opacity: 0;
+    transition: max-width 0.2s ease, opacity 0.2s ease; white-space: nowrap;
   }
-  .mode-pill.active { background: var(--accent-dim); color: #1a1404; font-weight: 600; }
-  .mode-pill-slideout {
-    display: flex; align-items: center; gap: 4px; max-width: 0; overflow: hidden; opacity: 0;
-    transition: max-width 0.2s ease, opacity 0.2s ease; white-space: nowrap; flex-shrink: 0;
-  }
-  .mode-pill-wrap:hover .mode-pill-slideout,
-  .mode-pill-wrap:focus-within .mode-pill-slideout {
-    max-width: 220px; opacity: 1; padding-right: 4px;
+  .mode-switcher-wrap:hover .mode-slideout,
+  .mode-switcher-wrap:focus-within .mode-slideout {
+    max-width: 260px; opacity: 1; padding-right: 6px;
   }
   .mode-slide-option {
-    height: 24px; padding: 0 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg);
-    color: var(--muted); font-size: 11px; cursor: pointer; flex-shrink: 0;
+    height: 26px; padding: 0 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--muted); font-size: 11.5px; cursor: pointer; flex-shrink: 0;
   }
   .mode-slide-option.active { background: var(--accent-dim); color: #1a1404; border-color: var(--accent-dim); font-weight: 600; }
 
@@ -438,11 +464,13 @@
         <input type="text" id="search-input" placeholder="Search courses, notes, chat..." oninput="handleSearch()" onfocus="handleSearch()" />
         <div id="search-results"></div>
       </div>
-      <div class="modes-container" id="modes-container">
-        <select id="mode-switcher" title="AI Mode" style="display:none;"></select>
-        <!-- Pills populated by buildModesContainer() - one per mode, each with
-             its own hover-revealed continue/new slideout, all clipped within
-             this single bordered box so nothing renders outside it. -->
+      <div class="mode-switcher-wrap" id="mode-switcher-wrap">
+        <select id="mode-switcher" title="AI Mode"></select>
+        <span class="mode-switcher-arrow" id="mode-switcher-arrow"></span>
+        <div class="mode-slideout" id="mode-slideout">
+          <button class="mode-slide-option active" data-choice="continue" id="mode-slide-continue-btn" onclick="selectCourseChoice('continue')"></button>
+          <button class="mode-slide-option" data-choice="new" id="mode-slide-new-btn" onclick="selectCourseChoice('new')"></button>
+        </div>
       </div>
       <button id="mode-start-nav-btn" onclick="triggerModeStart()">
         <span id="mode-start-nav-icon"></span> <span id="mode-start-nav-label">Start new course</span>
@@ -521,7 +549,10 @@
 
     <div id="app-body">
       <div id="sidebar">
-        <div class="sidebar-top"><button class="collapse-btn" onclick="toggleSidebar()" id="collapse-icon-holder"></button></div>
+        <div class="sidebar-top">
+          <span class="sidebar-top-label">Menu</span>
+          <button class="collapse-btn" onclick="toggleSidebar()" id="collapse-icon-holder"></button>
+        </div>
         <div class="nav-list" id="nav-list"></div>
         <div class="sidebar-footer">
           <div class="email" id="sidebar-email"></div>
@@ -1563,11 +1594,16 @@
     const footer = document.querySelector('.sidebar-footer');
     if (isGuestMode) {
       footer.innerHTML = `
-        <div class="email" style="margin-bottom:8px;">Browsing as guest</div>
-        <div style="display:flex;gap:6px;">
-          <button class="logout-btn" style="flex:1;" onclick="showScreen('login-screen')">Log in</button>
-          <button class="btn" style="flex:1;padding:7px 10px;font-size:12.5px;" onclick="showScreen('signup-screen')">Sign up</button>
-        </div>`;
+        <div class="guest-footer-full">
+          <div class="email" style="margin-bottom:8px;">Browsing as guest</div>
+          <div style="display:flex;gap:6px;">
+            <button class="logout-btn" style="flex:1;" onclick="showScreen('login-screen')">Log in</button>
+            <button class="btn" style="flex:1;padding:7px 10px;font-size:12.5px;" onclick="showScreen('signup-screen')">Sign up</button>
+          </div>
+        </div>
+        <button class="guest-footer-collapsed-btn" id="guest-footer-collapsed-btn" onclick="showScreen('login-screen')" title="Log in or sign up"></button>`;
+      const collapsedBtn = document.getElementById('guest-footer-collapsed-btn');
+      if (collapsedBtn) collapsedBtn.innerHTML = I('user', 16);
     } else {
       footer.innerHTML = `
         <div class="email" id="sidebar-email">${esc(currentUserEmail)}</div>
@@ -1589,54 +1625,68 @@
 
   let currentUserEmail = '';
 
+  // Each stage below runs in its own try/catch. This function previously ran
+  // top-to-bottom with no error isolation - if any single call threw, every
+  // subsequent line silently never executed (including theme setup, which
+  // is why colors could stay broken until something unrelated re-triggered
+  // them). Now a failure in one area is logged and skipped rather than
+  // taking out everything that comes after it.
   function initChrome() {
     chromeInitialized = true;
-    buildSidebar();
-    document.getElementById('search-icon').innerHTML = I('search', 16);
-    document.getElementById('calendar-btn').innerHTML = I('calendar');
-    document.getElementById('notif-btn').innerHTML = I('bell');
-    document.getElementById('messages-btn').innerHTML = I('mail');
-    document.getElementById('theme-btn').innerHTML = I('sun');
-    document.getElementById('profile-btn').innerHTML = I('user');
-    document.getElementById('collapse-icon-holder').innerHTML = I('menu');
-    document.getElementById('attach-btn').innerHTML = I('attach');
-    document.getElementById('camera-btn').innerHTML = I('camera');
-    document.getElementById('mic-btn').innerHTML = I('mic');
-    document.getElementById('voice-out-btn').innerHTML = I('speaker');
-    document.getElementById('imagegen-btn').innerHTML = I('image');
-    document.getElementById('floating-chat-btn').innerHTML = I('chat', 22);
-    document.getElementById('mode-start-nav-icon').innerHTML = I('plus', 14);
-    document.getElementById('mode-history-btn').innerHTML = I('search', 16);
-    document.getElementById('right-sidebar-toggle').innerHTML = I('panel', 14);
-    const railIcons = { 'widget-chat-quick': 'chat', 'widget-progress': 'progress', 'widget-course': 'courses', 'widget-tasks': 'planner', 'pomodoro-display': 'timer', 'calc-display': 'calc' };
-    document.querySelectorAll('.rail-icon-btn').forEach(btn => { btn.innerHTML = I(railIcons[btn.dataset.widget] || 'dashboard', 17); });
-    document.querySelectorAll('.widget-header .chevron').forEach(el => el.innerHTML = I('chevron', 14));
-    document.querySelectorAll('.nav-section-label .chevron').forEach(el => el.innerHTML = I('chevron', 14));
 
-    const modeSel = document.getElementById('mode-switcher');
-    modeSel.innerHTML = ['tutor','coding_assistant','study_partner','quiz_master','research_assistant','career_coach']
-      .map(m => `<option value="${m}">${m.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())}</option>`).join('');
-    modeSel.addEventListener('change', () => {
-      document.getElementById('chat-mode-title').textContent = modeSel.options[modeSel.selectedIndex].text;
+    try {
+      buildSidebar();
+      document.getElementById('search-icon').innerHTML = I('search', 16);
+      document.getElementById('calendar-btn').innerHTML = I('calendar');
+      document.getElementById('notif-btn').innerHTML = I('bell');
+      document.getElementById('messages-btn').innerHTML = I('mail');
+      document.getElementById('theme-btn').innerHTML = I('sun');
+      document.getElementById('profile-btn').innerHTML = I('user');
+      document.getElementById('collapse-icon-holder').innerHTML = I('menu');
+      document.getElementById('attach-btn').innerHTML = I('attach');
+      document.getElementById('camera-btn').innerHTML = I('camera');
+      document.getElementById('mic-btn').innerHTML = I('mic');
+      document.getElementById('voice-out-btn').innerHTML = I('speaker');
+      document.getElementById('imagegen-btn').innerHTML = I('image');
+      document.getElementById('floating-chat-btn').innerHTML = I('chat', 22);
+      document.getElementById('mode-switcher-arrow').innerHTML = I('chevron', 12);
+      document.getElementById('mode-start-nav-icon').innerHTML = I('plus', 14);
+      document.getElementById('mode-history-btn').innerHTML = I('search', 16);
+      document.getElementById('right-sidebar-toggle').innerHTML = I('panel', 14);
+      const railIcons = { 'widget-chat-quick': 'chat', 'widget-progress': 'progress', 'widget-course': 'courses', 'widget-tasks': 'planner', 'pomodoro-display': 'timer', 'calc-display': 'calc' };
+      document.querySelectorAll('.rail-icon-btn').forEach(btn => { btn.innerHTML = I(railIcons[btn.dataset.widget] || 'dashboard', 17); });
+      document.querySelectorAll('.widget-header .chevron').forEach(el => el.innerHTML = I('chevron', 14));
+      document.querySelectorAll('.nav-section-label .chevron').forEach(el => el.innerHTML = I('chevron', 14));
+    } catch (e) { console.error('[initChrome] sidebar/icons failed:', e); }
+
+    try {
+      const modeSel = document.getElementById('mode-switcher');
+      modeSel.innerHTML = ['tutor','coding_assistant','study_partner','quiz_master','research_assistant','career_coach']
+        .map(m => `<option value="${m}">${m.replace('_',' ').replace(/\b\w/g, c => c.toUpperCase())}</option>`).join('');
+      modeSel.addEventListener('change', () => {
+        const titleEl = document.getElementById('chat-mode-title');
+        if (titleEl) titleEl.textContent = modeSel.options[modeSel.selectedIndex].text;
+        refreshModeSlideout();
+        const choice = courseChoicePerMode[modeSel.value] || 'continue';
+        if (choice === 'continue' && !isGuestMode) loadModeContinuation(modeSel.value);
+      });
       refreshModeSlideout();
-      const choice = courseChoicePerMode[modeSel.value] || 'continue';
-      if (choice === 'continue' && !isGuestMode) loadModeContinuation(modeSel.value);
-    });
-    buildModesContainer();
-    refreshModeSlideout();
+    } catch (e) { console.error('[initChrome] mode switcher failed:', e); }
 
-    buildCalculator();
-    initTheme();
-    if (!isGuestMode) loadCalendarAndNotifs();
-    renderSuggestedPrompts();
-    initSettingsLanguageMirror();
-    initVoiceSelection();
+    try { buildCalculator(); } catch (e) { console.error('[initChrome] calculator failed:', e); }
+    try { initTheme(); } catch (e) { console.error('[initChrome] theme failed:', e); }
+    try { if (!isGuestMode) loadCalendarAndNotifs(); } catch (e) { console.error('[initChrome] calendar/notifs failed:', e); }
+    try { renderSuggestedPrompts(); } catch (e) { console.error('[initChrome] suggested prompts failed:', e); }
+    try { initSettingsLanguageMirror(); } catch (e) { console.error('[initChrome] language mirror failed:', e); }
+    try { initVoiceSelection(); } catch (e) { console.error('[initChrome] voice selection failed:', e); }
 
-    document.getElementById('chat-textarea').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
-    });
-    if (!isGuestMode) loadChatHistory();
-    initWhiteboard();
+    try {
+      document.getElementById('chat-textarea').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+      });
+      if (!isGuestMode) loadChatHistory();
+      initWhiteboard();
+    } catch (e) { console.error('[initChrome] chat/whiteboard init failed:', e); }
   }
 
   function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
@@ -2120,63 +2170,15 @@
   // abandoned sessions if they just toggled "new" and changed their mind.
   const pendingNewSession = {};
 
-  const MODE_ORDER = ['tutor', 'coding_assistant', 'study_partner', 'quiz_master', 'research_assistant', 'career_coach'];
-
-  // Builds one pill + its own independent hover slideout per mode, all
-  // inside the single .modes-container box - clicking a pill switches mode
-  // (via the hidden native select, so every existing .value/.change read
-  // elsewhere in the app keeps working untouched); clicking a slideout
-  // option switches to that mode AND applies the continue/new choice.
-  function buildModesContainer() {
-    const container = document.getElementById('modes-container');
-    container.innerHTML = MODE_ORDER.map(m => {
-      const ux = MODE_UX[m];
-      const label = m.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
-      return `
-        <div class="mode-pill-wrap" data-mode="${m}">
-          <button class="mode-pill" onclick="selectMode('${m}')">${label}</button>
-          <div class="mode-pill-slideout">
-            <button class="mode-slide-option" data-choice="continue" onclick="selectModeAndChoice('${m}','continue')">${ux.cont}</button>
-            <button class="mode-slide-option" data-choice="new" onclick="selectModeAndChoice('${m}','new')">${ux.fresh}</button>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  function selectMode(mode) {
-    const modeSel = document.getElementById('mode-switcher');
-    if (modeSel.value === mode) return;
-    modeSel.value = mode;
-    modeSel.dispatchEvent(new Event('change'));
-  }
-
-  function selectModeAndChoice(mode, choice) {
-    selectMode(mode);
-    courseChoicePerMode[mode] = choice;
-    refreshModeSlideout();
-    if (choice === 'new') {
-      document.getElementById('chat-messages').innerHTML = '';
-      pendingNewSession[mode] = true;
-      showToast('Starting fresh - your previous ' + MODE_UX[mode].cont.toLowerCase() + ' is still saved and searchable.');
-    } else {
-      pendingNewSession[mode] = false;
-      if (!isGuestMode) loadModeContinuation(mode);
-    }
-  }
-
   function refreshModeSlideout() {
     const mode = document.getElementById('mode-switcher').value;
     const ux = MODE_UX[mode] || MODE_UX.tutor;
     const choice = courseChoicePerMode[mode] || 'continue';
 
-    document.querySelectorAll('.mode-pill-wrap').forEach(wrap => {
-      const isActive = wrap.dataset.mode === mode;
-      wrap.querySelector('.mode-pill').classList.toggle('active', isActive);
-      const wrapChoice = courseChoicePerMode[wrap.dataset.mode] || 'continue';
-      wrap.querySelectorAll('.mode-slide-option').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.choice === wrapChoice);
-      });
-    });
+    const contBtn = document.getElementById('mode-slide-continue-btn');
+    const newBtn = document.getElementById('mode-slide-new-btn');
+    if (contBtn) { contBtn.textContent = ux.cont; contBtn.classList.toggle('active', choice === 'continue'); }
+    if (newBtn) { newBtn.textContent = ux.fresh; newBtn.classList.toggle('active', choice === 'new'); }
 
     const startLabel = document.getElementById('mode-start-nav-label');
     if (startLabel) startLabel.textContent = ux.start;
