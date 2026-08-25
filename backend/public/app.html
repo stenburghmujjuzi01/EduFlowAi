@@ -1743,24 +1743,33 @@
     const avatar = localStorage.getItem('eduflow_avatar');
     const label = name || currentUserEmail || 'Account';
 
-    document.getElementById('account-pop-name').textContent = label;
-    document.getElementById('account-pop-email').textContent = currentUserEmail;
-    document.getElementById('account-pop-name-input').value = name;
-    document.getElementById('account-pop-phone-input').value = phone;
-    document.getElementById('settings-name-input').value = name;
-    document.getElementById('settings-phone-input').value = phone;
+    // These live inside containers that guest mode can wholesale replace
+    // (the settings page's account fields, in particular) before a real
+    // login ever runs - guard every lookup so a still-guest DOM state can
+    // never crash this.
+    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+
+    setText('account-pop-name', label);
+    setText('account-pop-email', currentUserEmail);
+    setVal('account-pop-name-input', name);
+    setVal('account-pop-phone-input', phone);
+    setVal('settings-name-input', name);
+    setVal('settings-phone-input', phone);
 
     const avatarHtml = avatar ? `<img src="${avatar}" />` : esc(initials(name || currentUserEmail));
-    document.getElementById('account-avatar-lg').innerHTML = avatarHtml;
-    document.getElementById('avatar-remove-link').style.display = avatar ? 'block' : 'none';
+    const avatarLg = document.getElementById('account-avatar-lg');
+    if (avatarLg) avatarLg.innerHTML = avatarHtml;
+    const removeLink = document.getElementById('avatar-remove-link');
+    if (removeLink) removeLink.style.display = avatar ? 'block' : 'none';
 
     // Replace the plain account icon in the navbar, and the sidebar-footer
     // logout icon when collapsed, with the chosen profile picture / initial.
     const profileBtn = document.getElementById('profile-btn');
-    profileBtn.innerHTML = avatar ? `<span class="account-avatar" style="width:24px;height:24px;font-size:11px;">${avatarHtml}</span>` : I('user');
+    if (profileBtn) profileBtn.innerHTML = avatar ? `<span class="account-avatar" style="width:24px;height:24px;font-size:11px;">${avatarHtml}</span>` : I('user');
 
     const footerIcon = document.getElementById('sidebar-footer-avatar');
-    footerIcon.innerHTML = avatarHtml;
+    if (footerIcon) footerIcon.innerHTML = avatarHtml;
   }
 
   function handleAvatarUpload(event) {
@@ -2169,10 +2178,13 @@
       });
     });
 
-    document.getElementById('mode-start-nav-label').textContent = ux.start;
-    document.getElementById('mode-start-nav-btn').title = ux.start;
+    const startLabel = document.getElementById('mode-start-nav-label');
+    if (startLabel) startLabel.textContent = ux.start;
+    const startBtn = document.getElementById('mode-start-nav-btn');
+    if (startBtn) startBtn.title = ux.start;
     const modeLabel = document.getElementById('mode-switcher').selectedOptions[0].text;
-    document.getElementById('mode-history-inline-search').placeholder = 'Search ' + modeLabel + ' history...';
+    const historySearch = document.getElementById('mode-history-inline-search');
+    if (historySearch) historySearch.placeholder = 'Search ' + modeLabel + ' history...';
   }
 
   function selectCourseChoice(choice) {
