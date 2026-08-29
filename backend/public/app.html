@@ -148,8 +148,6 @@
   #guest-banner .btn { padding: 6px 14px; font-size: 12px; }
   .nav-item.locked { opacity: 0.5; cursor: pointer; }
   .nav-item .lock-icon { margin-left: auto; display: flex; opacity: 0.7; }
-  .widget-guest-lock { font-size: 12px; color: var(--muted); }
-  .widget-guest-lock a { color: var(--accent); cursor: pointer; }
 
   #app-body { display: flex; flex: 1; min-height: 0; }
 
@@ -178,6 +176,9 @@
   .soon-tag { font-size: 9px; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-left: auto; }
   #sidebar.collapsed .soon-tag { display: none; }
 
+  #sidebar-bottom-icons { padding: 8px; border-top: 1px solid var(--border); }
+  #sidebar-bottom-icons .nav-item { margin-bottom: 0; }
+
   .sidebar-footer { border-top: 1px solid var(--border); padding: 12px; }
   .sidebar-footer .email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
   #sidebar.collapsed .sidebar-footer .email { display: none; }
@@ -197,30 +198,25 @@
   #main-layout { display: flex; gap: 24px; height: 100%; }
   #main-content.chat-mode #main-layout { width: 100%; }
   #center-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  #right-sidebar { width: 260px; flex-shrink: 0; overflow-y: auto; transition: width 0.15s ease, min-width 0.15s ease; position: relative; padding-top: 4px; }
-  #right-sidebar.collapsed { width: 52px; min-width: 52px; overflow: visible; padding-top: 0; }
-  #right-sidebar.collapsed .widget-box { display: none; }
-  #right-sidebar-rail { display: none; flex-direction: column; gap: 6px; align-items: center; padding-top: 4px; }
-  #right-sidebar.collapsed #right-sidebar-rail { display: flex; }
-  .rail-icon-btn {
-    width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface);
+
+  /* ---------- Floating right-side tool icons ----------
+     A slim fixed strip, not a side panel - each icon opens its target as a
+     tab in the center content area. Icons without a login requirement
+     (data-gated unset) sit above the ones that need an account. */
+  #right-floating-icons {
+    position: fixed; top: 50%; right: 14px; transform: translateY(-50%); z-index: 40;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .floating-tool-icon {
+    width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
     color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   }
-  .rail-icon-btn:hover { color: var(--text); border-color: var(--accent-dim); }
-  #right-sidebar-toggle {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; width: 26px; height: 26px; cursor: pointer; color: var(--muted); display: flex;
-    align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  #right-sidebar-toggle-row { display: flex; justify-content: flex-end; padding: 0 4px 6px; }
-  #right-sidebar.collapsed #right-sidebar-toggle-row { justify-content: center; padding: 0 0 6px; }
-  #right-sidebar-toggle:hover { color: var(--text); }
-  .widget-box .widget-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 0; }
-  .widget-box .widget-header .chevron { transition: transform 0.15s ease; display: flex; }
-  .widget-box .widget-header.closed .chevron { transform: rotate(-90deg); }
-  .widget-box .widget-body { overflow: hidden; max-height: 400px; transition: max-height 0.15s ease; margin-top: 10px; }
-  .widget-box .widget-body.collapsed { max-height: 0; margin-top: 0; }
-  @media (max-width: 980px) { #right-sidebar { display: none; } }
+  .floating-tool-icon:hover { color: var(--text); border-color: var(--accent-dim); }
+  .floating-tool-icon.active { background: var(--accent-dim); color: #1a1404; border-color: var(--accent-dim); }
+  .floating-tool-icon.locked { opacity: 0.55; }
+  .floating-tool-icon[data-gated="1"] { margin-top: 4px; }
+  @media (max-width: 980px) { #right-floating-icons { display: none; } }
 
   .content-section { display: none; max-width: 100%; }
   .content-section.active { display: block; }
@@ -295,9 +291,7 @@
   #chat-send-btn { margin-left: auto; background: var(--accent); color: #1a1404; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 13px; }
   #chat-file-name { font-size: 11px; color: var(--muted); padding: 0 8px; }
 
-  /* Right sidebar widgets */
-  .widget-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  .widget-box h4 { margin: 0 0 10px 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  /* Tool tabs (Calculator, Pomodoro Timer) */
   #pomodoro-display { font-size: 28px; font-weight: 700; text-align: center; margin: 10px 0; font-variant-numeric: tabular-nums; }
   .pomodoro-controls { display: flex; gap: 6px; justify-content: center; }
   #calc-display { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; text-align: right; font-size: 18px; margin-bottom: 8px; min-height: 24px; }
@@ -312,48 +306,31 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 50; transition: transform 0.15s ease, opacity 0.15s ease;
   }
   #floating-chat-btn.hidden-floating { transform: scale(0.6); opacity: 0; pointer-events: none; }
-  /* ---------- Mode switcher: one compact box, expands on hover ----------
-     A native <select> keeps this compact (no horizontal scrolling needed to
-     reach every mode, unlike a row of pills would). The continue/new toggle
-     lives INSIDE the same bordered box, revealed by growing rightward from
-     an arrow - genuinely part of one container, not a separate floating
-     popup positioned outside it. */
-  .mode-switcher-wrap {
-    display: flex; align-items: center; height: 36px; border: 1px solid var(--border); border-radius: 8px;
-    background: var(--surface); flex-shrink: 0; overflow: hidden;
-  }
-  .mode-switcher-wrap select { border: none; background: none; height: 100%; padding: 0 6px 0 10px; color: var(--text); max-width: 140px; }
-  .mode-switcher-arrow { display: flex; align-items: center; padding: 0 2px; color: var(--muted); flex-shrink: 0; transition: transform 0.15s ease; transform: rotate(-90deg); }
-  .mode-switcher-wrap:hover .mode-switcher-arrow,
-  .mode-switcher-wrap:focus-within .mode-switcher-arrow { transform: rotate(0deg); color: var(--accent); }
-  .mode-slideout {
-    display: flex; align-items: center; gap: 6px; max-width: 0; overflow: hidden; opacity: 0;
-    transition: max-width 0.2s ease, opacity 0.2s ease; white-space: nowrap;
-  }
-  .mode-switcher-wrap:hover .mode-slideout,
-  .mode-switcher-wrap:focus-within .mode-slideout {
-    max-width: 260px; opacity: 1; padding-right: 6px;
-  }
-  .mode-slide-option {
-    height: 26px; padding: 0 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg);
-    color: var(--muted); font-size: 11.5px; cursor: pointer; flex-shrink: 0;
-  }
-  .mode-slide-option.active { background: var(--accent-dim); color: #1a1404; border-color: var(--accent-dim); font-weight: 600; }
-
   /* Independent, always-visible button - label changes with the selected
-     mode, but it lives on its own in the navbar, not inside the switcher. */
+     mode. Mode switching itself now always auto-continues that mode's last
+     session (see loadModeContinuation) - this button is the only way to
+     deliberately start fresh. */
   #mode-start-nav-btn {
     display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 12px; border-radius: 999px;
     background: var(--accent); color: #1a1404; border: none; cursor: pointer; font-weight: 600; font-size: 12.5px;
     flex-shrink: 0; white-space: nowrap;
   }
 
-  /* ---------- Per-mode history search popup (icon-triggered) ---------- */
-  #mode-history-popover input {
-    width: 100%; padding: 9px 12px; font-size: 13px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--bg); color: var(--text); margin-bottom: 10px;
+  /* ---------- Per-mode history search (inline box, not an icon) ---------- */
+  .mode-history-search-wrap {
+    display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); flex-shrink: 0; width: 190px; position: relative;
   }
-  #mode-history-popover input:focus { outline: none; border-color: var(--accent-dim); }
+  .mode-history-search-wrap input { border: none; background: none; font-size: 12.5px; color: var(--text); width: 100%; padding: 0; }
+  .mode-history-search-wrap input:focus { outline: none; }
+  .mode-history-search-wrap .icon-slot { color: var(--muted); flex-shrink: 0; display: flex; }
+  .mode-history-search-wrap.hidden-for-guest { display: none; }
+  .mode-history-dropdown {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; width: 280px; max-height: 320px;
+    overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 6px; z-index: 30; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .mode-history-dropdown.visible { display: block; }
   .mode-history-item {
     display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; font-size: 13px; cursor: pointer;
   }
@@ -365,6 +342,41 @@
   }
   .modal-overlay.visible { display: flex; }
   .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 360px; max-height: 80vh; overflow-y: auto; }
+
+  /* ---------- Settings modal: internal sidebar + content pane ---------- */
+  .settings-modal-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 820px; max-width: 92vw;
+    height: 600px; max-height: 86vh; display: flex; overflow: hidden; position: relative;
+  }
+  .settings-modal-box .modal-close { position: absolute; top: 14px; right: 16px; z-index: 5; }
+  .settings-modal-sidebar {
+    width: 210px; flex-shrink: 0; border-right: 1px solid var(--border); padding: 14px 10px; overflow-y: auto;
+    background: var(--bg);
+  }
+  .settings-modal-search {
+    display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); margin-bottom: 14px;
+  }
+  .settings-modal-search input { border: none; background: none; font-size: 12.5px; color: var(--muted); width: 100%; }
+  .settings-modal-search .icon-slot { color: var(--muted); display: flex; }
+  .settings-nav-label {
+    font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 10px 8px 4px;
+  }
+  .settings-nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 8px; border-radius: 7px; cursor: pointer;
+    font-size: 13px; color: var(--text);
+  }
+  .settings-nav-item:hover { background: var(--surface); }
+  .settings-nav-item.active { background: var(--accent-dim); color: #1a1404; font-weight: 600; }
+  .settings-nav-item .nav-icon { flex-shrink: 0; display: flex; }
+  .settings-modal-content { flex: 1; overflow-y: auto; padding: 28px 32px; }
+  .settings-pane { display: none; }
+  .settings-pane.active { display: block; }
+  .settings-pane h2 { margin-top: 0; }
+  @media (max-width: 640px) {
+    .settings-modal-box { flex-direction: column; height: 86vh; }
+    .settings-modal-sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  }
   .modal-box h3 { margin-top: 0; }
   .modal-close { float: right; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; }
   .star-row { display: flex; gap: 6px; margin: 10px 0; }
@@ -464,23 +476,14 @@
         <input type="text" id="search-input" placeholder="Search courses, notes, chat..." oninput="handleSearch()" onfocus="handleSearch()" />
         <div id="search-results"></div>
       </div>
-      <div class="mode-switcher-wrap" id="mode-switcher-wrap">
-        <select id="mode-switcher" title="AI Mode"></select>
-        <span class="mode-switcher-arrow" id="mode-switcher-arrow"></span>
-        <div class="mode-slideout" id="mode-slideout">
-          <button class="mode-slide-option active" data-choice="continue" id="mode-slide-continue-btn" onclick="selectCourseChoice('continue')"></button>
-          <button class="mode-slide-option" data-choice="new" id="mode-slide-new-btn" onclick="selectCourseChoice('new')"></button>
-        </div>
-      </div>
+      <select id="mode-switcher" title="AI Mode" style="height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:0 8px;flex-shrink:0;"></select>
       <button id="mode-start-nav-btn" onclick="triggerModeStart()">
         <span id="mode-start-nav-icon"></span> <span id="mode-start-nav-label">Start new course</span>
       </button>
-      <div class="popover-trigger">
-        <button class="nav-icon-btn" id="mode-history-btn" onclick="openModeHistoryPanel()" title="Chat history for this mode"></button>
-        <div class="popover" id="mode-history-popover" style="width:300px;">
-          <input type="text" id="mode-history-inline-search" placeholder="Search Tutor history..." oninput="searchModeHistory()" />
-          <div id="mode-history-results"></div>
-        </div>
+      <div class="mode-history-search-wrap" id="mode-history-search-wrap">
+        <span class="icon-slot" id="mode-history-icon"></span>
+        <input type="text" id="mode-history-inline-search" placeholder="Search Tutor history..." oninput="searchModeHistory()" onfocus="handleModeHistoryFocus()" />
+        <div id="mode-history-results" class="mode-history-dropdown"></div>
       </div>
       <div class="nav-spacer"></div>
       <div class="popover-trigger">
@@ -554,6 +557,20 @@
           <button class="collapse-btn" onclick="toggleSidebar()" id="collapse-icon-holder"></button>
         </div>
         <div class="nav-list" id="nav-list"></div>
+        <div id="sidebar-bottom-icons">
+          <div class="nav-item" onclick="openSettingsModal()">
+            <span class="nav-icon" id="icon-settings-nav"></span>
+            <span class="label">Settings</span>
+          </div>
+          <div class="nav-item" onclick="openModal('privacy-modal')">
+            <span class="nav-icon" id="icon-privacy-nav"></span>
+            <span class="label">Privacy</span>
+          </div>
+          <div class="nav-item" onclick="openModal('help-modal')">
+            <span class="nav-icon" id="icon-help-nav"></span>
+            <span class="label">Help &amp; Support</span>
+          </div>
+        </div>
         <div class="sidebar-footer">
           <div class="email" id="sidebar-email"></div>
           <button class="logout-btn" onclick="handleLogout()">
@@ -972,126 +989,158 @@
               </div>
             </div>
 
-            <div class="content-section" id="section-settings">
-              <h1>Settings</h1>
-              <div class="box">
-                <h3>Appearance</h3>
-                <div class="row-flex">
-                  <button class="btn-outline" id="theme-btn-light" onclick="setTheme('light')">Light</button>
-                  <button class="btn-outline" id="theme-btn-dark" onclick="setTheme('dark')">Dark</button>
-                  <button class="btn-outline" id="theme-btn-system" onclick="setTheme('system')">Device theme</button>
-                </div>
-              </div>
-              <div class="box">
-                <h3>Language</h3>
-                <p class="empty" style="margin:0 0 10px;">Choose the language used across the interface. Change it any time from the navbar too.</p>
-                <select id="settings-language-select" onchange="document.getElementById('language-select').value=this.value; handleLanguageChange();" style="max-width:260px;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);"></select>
-              </div>
-              <div class="box">
-                <h3>Voice</h3>
-                <div class="row-flex" style="margin-bottom:10px;">
-                  <label style="font-size:13px;color:var(--muted);min-width:120px;">Read-back voice</label>
-                  <select id="settings-voice-select" onchange="setPreferredVoice(this.value)" style="flex:1;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);"></select>
-                </div>
-                <div class="row-flex">
-                  <label style="font-size:13px;color:var(--muted);min-width:120px;">Voice input language</label>
-                  <select id="settings-voice-input-lang" onchange="localStorage.setItem('eduflow_voice_input_lang', this.value)" style="flex:1;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
-                    <option value="en-US">English (US)</option>
-                    <option value="en-GB">English (UK)</option>
-                    <option value="fr-FR">French</option>
-                    <option value="es-ES">Spanish</option>
-                    <option value="sw-KE">Swahili</option>
-                  </select>
-                </div>
-              </div>
-              <div class="box">
-                <h3>Notifications</h3>
-                <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;">
-                  <input type="checkbox" id="settings-notif-toggle" checked onchange="localStorage.setItem('eduflow_notifs_enabled', this.checked)" /> Task reminders &amp; alerts
-                </label>
-                <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
-                  <input type="checkbox" id="settings-sound-toggle" onchange="localStorage.setItem('eduflow_notif_sound', this.checked)" /> Notification sound
-                </label>
-              </div>
-              <div class="box" id="settings-account-box">
-                <h3>Account</h3>
-                <div id="settings-account-fields">
-                  <div class="field-wrap"><label class="field-label">Display name</label><input type="text" id="settings-name-input" placeholder="Your name" /></div>
-                  <div class="field-wrap"><label class="field-label">WhatsApp number</label><input type="text" id="settings-phone-input" placeholder="e.g. 256700000000" /></div>
-                  <button class="btn" onclick="saveAccountDetails(this)">Save changes</button>
-                  <div id="settings-account-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
-                  <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-                  <p style="font-size:13px;" id="settings-email"></p>
-                  <button class="btn-outline" onclick="handleChangePassword()">Change password</button>
-                </div>
-              </div>
-              <div class="box">
-                <h3>Data</h3>
-                <p class="empty" style="margin:0 0 10px;">Your chat draft and preferences are stored locally on this device.</p>
-                <button class="btn-outline" onclick="localStorage.removeItem('eduflow_chat_draft'); showToast('Chat draft cleared.');">Clear saved draft</button>
-              </div>
-              <div class="box" id="settings-logout-box">
-                <h3>Log out</h3>
-                <button class="btn-outline" onclick="handleLogout()">Log out</button>
-              </div>
-            </div>
-
           </div>
 
-          <div id="right-sidebar">
-            <div id="right-sidebar-toggle-row">
-              <button id="right-sidebar-toggle" onclick="toggleRightSidebar()" title="Collapse panel"></button>
-            </div>
-            <div id="right-sidebar-rail">
-              <button class="rail-icon-btn" data-widget="widget-chat-quick" onclick="expandRailWidget(this)" title="AI Chat"></button>
-              <button class="rail-icon-btn" data-widget="widget-progress" onclick="expandRailWidget(this)" title="Learning Progress"></button>
-              <button class="rail-icon-btn" data-widget="widget-course" onclick="expandRailWidget(this)" title="Current Course"></button>
-              <button class="rail-icon-btn" data-widget="widget-tasks" onclick="expandRailWidget(this)" title="Upcoming Tasks"></button>
-              <button class="rail-icon-btn" data-widget="pomodoro-display" onclick="expandRailWidget(this)" title="Pomodoro Timer"></button>
-              <button class="rail-icon-btn" data-widget="calc-display" onclick="expandRailWidget(this)" title="Calculator"></button>
-            </div>
-            <div class="widget-box" id="widget-chat-quick">
-              <div class="widget-header" onclick="toggleWidget(this)"><h4 style="margin:0;">AI Chat</h4><span class="chevron"></span></div>
-              <div class="widget-body">
-                <div id="widget-chat-quick-preview" style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">Ask EduFlow Ai anything.</div>
-                <div class="row-flex">
-                  <input type="text" id="widget-chat-quick-input" placeholder="Quick question..." />
-                  <button class="btn" onclick="sendQuickChat()">Ask</button>
+          <div class="modal-overlay" id="settings-modal">
+            <div class="settings-modal-box">
+              <button class="modal-close" onclick="closeModal('settings-modal')">&times;</button>
+              <div class="settings-modal-sidebar">
+                <div class="settings-modal-search">
+                  <span class="icon-slot" id="settings-search-icon"></span>
+                  <input type="text" placeholder="Search settings" disabled title="Coming soon" />
+                </div>
+                <div class="settings-nav-label">Settings</div>
+                <div class="settings-nav-item active" data-pane="general" onclick="switchSettingsPane('general')">
+                  <span class="nav-icon" id="icon-settings-general"></span> General
+                </div>
+                <div class="settings-nav-item" data-pane="account" onclick="switchSettingsPane('account')">
+                  <span class="nav-icon" id="icon-settings-account"></span> Account
+                </div>
+                <div class="settings-nav-item" data-pane="voice" onclick="switchSettingsPane('voice')">
+                  <span class="nav-icon" id="icon-settings-voice"></span> Voice
+                </div>
+                <div class="settings-nav-item" data-pane="notifications" onclick="switchSettingsPane('notifications')">
+                  <span class="nav-icon" id="icon-settings-notif"></span> Notifications
+                </div>
+                <div class="settings-nav-label">Platform</div>
+                <div class="settings-nav-item" data-pane="data" onclick="switchSettingsPane('data')">
+                  <span class="nav-icon" id="icon-settings-data"></span> Data
+                </div>
+                <div class="settings-nav-item" data-pane="about" onclick="switchSettingsPane('about')">
+                  <span class="nav-icon" id="icon-settings-about"></span> About EduFlow Ai
                 </div>
               </div>
-            </div>
-            <div class="widget-box">
-              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Learning Progress</h4><span class="chevron"></span></div>
-              <div class="widget-body collapsed"><div id="widget-progress" style="font-size:13px;"></div></div>
-            </div>
-            <div class="widget-box">
-              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Current Course</h4><span class="chevron"></span></div>
-              <div class="widget-body collapsed"><div id="widget-course" style="font-size:13px;"></div></div>
-            </div>
-            <div class="widget-box">
-              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Upcoming Tasks</h4><span class="chevron"></span></div>
-              <div class="widget-body collapsed"><div id="widget-tasks" style="font-size:13px;"></div></div>
-            </div>
-            <div class="widget-box">
-              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Pomodoro Timer</h4><span class="chevron"></span></div>
-              <div class="widget-body collapsed">
-                <div id="pomodoro-display">25:00</div>
-                <div class="pomodoro-controls">
-                  <button class="btn-outline" onclick="pomodoroStart()">Start</button>
-                  <button class="btn-outline" onclick="pomodoroPause()">Pause</button>
-                  <button class="btn-outline" onclick="pomodoroReset()">Reset</button>
+              <div class="settings-modal-content">
+
+                <div class="settings-pane active" id="settings-pane-general">
+                  <h2>General</h2>
+                  <div class="box">
+                    <h3>Appearance</h3>
+                    <div class="row-flex">
+                      <button class="btn-outline" id="theme-btn-light" onclick="setTheme('light')">Light</button>
+                      <button class="btn-outline" id="theme-btn-dark" onclick="setTheme('dark')">Dark</button>
+                      <button class="btn-outline" id="theme-btn-system" onclick="setTheme('system')">Device theme</button>
+                    </div>
+                  </div>
+                  <div class="box">
+                    <h3>Language</h3>
+                    <p class="empty" style="margin:0 0 10px;">Choose the language used across the interface. Change it any time from the navbar too.</p>
+                    <select id="settings-language-select" onchange="document.getElementById('language-select').value=this.value; handleLanguageChange();" style="max-width:260px;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);"></select>
+                  </div>
                 </div>
+
+                <div class="settings-pane" id="settings-pane-account">
+                  <h2>Account</h2>
+                  <div class="box" id="settings-account-box">
+                    <div id="settings-account-fields">
+                      <div class="field-wrap"><label class="field-label">Display name</label><input type="text" id="settings-name-input" placeholder="Your name" /></div>
+                      <div class="field-wrap"><label class="field-label">WhatsApp number</label><input type="text" id="settings-phone-input" placeholder="e.g. 256700000000" /></div>
+                      <button class="btn" onclick="saveAccountDetails(this)">Save changes</button>
+                      <div id="settings-account-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+                      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+                      <p style="font-size:13px;" id="settings-email"></p>
+                      <button class="btn-outline" onclick="handleChangePassword()">Change password</button>
+                    </div>
+                  </div>
+                  <div class="box" id="settings-logout-box">
+                    <h3>Log out</h3>
+                    <button class="btn-outline" onclick="handleLogout()">Log out</button>
+                  </div>
+                </div>
+
+                <div class="settings-pane" id="settings-pane-voice">
+                  <h2>Voice</h2>
+                  <div class="box">
+                    <div class="row-flex" style="margin-bottom:10px;">
+                      <label style="font-size:13px;color:var(--muted);min-width:120px;">Read-back voice</label>
+                      <select id="settings-voice-select" onchange="setPreferredVoice(this.value)" style="flex:1;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);"></select>
+                    </div>
+                    <div class="row-flex">
+                      <label style="font-size:13px;color:var(--muted);min-width:120px;">Voice input language</label>
+                      <select id="settings-voice-input-lang" onchange="localStorage.setItem('eduflow_voice_input_lang', this.value)" style="flex:1;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
+                        <option value="en-US">English (US)</option>
+                        <option value="en-GB">English (UK)</option>
+                        <option value="fr-FR">French</option>
+                        <option value="es-ES">Spanish</option>
+                        <option value="sw-KE">Swahili</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="settings-pane" id="settings-pane-notifications">
+                  <h2>Notifications</h2>
+                  <div class="box">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;">
+                      <input type="checkbox" id="settings-notif-toggle" checked onchange="localStorage.setItem('eduflow_notifs_enabled', this.checked)" /> Task reminders &amp; alerts
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                      <input type="checkbox" id="settings-sound-toggle" onchange="localStorage.setItem('eduflow_notif_sound', this.checked)" /> Notification sound
+                    </label>
+                  </div>
+                </div>
+
+                <div class="settings-pane" id="settings-pane-data">
+                  <h2>Data</h2>
+                  <div class="box">
+                    <p class="empty" style="margin:0 0 10px;">Your chat draft and preferences are stored locally on this device.</p>
+                    <button class="btn-outline" onclick="localStorage.removeItem('eduflow_chat_draft'); showToast('Chat draft cleared.');">Clear saved draft</button>
+                  </div>
+                </div>
+
+                <div class="settings-pane" id="settings-pane-about">
+                  <h2>About EduFlow Ai</h2>
+                  <div class="box">
+                    <p style="font-size:13px;color:var(--muted);">EduFlow Ai helps you learn, practice and track progress with an AI tutor across chat, WhatsApp and this platform.</p>
+                  </div>
+                </div>
+
               </div>
             </div>
-            <div class="widget-box">
-              <div class="widget-header closed" onclick="toggleWidget(this)"><h4 style="margin:0;">Calculator</h4><span class="chevron"></span></div>
-              <div class="widget-body collapsed">
-                <div id="calc-display">0</div>
-                <div id="calc-grid"></div>
+          </div>
+
+          <div class="content-section" id="section-tool-calc">
+            <h1>Calculator</h1>
+            <div class="box" style="max-width:320px;">
+              <div id="calc-display">0</div>
+              <div id="calc-grid"></div>
+            </div>
+          </div>
+
+          <div class="content-section" id="section-tool-timer">
+            <h1>Pomodoro Timer</h1>
+            <div class="box" style="max-width:320px;text-align:center;">
+              <div id="pomodoro-display" style="font-size:40px;font-weight:700;margin-bottom:14px;">25:00</div>
+              <div class="pomodoro-controls" style="display:flex;gap:8px;justify-content:center;">
+                <button class="btn-outline" onclick="pomodoroStart()">Start</button>
+                <button class="btn-outline" onclick="pomodoroPause()">Pause</button>
+                <button class="btn-outline" onclick="pomodoroReset()">Reset</button>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Floating tool icons - each opens its own tab in the center content
+           area rather than a side panel. Icons that need an account (marked
+           with data-gated) are ordered below the ones that don't. -->
+      <div id="right-floating-icons">
+        <button class="floating-tool-icon" data-tool="tool-calc" onclick="openToolTab('tool-calc')" title="Calculator"></button>
+        <button class="floating-tool-icon" data-tool="tool-timer" onclick="openToolTab('tool-timer')" title="Pomodoro Timer"></button>
+        <button class="floating-tool-icon" data-tool="chat" onclick="openToolTab('chat')" title="AI Chat"></button>
+        <button class="floating-tool-icon" data-tool="progress" data-gated="1" onclick="openToolTab('progress')" title="Learning Progress"></button>
+        <button class="floating-tool-icon" data-tool="courses" data-gated="1" onclick="openToolTab('courses')" title="Current Course"></button>
+        <button class="floating-tool-icon" data-tool="planner" data-gated="1" onclick="openToolTab('planner')" title="Upcoming Tasks"></button>
       </div>
     </div>
   </div>
@@ -1102,10 +1151,26 @@
   <div class="modal-overlay" id="help-modal">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal('help-modal')">&times;</button>
-      <h3>Help Center</h3>
+      <h3>Help &amp; Support</h3>
       <p style="font-size:13px;"><strong>How do I start a course?</strong><br/>Use AI Chat or WhatsApp to tell EduFlow Ai what you'd like to learn.</p>
       <p style="font-size:13px;"><strong>How do certificates work?</strong><br/>Pass your final assessment (6/10 or higher) to receive a downloadable, verifiable PDF certificate.</p>
       <p style="font-size:13px;"><strong>Can I use this on WhatsApp too?</strong><br/>Yes - your account and progress are shared between WhatsApp and the website.</p>
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;" />
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;">Didn't find what you needed?</p>
+      <button class="btn-outline" onclick="closeModal('help-modal');openModal('feedback-modal')">Contact us / send feedback</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="privacy-modal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('privacy-modal')">&times;</button>
+      <h3>Privacy</h3>
+      <p style="font-size:13px;"><strong>Browsing as a guest</strong><br/>Nothing you say in guest mode is tied to an account or saved beyond this browser session - no chat history, no progress tracking.</p>
+      <p style="font-size:13px;"><strong>With an account</strong><br/>We save your chats (organized by mode/session), notes, tasks, flashcards and progress so you can pick up where you left off, on the website or WhatsApp.</p>
+      <p style="font-size:13px;"><strong>Profile picture</strong><br/>If you use "Use email profile photo," we look up a photo via Gravatar using your email - we don't store or share your email with them beyond that lookup.</p>
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;" />
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">Local data (drafts, theme, language) stored in this browser only:</p>
+      <button class="btn-outline" onclick="clearAllLocalData()">Clear local data on this device</button>
     </div>
   </div>
 
@@ -1207,6 +1272,8 @@
     lock: svg('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 13),
     copy: svg('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>', 13),
     check: svg('<path d="M20 6L9 17l-5-5"/>', 13),
+    privacy: svg('<path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6l8-3z"/>'),
+    help: svg('<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/>'),
   };
   function I(name, size) { return ICONS[name] ? ICONS[name].replace(/width="\d+" height="\d+"/, `width="${size||18}" height="${size||18}"`) : ''; }
 
@@ -1241,7 +1308,6 @@
       { id: 'career-center', label: 'Career Center', icon: 'career', live: true },
       { id: 'ai-tools', label: 'AI Tools', icon: 'aitools', live: true },
       { id: 'admin', label: 'Instructor Tools', icon: 'admin', live: true },
-      { id: 'settings', label: 'Settings', icon: 'settings', live: true },
     ]},
   ];
 
@@ -1297,7 +1363,6 @@
     if (name === 'community') loadCommunityPosts();
     if (name === 'live-classes') loadLiveClasses();
     if (name === 'admin') loadMyCustomQuizzes();
-    if (name === 'settings') renderSettingsGuestState();
   }
 
   // ---------- Auth screens ----------
@@ -1548,6 +1613,20 @@
     }
   }
 
+  // ---------- Settings modal (Claude-style: internal sidebar + panes) ----------
+  function openSettingsModal() {
+    renderSettingsGuestState();
+    openModal('settings-modal');
+  }
+  function switchSettingsPane(pane) {
+    if (isGuestMode && pane === 'account') {
+      guestGate('Sign up to manage your account', 'Name, WhatsApp number, photo and password all live on a free account.');
+      return;
+    }
+    document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.toggle('active', el.dataset.pane === pane));
+    document.querySelectorAll('.settings-pane').forEach(el => el.classList.toggle('active', el.id === 'settings-pane-' + pane));
+  }
+
   function guestGate(title, body) {
     document.getElementById('guest-gate-title').textContent = title || 'Sign up to unlock this';
     document.getElementById('guest-gate-body').textContent = body || 'This feature is only available to registered users. Create a free account to unlock every AI tool and save your progress.';
@@ -1557,9 +1636,9 @@
   // Nav items other than Chat/Settings need an account - grey them out and
   // route clicks into the sign-up prompt instead of a broken/empty page.
   function applyGuestLocks() {
-    document.querySelectorAll('.nav-item').forEach(el => {
+    document.querySelectorAll('#nav-list .nav-item').forEach(el => {
       const id = el.dataset.section;
-      const locked = isGuestMode && id !== 'chat' && id !== 'settings';
+      const locked = isGuestMode && id !== 'chat';
       el.classList.toggle('locked', locked);
       if (locked && !el.querySelector('.lock-icon')) {
         const span = document.createElement('span');
@@ -1568,10 +1647,18 @@
         el.appendChild(span);
       }
     });
-    ['widget-progress', 'widget-course', 'widget-tasks'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el && isGuestMode) el.innerHTML = '<div class="widget-guest-lock">Sign up to unlock this. <a onclick="guestGate()">Create free account</a></div>';
+    document.querySelectorAll('.floating-tool-icon').forEach(btn => {
+      btn.classList.toggle('locked', isGuestMode && btn.dataset.gated === '1');
     });
+    // Guests have no saved chat/notes history at all, so search (both the
+    // main platform search and the per-mode history search) is hidden
+    // outright rather than shown-but-gated - there's genuinely nothing for
+    // it to search yet.
+    const searchWrap = document.getElementById('search-wrap');
+    if (searchWrap) searchWrap.style.display = isGuestMode ? 'none' : '';
+    const modeHistoryWrap = document.getElementById('mode-history-search-wrap');
+    if (modeHistoryWrap) modeHistoryWrap.classList.toggle('hidden-for-guest', isGuestMode);
+
     const profileBtn = document.getElementById('profile-btn');
     profileBtn.classList.toggle('pulsate-account', isGuestMode);
     profileBtn.onclick = isGuestMode ? () => showScreen('login-screen') : () => togglePopover('account-popover');
@@ -1616,7 +1703,7 @@
   }
 
   function handleNavClick(id, live) {
-    if (isGuestMode && id !== 'chat' && id !== 'settings') {
+    if (isGuestMode && id !== 'chat') {
       guestGate('Sign up to unlock this', `${document.querySelector('.nav-item[data-section="' + id + '"] .label')?.textContent || 'This section'} is only available to registered users - it's quick and free to set up.`);
       return;
     }
@@ -1649,12 +1736,20 @@
       document.getElementById('voice-out-btn').innerHTML = I('speaker');
       document.getElementById('imagegen-btn').innerHTML = I('image');
       document.getElementById('floating-chat-btn').innerHTML = I('chat', 22);
-      document.getElementById('mode-switcher-arrow').innerHTML = I('chevron', 12);
+      document.getElementById('mode-history-icon').innerHTML = I('search', 14);
+      document.getElementById('icon-settings-nav').innerHTML = I('settings', 17);
+      document.getElementById('icon-privacy-nav').innerHTML = I('privacy', 17);
+      document.getElementById('icon-help-nav').innerHTML = I('help', 17);
+      document.getElementById('settings-search-icon').innerHTML = I('search', 14);
+      document.getElementById('icon-settings-general').innerHTML = I('settings', 15);
+      document.getElementById('icon-settings-account').innerHTML = I('user', 15);
+      document.getElementById('icon-settings-voice').innerHTML = I('speaker', 15);
+      document.getElementById('icon-settings-notif').innerHTML = I('bell', 15);
+      document.getElementById('icon-settings-data').innerHTML = I('panel', 15);
+      document.getElementById('icon-settings-about').innerHTML = I('help', 15);
       document.getElementById('mode-start-nav-icon').innerHTML = I('plus', 14);
-      document.getElementById('mode-history-btn').innerHTML = I('search', 16);
-      document.getElementById('right-sidebar-toggle').innerHTML = I('panel', 14);
-      const railIcons = { 'widget-chat-quick': 'chat', 'widget-progress': 'progress', 'widget-course': 'courses', 'widget-tasks': 'planner', 'pomodoro-display': 'timer', 'calc-display': 'calc' };
-      document.querySelectorAll('.rail-icon-btn').forEach(btn => { btn.innerHTML = I(railIcons[btn.dataset.widget] || 'dashboard', 17); });
+      const toolIcons = { 'tool-calc': 'calc', 'tool-timer': 'timer', 'chat': 'chat', 'progress': 'progress', 'courses': 'courses', 'planner': 'planner' };
+      document.querySelectorAll('.floating-tool-icon').forEach(btn => { btn.innerHTML = I(toolIcons[btn.dataset.tool] || 'dashboard', 18); });
       document.querySelectorAll('.widget-header .chevron').forEach(el => el.innerHTML = I('chevron', 14));
       document.querySelectorAll('.nav-section-label .chevron').forEach(el => el.innerHTML = I('chevron', 14));
     } catch (e) { console.error('[initChrome] sidebar/icons failed:', e); }
@@ -1667,8 +1762,8 @@
         const titleEl = document.getElementById('chat-mode-title');
         if (titleEl) titleEl.textContent = modeSel.options[modeSel.selectedIndex].text;
         refreshModeSlideout();
-        const choice = courseChoicePerMode[modeSel.value] || 'continue';
-        if (choice === 'continue' && !isGuestMode) loadModeContinuation(modeSel.value);
+        document.getElementById('mode-history-results').classList.remove('visible');
+        if (!isGuestMode) loadModeContinuation(modeSel.value);
       });
       refreshModeSlideout();
     } catch (e) { console.error('[initChrome] mode switcher failed:', e); }
@@ -1703,46 +1798,17 @@
     }
   }
 
-  function toggleRightSidebar() {
-    const panel = document.getElementById('right-sidebar');
-    panel.classList.toggle('collapsed');
-  }
-
-  // Clicking an icon in the collapsed right-sidebar rail expands the panel
-  // and opens just that widget (closing the others, same accordion rule as
-  // clicking a widget header directly).
-  function expandRailWidget(btn) {
-    const panel = document.getElementById('right-sidebar');
-    panel.classList.remove('collapsed');
-    const targetId = btn.dataset.widget;
-    const target = document.getElementById(targetId);
-    if (!target) return;
-    const box = target.closest('.widget-box');
-    const header = box && box.querySelector('.widget-header');
-    if (header) { openOnlyWidget(header); box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-  }
-
-  // Only one widget open at a time in the right sidebar, matching the left
-  // sidebar's group behavior - opening one closes whichever else was open.
-  function openOnlyWidget(headerEl) {
-    document.querySelectorAll('.widget-header').forEach(h => {
-      h.classList.add('closed');
-      if (h.nextElementSibling) h.nextElementSibling.classList.add('collapsed');
-    });
-    headerEl.classList.remove('closed');
-    headerEl.nextElementSibling.classList.remove('collapsed');
-  }
-
-  function toggleWidget(headerEl) {
-    const wasClosed = headerEl.classList.contains('closed');
-    document.querySelectorAll('.widget-header').forEach(h => {
-      h.classList.add('closed');
-      if (h.nextElementSibling) h.nextElementSibling.classList.add('collapsed');
-    });
-    if (wasClosed) {
-      headerEl.classList.remove('closed');
-      headerEl.nextElementSibling.classList.remove('collapsed');
+  // Each floating tool icon opens its target as a tab in the center content
+  // area. Gated ones (marked data-gated) route guests into the sign-up
+  // prompt instead of a broken/empty page.
+  function openToolTab(id) {
+    const btn = document.querySelector(`.floating-tool-icon[data-tool="${id}"]`);
+    if (isGuestMode && btn && btn.dataset.gated === '1') {
+      guestGate('Sign up to unlock this', `${btn.title} is saved to your account - create a free one to turn this on.`);
+      return;
     }
+    document.querySelectorAll('.floating-tool-icon').forEach(b => b.classList.toggle('active', b.dataset.tool === id));
+    showSection(id);
   }
 
   function togglePopover(id) {
@@ -1760,6 +1826,7 @@
       document.querySelectorAll('.popover').forEach(p => p.classList.remove('visible'));
     }
     if (!e.target.closest('#search-wrap')) document.getElementById('search-results').classList.remove('visible');
+    if (!e.target.closest('#mode-history-search-wrap')) document.getElementById('mode-history-results').classList.remove('visible');
   });
 
   // ---------- Generic "Enter submits" for single-line inputs ----------
@@ -2003,11 +2070,6 @@
     document.getElementById('courses-info').innerHTML = user.current_topic
       ? `<p style="margin:0 0 6px 0;font-size:14px;">Topic: <strong>${esc(user.current_topic)}</strong></p><p style="margin:0 0 6px 0;font-size:14px;">Skill level: <strong>${esc(user.skill_level) || 'Not yet assessed'}</strong></p><p style="margin:0;font-size:14px;">Progress: <strong>${user.current_lesson_number || 0}/5 lessons</strong></p>`
       : '<span class="empty">No course started yet.</span>';
-
-    document.getElementById('widget-progress').innerHTML = `XP: <strong>${user.xp || 0}</strong><br/>Level: <strong>${esc(user.level)}</strong>`;
-    document.getElementById('widget-course').innerHTML = user.current_topic ? `<strong>${esc(user.current_topic)}</strong><br/>Lesson ${user.current_lesson_number || 0}/5` : '<span class="empty">None yet</span>';
-
-    loadPlannerWidget();
   }
 
   function loadProgressSection() {
@@ -2067,40 +2129,6 @@
     document.getElementById('search-input').value = '';
   }
 
-  // Right-sidebar "AI Chat" quick-access widget: fires a real request through
-  // the same chat endpoint, shows a short preview inline, and the full
-  // exchange is also saved into the normal chat history.
-  async function sendQuickChat() {
-    const input = document.getElementById('widget-chat-quick-input');
-    const preview = document.getElementById('widget-chat-quick-preview');
-    const text = input.value.trim();
-    if (!text) return;
-    preview.textContent = 'Thinking...';
-    input.value = '';
-    try {
-      if (isGuestMode) {
-        const res = await fetch('/api/web/guest/chat', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 429) {
-          preview.textContent = data.message || "You've used today's free guest messages.";
-          guestGate("You've reached today's guest limit", data.message);
-          return;
-        }
-        if (!res.ok) throw new Error(data.error || 'Request failed');
-        preview.innerHTML = `${esc(data.reply.slice(0, 140))}${data.reply.length > 140 ? '&hellip;' : ''} <span style="color:var(--accent);cursor:pointer;" onclick="showSection('chat')">Open full chat &rarr;</span>`;
-      } else {
-        const mode = document.getElementById('mode-switcher').value;
-        const { reply } = await apiPost('/api/web/chat', { message: text, mode });
-        preview.innerHTML = `${esc(reply.slice(0, 140))}${reply.length > 140 ? '&hellip;' : ''} <span style="color:var(--accent);cursor:pointer;" onclick="showSection('chat')">Open full chat &rarr;</span>`;
-        loadChatHistory();
-      }
-    } catch (e) {
-      preview.textContent = 'Something went wrong - try again.';
-    }
-  }
-
   // ---------- Calendar / Notifications ----------
   let lastSeenNotifCount = Number(localStorage.getItem('eduflow_notif_seen') || 0);
 
@@ -2153,7 +2181,7 @@
   }
   function usePrompt(text) { document.getElementById('chat-textarea').value = text; sendChatMessage(); }
 
-  // ---------- Per-mode wording, slide-out panel, sessions ----------
+  // ---------- Per-mode wording, sessions ----------
   const MODE_UX = {
     tutor: { cont: 'Continue course', fresh: 'New course', start: 'Start new course', prompt: "I'd like to start a new course. What can you teach me?" },
     coding_assistant: { cont: 'Continue coding', fresh: 'New code', start: 'Start new code', prompt: "I'd like to start a new coding project. What can you help me build or learn?" },
@@ -2162,24 +2190,14 @@
     research_assistant: { cont: 'Continue research', fresh: 'New theme', start: 'Research a new theme', prompt: "I'd like to research a new theme. What should we explore?" },
     career_coach: { cont: 'Continue career', fresh: 'New career', start: 'Start new career coach', prompt: "I'd like to start a new career coaching session. What should we focus on?" },
   };
-  // Which choice (continue/new) is currently active per mode - remembered
-  // for the session so switching modes and back doesn't lose the choice.
-  const courseChoicePerMode = {};
   // A "new" session's heading is only actually recorded once the user sends
   // their first message in it - avoids littering history with empty,
-  // abandoned sessions if they just toggled "new" and changed their mind.
+  // abandoned sessions if they clicked Start new X and changed their mind.
   const pendingNewSession = {};
 
   function refreshModeSlideout() {
     const mode = document.getElementById('mode-switcher').value;
     const ux = MODE_UX[mode] || MODE_UX.tutor;
-    const choice = courseChoicePerMode[mode] || 'continue';
-
-    const contBtn = document.getElementById('mode-slide-continue-btn');
-    const newBtn = document.getElementById('mode-slide-new-btn');
-    if (contBtn) { contBtn.textContent = ux.cont; contBtn.classList.toggle('active', choice === 'continue'); }
-    if (newBtn) { newBtn.textContent = ux.fresh; newBtn.classList.toggle('active', choice === 'new'); }
-
     const startLabel = document.getElementById('mode-start-nav-label');
     if (startLabel) startLabel.textContent = ux.start;
     const startBtn = document.getElementById('mode-start-nav-btn');
@@ -2189,31 +2207,15 @@
     if (historySearch) historySearch.placeholder = 'Search ' + modeLabel + ' history...';
   }
 
-  function selectCourseChoice(choice) {
-    const mode = document.getElementById('mode-switcher').value;
-    courseChoicePerMode[mode] = choice;
-    refreshModeSlideout();
-    if (choice === 'new') {
-      document.getElementById('chat-messages').innerHTML = '';
-      pendingNewSession[mode] = true;
-      showToast('Starting fresh - your previous ' + (MODE_UX[mode] || MODE_UX.tutor).cont.toLowerCase() + ' is still saved and searchable.');
-    } else {
-      pendingNewSession[mode] = false;
-      if (!isGuestMode) loadModeContinuation(mode);
-    }
-  }
-
-  // Independent, always-visible button - prefills a mode-appropriate starter
-  // prompt. Its label (set by refreshModeSlideout) changes with whichever
-  // mode is currently selected, but the button itself is not tucked inside
-  // the mode switcher's hover panel.
+  // The only way to deliberately start fresh - prefills a mode-appropriate
+  // starter prompt. Mode switching itself always auto-continues that mode's
+  // last session (see loadModeContinuation), so there's no separate manual
+  // continue/new toggle to manage.
   function triggerModeStart() {
     const mode = document.getElementById('mode-switcher').value;
     const ux = MODE_UX[mode] || MODE_UX.tutor;
-    courseChoicePerMode[mode] = 'new';
     pendingNewSession[mode] = true;
     document.getElementById('chat-messages').innerHTML = '';
-    refreshModeSlideout();
     showSection('chat');
     showToast(ux.start + ' - tell EduFlow Ai what you have in mind, then hit send.');
     const ta = document.getElementById('chat-textarea');
@@ -2241,6 +2243,8 @@
     try { await apiPost('/api/web/chat/session', { mode, heading }); } catch (e) { /* non-critical */ }
   }
 
+  // Switching modes always shows that mode's own last session and scrolls
+  // to the bottom of it - no manual "continue" step needed.
   async function loadModeContinuation(mode) {
     if (isGuestMode) return;
     try {
@@ -2252,23 +2256,16 @@
     } catch (e) { /* silent */ }
   }
 
-  // ---------- Per-mode history search popup (icon-triggered) ----------
+  // ---------- Per-mode history search (inline box + dropdown) ----------
   // Shows session HEADINGS only - never raw message text - matching how
   // ChatGPT's own history search surfaces titles rather than message
-  // excerpts. Clicking a heading resumes that whole session.
+  // excerpts. Clicking a heading resumes that whole session. Hidden
+  // entirely for guests (see applyGuestLocks) since nothing is recorded
+  // for them to search.
   let modeHistoryDebounce = null;
-  function openModeHistoryPanel() {
-    if (isGuestMode) {
-      guestGate('Sign up to view chat history', 'Chat history per mode is saved to your account - create a free one to turn this on.');
-      return;
-    }
-    togglePopover('mode-history-popover');
-    if (document.getElementById('mode-history-popover').classList.contains('visible')) {
-      const mode = document.getElementById('mode-switcher').value;
-      document.getElementById('mode-history-inline-search').value = '';
-      document.getElementById('mode-history-inline-search').focus();
-      fetchModeHistory(mode, '');
-    }
+  function handleModeHistoryFocus() {
+    const mode = document.getElementById('mode-switcher').value;
+    fetchModeHistory(mode, document.getElementById('mode-history-inline-search').value.trim());
   }
   function searchModeHistory() {
     clearTimeout(modeHistoryDebounce);
@@ -2286,6 +2283,7 @@
   async function fetchModeHistory(mode, q) {
     if (isGuestMode) return;
     const resultsEl = document.getElementById('mode-history-results');
+    resultsEl.classList.add('visible');
     resultsEl.innerHTML = '<div class="mode-history-item">Loading…</div>';
     try {
       const url = '/api/web/chat/mode-sessions?mode=' + encodeURIComponent(mode) + (q ? '&q=' + encodeURIComponent(q) : '');
@@ -2308,7 +2306,8 @@
     const s = (window.__modeSessions || [])[i];
     if (!s) return;
     const mode = document.getElementById('mode-switcher').value;
-    togglePopover('mode-history-popover');
+    document.getElementById('mode-history-results').classList.remove('visible');
+    document.getElementById('mode-history-inline-search').value = '';
     showSection('chat');
     try {
       const { messages } = await apiGet('/api/web/chat/mode-session-messages?sessionId=' + encodeURIComponent(s.id) + '&mode=' + encodeURIComponent(mode));
@@ -2316,8 +2315,6 @@
       box.innerHTML = '';
       messages.forEach(m => appendMessage(m.role, m.content, false));
       scrollChatToBottom(false);
-      courseChoicePerMode[mode] = 'continue';
-      refreshModeSlideout();
     } catch (e) { showToast('Could not load that session.'); }
   }
 
@@ -2495,6 +2492,13 @@
   }
 
   function openModal(id) { document.getElementById(id).classList.add('visible'); }
+
+  function clearAllLocalData() {
+    ['eduflow_avatar', 'eduflow_chat_draft', 'eduflow_lang', 'eduflow_theme', 'eduflow_voice_uri',
+      'eduflow_voice_chosen', 'eduflow_voice_input_lang', 'eduflow_notifs_enabled', 'eduflow_notif_sound',
+      'eduflow_notif_seen'].forEach(k => localStorage.removeItem(k));
+    showToast('Local data cleared on this device.');
+  }
 
   let lastUserMessage = '';
   function regenerateLast(btn) {
@@ -2754,16 +2758,6 @@
       renderPlannerList();
     } catch (e) { /* silent */ }
   }
-  async function loadPlannerWidget() {
-    try {
-      const { tasks } = await apiGet('/api/web/planner');
-      plannerTasksCache = tasks;
-      const upcoming = tasks.filter(t => !t.done).slice(0, 4);
-      document.getElementById('widget-tasks').innerHTML = upcoming.length
-        ? upcoming.map(t => `<div>${esc(t.title)}</div>`).join('')
-        : '<span class="empty">Nothing pending.</span>';
-    } catch (e) { /* silent */ }
-  }
   async function createTask() {
     const title = document.getElementById('task-title-input').value.trim();
     const due = document.getElementById('task-due-input').value; // "YYYY-MM-DD" or ''
@@ -2780,11 +2774,10 @@
     document.getElementById('task-title-input').value = '';
     showToast('Task scheduled.');
     loadPlanner();
-    loadPlannerWidget();
     loadCalendarAndNotifs();
   }
-  async function toggleTask(id, done) { await apiPatch('/api/web/planner/' + id, { done }); loadPlannerWidget(); loadPlanner(); }
-  async function deleteTask(id) { await apiDelete('/api/web/planner/' + id); loadPlanner(); loadPlannerWidget(); }
+  async function toggleTask(id, done) { await apiPatch('/api/web/planner/' + id, { done }); loadPlanner(); }
+  async function deleteTask(id) { await apiDelete('/api/web/planner/' + id); loadPlanner(); }
 
   // ---------- Leaderboard ----------
   async function loadLeaderboard() {
