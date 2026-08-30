@@ -21,6 +21,10 @@
     } catch (e) {
       document.documentElement.setAttribute('data-theme', 'light');
     }
+    try {
+      const textSize = localStorage.getItem('eduflow_text_size');
+      if (textSize) document.documentElement.setAttribute('data-text-size', textSize);
+    } catch (e) { /* ignore */ }
   })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -29,6 +33,8 @@
   :root {
     --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
+  :root[data-text-size="small"] body { font-size: 13px; }
+  :root[data-text-size="large"] body { font-size: 16px; }
   :root[data-theme="dark"] {
     --bg: #0f172a; --sidebar-bg: #0b1220; --surface: #1a2436; --border: #2c3a52; --text: #eef2f7;
     --muted: #93a2b8; --accent: #d8ad4c; --accent-dim: #7a622c; --green: #55c98a; --red: #e5707a;
@@ -147,6 +153,10 @@
   #guest-banner.visible { display: flex; }
   #guest-banner .btn { padding: 6px 14px; font-size: 12px; }
   .nav-item.locked { opacity: 0.5; cursor: pointer; }
+  /* When collapsed there's no room for the lock icon/label to explain the
+     dimming anyway, so keep icons fully visible - same as logged-in users
+     see when collapsed - rather than looking faded/broken. */
+  #sidebar.collapsed .nav-item.locked { opacity: 1; }
   .nav-item .lock-icon { margin-left: auto; display: flex; opacity: 0.7; }
 
   #app-body { display: flex; flex: 1; min-height: 0; }
@@ -198,25 +208,6 @@
   #main-layout { display: flex; gap: 24px; height: 100%; }
   #main-content.chat-mode #main-layout { width: 100%; }
   #center-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-
-  /* ---------- Floating right-side tool icons ----------
-     A slim fixed strip, not a side panel - each icon opens its target as a
-     tab in the center content area. Icons without a login requirement
-     (data-gated unset) sit above the ones that need an account. */
-  #right-floating-icons {
-    position: fixed; top: 50%; right: 14px; transform: translateY(-50%); z-index: 40;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .floating-tool-icon {
-    width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
-    color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  }
-  .floating-tool-icon:hover { color: var(--text); border-color: var(--accent-dim); }
-  .floating-tool-icon.active { background: var(--accent-dim); color: #1a1404; border-color: var(--accent-dim); }
-  .floating-tool-icon.locked { opacity: 0.55; }
-  .floating-tool-icon[data-gated="1"] { margin-top: 4px; }
-  @media (max-width: 980px) { #right-floating-icons { display: none; } }
 
   .content-section { display: none; max-width: 100%; }
   .content-section.active { display: block; }
@@ -342,6 +333,8 @@
   }
   .modal-overlay.visible { display: flex; }
   .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 360px; max-height: 80vh; overflow-y: auto; }
+  .pw-stage { display: none; }
+  .pw-stage.active { display: block; }
 
   /* ---------- Settings modal: internal sidebar + content pane ---------- */
   .settings-modal-box {
@@ -359,6 +352,8 @@
   }
   .settings-modal-search input { border: none; background: none; font-size: 12.5px; color: var(--muted); width: 100%; }
   .settings-modal-search .icon-slot { color: var(--muted); display: flex; }
+  .settings-nav-set { display: none; }
+  .settings-nav-set.active { display: block; }
   .settings-nav-label {
     font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; padding: 10px 8px 4px;
   }
@@ -487,7 +482,7 @@
       </div>
       <div class="nav-spacer"></div>
       <div class="popover-trigger">
-        <button class="nav-icon-btn" id="calendar-btn" onclick="togglePopover('calendar-popover')" title="Calendar"></button>
+        <button class="nav-icon-btn" id="calendar-btn" onclick="openCalendarPopover()" title="Calendar"></button>
         <div class="popover" id="calendar-popover">
           <div class="popover-title">Today</div>
           <div id="calendar-content"></div>
@@ -495,10 +490,20 @@
         </div>
       </div>
       <div class="popover-trigger">
-        <button class="nav-icon-btn" id="notif-btn" onclick="togglePopover('notif-popover')" title="Notifications"></button>
+        <button class="nav-icon-btn" id="notif-btn" onclick="openNotifPopover()" title="Notifications"></button>
         <div class="popover" id="notif-popover"><div class="popover-title">Notifications</div><div id="notif-content"></div></div>
       </div>
-      <button class="nav-icon-btn" id="messages-btn" title="Messages (coming soon)" onclick="alert('Private messaging is coming soon.')"></button>
+      <div class="popover-trigger">
+        <button class="nav-icon-btn" id="messages-btn" title="Messages" onclick="openMessagesPopover()"></button>
+        <div class="popover" id="messages-popover" style="width:280px;">
+          <div class="popover-title">Messages</div>
+          <div id="messages-content">
+            <div class="mode-history-item" style="cursor:default;color:var(--muted);">
+              Private messaging is coming soon. In the meantime, reach us via Help &amp; Support.
+            </div>
+          </div>
+        </div>
+      </div>
       <select id="language-select" title="Language" onchange="handleLanguageChange()">
         <option value="en">English</option>
         <option value="es">Spanish</option>
@@ -999,25 +1004,47 @@
                   <span class="icon-slot" id="settings-search-icon"></span>
                   <input type="text" placeholder="Search settings" disabled title="Coming soon" />
                 </div>
-                <div class="settings-nav-label">Settings</div>
-                <div class="settings-nav-item active" data-pane="general" onclick="switchSettingsPane('general')">
-                  <span class="nav-icon" id="icon-settings-general"></span> General
+
+                <!-- Guest set: only what works without an account -->
+                <div class="settings-nav-set" id="settings-nav-guest">
+                  <div class="settings-nav-label">Settings</div>
+                  <div class="settings-nav-item active" data-pane="general" onclick="switchSettingsPane('general')">
+                    <span class="nav-icon" id="icon-settings-general-g"></span> General
+                  </div>
+                  <div class="settings-nav-item" data-pane="voice" onclick="switchSettingsPane('voice')">
+                    <span class="nav-icon" id="icon-settings-voice-g"></span> Voice
+                  </div>
+                  <div class="settings-nav-item" data-pane="about" onclick="switchSettingsPane('about')">
+                    <span class="nav-icon" id="icon-settings-about-g"></span> About EduFlow Ai
+                  </div>
+                  <div class="settings-nav-label">Account</div>
+                  <div class="settings-nav-item" data-pane="signup-cta" onclick="switchSettingsPane('signup-cta')">
+                    <span class="nav-icon" id="icon-settings-signup-g"></span> Sign up / Log in
+                  </div>
                 </div>
-                <div class="settings-nav-item" data-pane="account" onclick="switchSettingsPane('account')">
-                  <span class="nav-icon" id="icon-settings-account"></span> Account
-                </div>
-                <div class="settings-nav-item" data-pane="voice" onclick="switchSettingsPane('voice')">
-                  <span class="nav-icon" id="icon-settings-voice"></span> Voice
-                </div>
-                <div class="settings-nav-item" data-pane="notifications" onclick="switchSettingsPane('notifications')">
-                  <span class="nav-icon" id="icon-settings-notif"></span> Notifications
-                </div>
-                <div class="settings-nav-label">Platform</div>
-                <div class="settings-nav-item" data-pane="data" onclick="switchSettingsPane('data')">
-                  <span class="nav-icon" id="icon-settings-data"></span> Data
-                </div>
-                <div class="settings-nav-item" data-pane="about" onclick="switchSettingsPane('about')">
-                  <span class="nav-icon" id="icon-settings-about"></span> About EduFlow Ai
+
+                <!-- Member set: full options -->
+                <div class="settings-nav-set" id="settings-nav-member">
+                  <div class="settings-nav-label">Settings</div>
+                  <div class="settings-nav-item active" data-pane="general" onclick="switchSettingsPane('general')">
+                    <span class="nav-icon" id="icon-settings-general"></span> General
+                  </div>
+                  <div class="settings-nav-item" data-pane="account" onclick="switchSettingsPane('account')">
+                    <span class="nav-icon" id="icon-settings-account"></span> Account
+                  </div>
+                  <div class="settings-nav-item" data-pane="voice" onclick="switchSettingsPane('voice')">
+                    <span class="nav-icon" id="icon-settings-voice"></span> Voice
+                  </div>
+                  <div class="settings-nav-item" data-pane="notifications" onclick="switchSettingsPane('notifications')">
+                    <span class="nav-icon" id="icon-settings-notif"></span> Notifications
+                  </div>
+                  <div class="settings-nav-label">Platform</div>
+                  <div class="settings-nav-item" data-pane="data" onclick="switchSettingsPane('data')">
+                    <span class="nav-icon" id="icon-settings-data"></span> Data
+                  </div>
+                  <div class="settings-nav-item" data-pane="about" onclick="switchSettingsPane('about')">
+                    <span class="nav-icon" id="icon-settings-about"></span> About EduFlow Ai
+                  </div>
                 </div>
               </div>
               <div class="settings-modal-content">
@@ -1037,6 +1064,20 @@
                     <p class="empty" style="margin:0 0 10px;">Choose the language used across the interface. Change it any time from the navbar too.</p>
                     <select id="settings-language-select" onchange="document.getElementById('language-select').value=this.value; handleLanguageChange();" style="max-width:260px;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);"></select>
                   </div>
+                  <div class="box">
+                    <h3>Text size</h3>
+                    <div class="row-flex">
+                      <button class="btn-outline" onclick="setTextSize('small')">Small</button>
+                      <button class="btn-outline" onclick="setTextSize('normal')">Normal</button>
+                      <button class="btn-outline" onclick="setTextSize('large')">Large</button>
+                    </div>
+                  </div>
+                  <div class="box">
+                    <h3>Sending messages</h3>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                      <input type="checkbox" id="settings-enter-send-toggle" checked onchange="localStorage.setItem('eduflow_enter_sends', this.checked)" /> Send message with Enter (Shift+Enter for a new line)
+                    </label>
+                  </div>
                 </div>
 
                 <div class="settings-pane" id="settings-pane-account">
@@ -1047,10 +1088,24 @@
                       <div class="field-wrap"><label class="field-label">WhatsApp number</label><input type="text" id="settings-phone-input" placeholder="e.g. 256700000000" /></div>
                       <button class="btn" onclick="saveAccountDetails(this)">Save changes</button>
                       <div id="settings-account-msg" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
-                      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-                      <p style="font-size:13px;" id="settings-email"></p>
-                      <button class="btn-outline" onclick="handleChangePassword()">Change password</button>
                     </div>
+                  </div>
+                  <div class="box">
+                    <h3>Email &amp; sign-in</h3>
+                    <p style="font-size:13px;" id="settings-email"></p>
+                    <button class="btn-outline" onclick="handleChangePassword()">Change password</button>
+                  </div>
+                  <div class="box">
+                    <h3>Profile picture</h3>
+                    <div class="row-flex">
+                      <button class="btn-outline" onclick="document.getElementById('avatar-file-input').click()">Upload photo</button>
+                      <button class="btn-outline" onclick="useEmailAvatar()">Use email profile photo</button>
+                    </div>
+                  </div>
+                  <div class="box">
+                    <h3>Danger zone</h3>
+                    <p class="empty" style="margin:0 0 10px;">Need your account removed entirely? We'll need to verify a few things first.</p>
+                    <button class="btn-outline" style="color:var(--red);border-color:var(--red);" onclick="closeModal('settings-modal');openModal('feedback-modal')">Request account deletion</button>
                   </div>
                   <div class="box" id="settings-logout-box">
                     <h3>Log out</h3>
@@ -1062,11 +1117,11 @@
                   <h2>Voice</h2>
                   <div class="box">
                     <div class="row-flex" style="margin-bottom:10px;">
-                      <label style="font-size:13px;color:var(--muted);min-width:120px;">Read-back voice</label>
+                      <label style="font-size:13px;color:var(--muted);min-width:140px;">Read-back voice</label>
                       <select id="settings-voice-select" onchange="setPreferredVoice(this.value)" style="flex:1;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);"></select>
                     </div>
                     <div class="row-flex">
-                      <label style="font-size:13px;color:var(--muted);min-width:120px;">Voice input language</label>
+                      <label style="font-size:13px;color:var(--muted);min-width:140px;">Voice input language</label>
                       <select id="settings-voice-input-lang" onchange="localStorage.setItem('eduflow_voice_input_lang', this.value)" style="flex:1;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
                         <option value="en-US">English (US)</option>
                         <option value="en-GB">English (UK)</option>
@@ -1076,11 +1131,21 @@
                       </select>
                     </div>
                   </div>
+                  <div class="box">
+                    <h3>Playback</h3>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;">
+                      <input type="checkbox" id="settings-autoread-toggle" onchange="voiceOutputEnabled = this.checked; localStorage.setItem('eduflow_autoread', this.checked);" /> Automatically read AI replies aloud
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                      <input type="checkbox" id="settings-autosend-toggle" onchange="localStorage.setItem('eduflow_voice_autosend', this.checked)" /> Send automatically when I stop speaking
+                    </label>
+                  </div>
                 </div>
 
                 <div class="settings-pane" id="settings-pane-notifications">
                   <h2>Notifications</h2>
                   <div class="box">
+                    <h3>In-app</h3>
                     <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;">
                       <input type="checkbox" id="settings-notif-toggle" checked onchange="localStorage.setItem('eduflow_notifs_enabled', this.checked)" /> Task reminders &amp; alerts
                     </label>
@@ -1088,13 +1153,28 @@
                       <input type="checkbox" id="settings-sound-toggle" onchange="localStorage.setItem('eduflow_notif_sound', this.checked)" /> Notification sound
                     </label>
                   </div>
+                  <div class="box">
+                    <h3>Email</h3>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;">
+                      <input type="checkbox" id="settings-email-notif-toggle" onchange="localStorage.setItem('eduflow_email_notifs', this.checked)" /> Email me about overdue tasks
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                      <input type="checkbox" id="settings-weekly-summary-toggle" onchange="localStorage.setItem('eduflow_weekly_summary', this.checked)" /> Weekly progress summary
+                    </label>
+                  </div>
                 </div>
 
                 <div class="settings-pane" id="settings-pane-data">
                   <h2>Data</h2>
                   <div class="box">
+                    <h3>Local device data</h3>
                     <p class="empty" style="margin:0 0 10px;">Your chat draft and preferences are stored locally on this device.</p>
                     <button class="btn-outline" onclick="localStorage.removeItem('eduflow_chat_draft'); showToast('Chat draft cleared.');">Clear saved draft</button>
+                  </div>
+                  <div class="box">
+                    <h3>Your account data</h3>
+                    <p class="empty" style="margin:0 0 10px;">Chats, notes, tasks, flashcards and progress saved to your account.</p>
+                    <button class="btn-outline" onclick="closeModal('settings-modal');openModal('feedback-modal')">Request a copy of my data</button>
                   </div>
                 </div>
 
@@ -1102,6 +1182,20 @@
                   <h2>About EduFlow Ai</h2>
                   <div class="box">
                     <p style="font-size:13px;color:var(--muted);">EduFlow Ai helps you learn, practice and track progress with an AI tutor across chat, WhatsApp and this platform.</p>
+                  </div>
+                  <div class="box">
+                    <h3>More</h3>
+                    <div class="account-pop-link" onclick="closeModal('settings-modal');openModal('privacy-modal')">Privacy</div>
+                    <div class="account-pop-link" onclick="closeModal('settings-modal');openModal('help-modal')">Help &amp; Support</div>
+                  </div>
+                </div>
+
+                <div class="settings-pane" id="settings-pane-signup-cta">
+                  <h2>Account</h2>
+                  <div class="box" style="text-align:center;">
+                    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">You're browsing as a guest, so there's no account to manage yet - your name, WhatsApp number, voice choice, notifications and progress all live on a free account.</p>
+                    <button class="btn" onclick="closeModal('settings-modal');showScreen('signup-screen')">Sign up free</button>
+                    <button class="btn-outline" style="margin-left:8px;" onclick="closeModal('settings-modal');showScreen('login-screen')">Log in</button>
                   </div>
                 </div>
 
@@ -1130,18 +1224,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Floating tool icons - each opens its own tab in the center content
-           area rather than a side panel. Icons that need an account (marked
-           with data-gated) are ordered below the ones that don't. -->
-      <div id="right-floating-icons">
-        <button class="floating-tool-icon" data-tool="tool-calc" onclick="openToolTab('tool-calc')" title="Calculator"></button>
-        <button class="floating-tool-icon" data-tool="tool-timer" onclick="openToolTab('tool-timer')" title="Pomodoro Timer"></button>
-        <button class="floating-tool-icon" data-tool="chat" onclick="openToolTab('chat')" title="AI Chat"></button>
-        <button class="floating-tool-icon" data-tool="progress" data-gated="1" onclick="openToolTab('progress')" title="Learning Progress"></button>
-        <button class="floating-tool-icon" data-tool="courses" data-gated="1" onclick="openToolTab('courses')" title="Current Course"></button>
-        <button class="floating-tool-icon" data-tool="planner" data-gated="1" onclick="openToolTab('planner')" title="Upcoming Tasks"></button>
-      </div>
     </div>
   </div>
 
@@ -1149,28 +1231,177 @@
   <div id="toast-stack"></div>
 
   <div class="modal-overlay" id="help-modal">
-    <div class="modal-box">
+    <div class="settings-modal-box">
       <button class="modal-close" onclick="closeModal('help-modal')">&times;</button>
-      <h3>Help &amp; Support</h3>
-      <p style="font-size:13px;"><strong>How do I start a course?</strong><br/>Use AI Chat or WhatsApp to tell EduFlow Ai what you'd like to learn.</p>
-      <p style="font-size:13px;"><strong>How do certificates work?</strong><br/>Pass your final assessment (6/10 or higher) to receive a downloadable, verifiable PDF certificate.</p>
-      <p style="font-size:13px;"><strong>Can I use this on WhatsApp too?</strong><br/>Yes - your account and progress are shared between WhatsApp and the website.</p>
-      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;" />
-      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;">Didn't find what you needed?</p>
-      <button class="btn-outline" onclick="closeModal('help-modal');openModal('feedback-modal')">Contact us / send feedback</button>
+      <div class="settings-modal-sidebar">
+        <div class="settings-nav-label">Help &amp; Support</div>
+        <div class="settings-nav-item active" data-pane="h-start" onclick="switchHelpPane('h-start')">Getting started</div>
+        <div class="settings-nav-item" data-pane="h-courses" onclick="switchHelpPane('h-courses')">Courses &amp; certificates</div>
+        <div class="settings-nav-item" data-pane="h-account" onclick="switchHelpPane('h-account')">Account &amp; access</div>
+        <div class="settings-nav-item" data-pane="h-trouble" onclick="switchHelpPane('h-trouble')">Troubleshooting</div>
+        <div class="settings-nav-label">Get in touch</div>
+        <div class="settings-nav-item" data-pane="h-contact" onclick="switchHelpPane('h-contact')">Contact us</div>
+      </div>
+      <div class="settings-modal-content">
+
+        <div class="settings-pane active" id="help-pane-h-start">
+          <h2>Getting started</h2>
+          <div class="box">
+            <h3>How do I start a course?</h3>
+            <p style="font-size:13px;color:var(--muted);">Open AI Chat and tell EduFlow Ai what you'd like to learn, or use the "Start new course" button next to the mode switcher. You can also message EduFlow Ai directly on WhatsApp.</p>
+          </div>
+          <div class="box">
+            <h3>What are modes?</h3>
+            <p style="font-size:13px;color:var(--muted);">Tutor, Coding Assistant, Study Partner, Quiz Master, Research Assistant and Career Coach are different AI personas tuned for different kinds of help. Each keeps its own separate chat history.</p>
+          </div>
+          <div class="box">
+            <h3>Can I use this on WhatsApp too?</h3>
+            <p style="font-size:13px;color:var(--muted);">Yes - your account and progress are shared between WhatsApp and the website, as long as you sign up with the same phone number.</p>
+          </div>
+        </div>
+
+        <div class="settings-pane" id="help-pane-h-courses">
+          <h2>Courses &amp; certificates</h2>
+          <div class="box">
+            <h3>How do certificates work?</h3>
+            <p style="font-size:13px;color:var(--muted);">Pass your final assessment (6/10 or higher) to receive a downloadable, verifiable PDF certificate with a unique certificate code.</p>
+          </div>
+          <div class="box">
+            <h3>Can I switch topics mid-course?</h3>
+            <p style="font-size:13px;color:var(--muted);">Yes - use "Start new course" (or the equivalent per mode, like "Start new topic") at any time. Your previous course stays saved and searchable.</p>
+          </div>
+          <div class="box">
+            <h3>How is my skill level decided?</h3>
+            <p style="font-size:13px;color:var(--muted);">EduFlow Ai asks a few quick questions when you start a topic and adjusts as you go based on your answers and quiz results.</p>
+          </div>
+        </div>
+
+        <div class="settings-pane" id="help-pane-h-account">
+          <h2>Account &amp; access</h2>
+          <div class="box">
+            <h3>Guest vs. registered</h3>
+            <p style="font-size:13px;color:var(--muted);">Guests get a limited chat with a daily message cap and nothing saved. Signing up (free) unlocks every AI tool, saves your chat history per mode, and tracks your progress.</p>
+          </div>
+          <div class="box">
+            <h3>I forgot my password</h3>
+            <p style="font-size:13px;color:var(--muted);">From the login screen, use your email to sign back in, or reach out via Contact us below if you're locked out entirely.</p>
+          </div>
+          <div class="box">
+            <h3>Can I delete my account?</h3>
+            <p style="font-size:13px;color:var(--muted);">Yes - go to Settings → Account → Danger zone and request deletion. We'll follow up by email to confirm before anything is removed.</p>
+          </div>
+        </div>
+
+        <div class="settings-pane" id="help-pane-h-trouble">
+          <h2>Troubleshooting</h2>
+          <div class="box">
+            <h3>The AI isn't responding</h3>
+            <p style="font-size:13px;color:var(--muted);">Check your connection and try again. Guests are limited to a small number of messages per day - signing up removes that limit.</p>
+          </div>
+          <div class="box">
+            <h3>My colors/theme look broken</h3>
+            <p style="font-size:13px;color:var(--muted);">Try switching themes once in Settings → General, or a hard refresh (Ctrl/Cmd+Shift+R). If it persists, let us know via Contact us.</p>
+          </div>
+          <div class="box">
+            <h3>Voice input or read-back isn't working</h3>
+            <p style="font-size:13px;color:var(--muted);">Voice features need microphone permission and a supported browser (Chrome/Edge work best). Check Settings → Voice for your chosen voice and language.</p>
+          </div>
+        </div>
+
+        <div class="settings-pane" id="help-pane-h-contact">
+          <h2>Contact us</h2>
+          <div class="box">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Didn't find what you needed? Send us a message and we'll get back to you.</p>
+            <button class="btn" onclick="closeModal('help-modal');openModal('feedback-modal')">Send feedback / contact us</button>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
   <div class="modal-overlay" id="privacy-modal">
-    <div class="modal-box">
+    <div class="settings-modal-box">
       <button class="modal-close" onclick="closeModal('privacy-modal')">&times;</button>
-      <h3>Privacy</h3>
-      <p style="font-size:13px;"><strong>Browsing as a guest</strong><br/>Nothing you say in guest mode is tied to an account or saved beyond this browser session - no chat history, no progress tracking.</p>
-      <p style="font-size:13px;"><strong>With an account</strong><br/>We save your chats (organized by mode/session), notes, tasks, flashcards and progress so you can pick up where you left off, on the website or WhatsApp.</p>
-      <p style="font-size:13px;"><strong>Profile picture</strong><br/>If you use "Use email profile photo," we look up a photo via Gravatar using your email - we don't store or share your email with them beyond that lookup.</p>
-      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;" />
-      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">Local data (drafts, theme, language) stored in this browser only:</p>
-      <button class="btn-outline" onclick="clearAllLocalData()">Clear local data on this device</button>
+      <div class="settings-modal-sidebar">
+        <div class="settings-nav-label">Privacy</div>
+        <div class="settings-nav-item active" data-pane="p-overview" onclick="switchPrivacyPane('p-overview')">Overview</div>
+        <div class="settings-nav-item" data-pane="p-guest" onclick="switchPrivacyPane('p-guest')">Guests vs. accounts</div>
+        <div class="settings-nav-item" data-pane="p-collect" onclick="switchPrivacyPane('p-collect')">What we collect</div>
+        <div class="settings-nav-item" data-pane="p-use" onclick="switchPrivacyPane('p-use')">How it's used</div>
+        <div class="settings-nav-item" data-pane="p-third" onclick="switchPrivacyPane('p-third')">Third-party services</div>
+        <div class="settings-nav-label">Your data</div>
+        <div class="settings-nav-item" data-pane="p-choices" onclick="switchPrivacyPane('p-choices')">Your choices</div>
+      </div>
+      <div class="settings-modal-content">
+
+        <div class="settings-pane active" id="privacy-pane-p-overview">
+          <h2>Overview</h2>
+          <div class="box">
+            <p style="font-size:13px;color:var(--muted);">EduFlow Ai is a learning platform. This page explains, plainly, what we store and why - not a full legal policy, just the practical version.</p>
+          </div>
+        </div>
+
+        <div class="settings-pane" id="privacy-pane-p-guest">
+          <h2>Guests vs. accounts</h2>
+          <div class="box">
+            <h3>Browsing as a guest</h3>
+            <p style="font-size:13px;color:var(--muted);">Nothing you say in guest mode is tied to an account or saved beyond this browser session - no chat history, no progress tracking. Messages are rate-limited per device/IP to prevent abuse, not to identify you.</p>
+          </div>
+          <div class="box">
+            <h3>With an account</h3>
+            <p style="font-size:13px;color:var(--muted);">We save your chats (organized by mode/session), notes, tasks, flashcards and progress so you can pick up where you left off, on the website or WhatsApp.</p>
+          </div>
+        </div>
+
+        <div class="settings-pane" id="privacy-pane-p-collect">
+          <h2>What we collect</h2>
+          <div class="box">
+            <h3>Account info</h3>
+            <p style="font-size:13px;color:var(--muted);">Email, WhatsApp number, and anything you enter (name, chats, notes, tasks).</p>
+          </div>
+          <div class="box">
+            <h3>Usage</h3>
+            <p style="font-size:13px;color:var(--muted);">Which modes/features you use, quiz scores, and course progress - so we can show your stats and improve the product.</p>
+          </div>
+          <div class="box">
+            <h3>What we don't collect</h3>
+            <p style="font-size:13px;color:var(--muted);">We don't sell your data, and guest sessions aren't linked to any identity.</p>
+          </div>
+        </div>
+
+        <div class="settings-pane" id="privacy-pane-p-use">
+          <h2>How it's used</h2>
+          <div class="box">
+            <p style="font-size:13px;color:var(--muted);">To run the product (show your chats, track progress, issue certificates), respond to support requests, and improve EduFlow Ai. Chat content is sent to our AI provider to generate replies, scoped to the current mode/session only.</p>
+          </div>
+        </div>
+
+        <div class="settings-pane" id="privacy-pane-p-third">
+          <h2>Third-party services</h2>
+          <div class="box">
+            <h3>Profile picture</h3>
+            <p style="font-size:13px;color:var(--muted);">If you use "Use email profile photo," we look up a photo via Gravatar using your email - we don't store or share your email with them beyond that lookup.</p>
+          </div>
+          <div class="box">
+            <h3>Authentication &amp; hosting</h3>
+            <p style="font-size:13px;color:var(--muted);">Accounts and data are managed via Supabase; the AI chat responses are generated via our AI provider.</p>
+          </div>
+        </div>
+
+        <div class="settings-pane" id="privacy-pane-p-choices">
+          <h2>Your choices</h2>
+          <div class="box">
+            <p class="empty" style="margin:0 0 10px;">Local data (drafts, theme, language) stored in this browser only:</p>
+            <button class="btn-outline" onclick="clearAllLocalData()">Clear local data on this device</button>
+          </div>
+          <div class="box">
+            <p class="empty" style="margin:0 0 10px;">Want a copy of your account data, or want it deleted?</p>
+            <button class="btn-outline" onclick="closeModal('privacy-modal');openModal('feedback-modal')">Request data / deletion</button>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
@@ -1216,6 +1447,44 @@
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
         <button class="btn" onclick="closeModal('guest-gate-modal');showScreen('signup-screen')">Sign up free</button>
         <button class="btn-outline" onclick="closeModal('guest-gate-modal');showScreen('login-screen')">I already have an account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password change: a real 3-stage protocol (verify identity -> choose
+       new password -> confirmation) rather than a single prompt(), so
+       there's an actual guard against someone with a hijacked session
+       silently changing the password with no re-verification step. -->
+  <div class="modal-overlay" id="password-modal">
+    <div class="modal-box" style="width:340px;">
+      <button class="modal-close" onclick="closeModal('password-modal')">&times;</button>
+      <div id="pw-step-indicator" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;">Step 1 of 3</div>
+
+      <div class="pw-stage active" id="pw-stage-1">
+        <h3 style="margin-top:0;">Verify your identity</h3>
+        <p style="font-size:12.5px;color:var(--muted);margin-top:-6px;">Enter your current password to continue.</p>
+        <div class="field-wrap"><input type="password" id="pw-current-input" placeholder="Current password" /></div>
+        <button class="btn" style="width:100%;" onclick="pwVerifyCurrent()">Verify &amp; continue</button>
+        <div id="pw-stage1-msg" style="font-size:12px;color:var(--red);margin-top:8px;min-height:16px;"></div>
+      </div>
+
+      <div class="pw-stage" id="pw-stage-2">
+        <h3 style="margin-top:0;">Choose a new password</h3>
+        <p style="font-size:12.5px;color:var(--muted);margin-top:-6px;">At least 8 characters, including a number.</p>
+        <div class="field-wrap"><input type="password" id="pw-new-input" placeholder="New password" oninput="pwCheckStrength()" /></div>
+        <div style="height:4px;border-radius:2px;background:var(--border);margin:6px 0 12px;overflow:hidden;">
+          <div id="pw-strength-bar" style="height:100%;width:0%;background:var(--red);transition:width .2s ease, background .2s ease;"></div>
+        </div>
+        <div class="field-wrap"><input type="password" id="pw-confirm-input" placeholder="Confirm new password" /></div>
+        <button class="btn" style="width:100%;" onclick="pwSubmitNew()">Update password</button>
+        <div id="pw-stage2-msg" style="font-size:12px;color:var(--red);margin-top:8px;min-height:16px;"></div>
+      </div>
+
+      <div class="pw-stage" id="pw-stage-3" style="text-align:center;padding:8px 0;">
+        <div style="font-size:34px;color:var(--green);margin-bottom:8px;">✓</div>
+        <h3 style="margin:0 0 6px;">Password updated</h3>
+        <p style="font-size:13px;color:var(--muted);margin:0;">Your password has been changed successfully.</p>
+        <button class="btn" style="margin-top:16px;" onclick="closeModal('password-modal')">Done</button>
       </div>
     </div>
   </div>
@@ -1278,6 +1547,9 @@
   function I(name, size) { return ICONS[name] ? ICONS[name].replace(/width="\d+" height="\d+"/, `width="${size||18}" height="${size||18}"`) : ''; }
 
   // ---------- Navigation config ----------
+  // Sections that don't need saved data / an account - open to guests.
+  const GUEST_FREE_SECTIONS = ['chat', 'tool-calc', 'tool-timer'];
+
   const NAV_SECTIONS = [
     { group: 'Learn', items: [
       { id: 'chat', label: 'AI Chat', icon: 'chat', live: true },
@@ -1295,6 +1567,8 @@
       { id: 'whiteboard', label: 'Whiteboard', icon: 'whiteboard', live: true },
       { id: 'code-editor', label: 'Code Editor', icon: 'code', live: true },
       { id: 'math', label: 'Math Workspace', icon: 'math', live: true },
+      { id: 'tool-calc', label: 'Calculator', icon: 'calc', live: true, noGuestLock: true },
+      { id: 'tool-timer', label: 'Pomodoro Timer', icon: 'timer', live: true, noGuestLock: true },
     ]},
     { group: 'Track', items: [
       { id: 'progress', label: 'Progress', icon: 'progress', live: true },
@@ -1616,15 +1890,31 @@
   // ---------- Settings modal (Claude-style: internal sidebar + panes) ----------
   function openSettingsModal() {
     renderSettingsGuestState();
+    document.getElementById('settings-nav-guest').classList.toggle('active', isGuestMode);
+    document.getElementById('settings-nav-member').classList.toggle('active', !isGuestMode);
+    switchSettingsPane('general');
     openModal('settings-modal');
   }
   function switchSettingsPane(pane) {
-    if (isGuestMode && pane === 'account') {
-      guestGate('Sign up to manage your account', 'Name, WhatsApp number, photo and password all live on a free account.');
+    if (isGuestMode && (pane === 'account' || pane === 'notifications' || pane === 'data')) {
+      guestGate('Sign up to unlock this', 'This lives on a free account - it only takes a moment to set up.');
       return;
     }
     document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.toggle('active', el.dataset.pane === pane));
     document.querySelectorAll('.settings-pane').forEach(el => el.classList.toggle('active', el.id === 'settings-pane-' + pane));
+  }
+  function setTextSize(size) {
+    document.documentElement.dataset.textSize = size;
+    localStorage.setItem('eduflow_text_size', size);
+  }
+
+  function switchHelpPane(pane) {
+    document.querySelectorAll('#help-modal .settings-nav-item').forEach(el => el.classList.toggle('active', el.dataset.pane === pane));
+    document.querySelectorAll('#help-modal .settings-pane').forEach(el => el.classList.toggle('active', el.id === 'help-pane-' + pane));
+  }
+  function switchPrivacyPane(pane) {
+    document.querySelectorAll('#privacy-modal .settings-nav-item').forEach(el => el.classList.toggle('active', el.dataset.pane === pane));
+    document.querySelectorAll('#privacy-modal .settings-pane').forEach(el => el.classList.toggle('active', el.id === 'privacy-pane-' + pane));
   }
 
   function guestGate(title, body) {
@@ -1638,7 +1928,7 @@
   function applyGuestLocks() {
     document.querySelectorAll('#nav-list .nav-item').forEach(el => {
       const id = el.dataset.section;
-      const locked = isGuestMode && id !== 'chat';
+      const locked = isGuestMode && !GUEST_FREE_SECTIONS.includes(id);
       el.classList.toggle('locked', locked);
       if (locked && !el.querySelector('.lock-icon')) {
         const span = document.createElement('span');
@@ -1646,9 +1936,6 @@
         span.innerHTML = I('lock', 13);
         el.appendChild(span);
       }
-    });
-    document.querySelectorAll('.floating-tool-icon').forEach(btn => {
-      btn.classList.toggle('locked', isGuestMode && btn.dataset.gated === '1');
     });
     // Guests have no saved chat/notes history at all, so search (both the
     // main platform search and the per-mode history search) is hidden
@@ -1670,11 +1957,6 @@
       const footerAvatar = document.getElementById('sidebar-footer-avatar');
       if (footerAvatar) footerAvatar.style.display = 'none';
     }
-    ['calendar-btn', 'notif-btn', 'messages-btn'].forEach(id => {
-      document.getElementById(id).onclick = isGuestMode
-        ? () => guestGate('Sign up to unlock this', 'Calendar, notifications and messages are saved to your account - create a free one to turn these on.')
-        : (id === 'calendar-btn' ? () => togglePopover('calendar-popover') : id === 'notif-btn' ? () => togglePopover('notif-popover') : () => alert('Private messaging is coming soon.'));
-    });
   }
 
   function renderSidebarFooter() {
@@ -1703,7 +1985,7 @@
   }
 
   function handleNavClick(id, live) {
-    if (isGuestMode && id !== 'chat') {
+    if (isGuestMode && !GUEST_FREE_SECTIONS.includes(id)) {
       guestGate('Sign up to unlock this', `${document.querySelector('.nav-item[data-section="' + id + '"] .label')?.textContent || 'This section'} is only available to registered users - it's quick and free to set up.`);
       return;
     }
@@ -1747,9 +2029,11 @@
       document.getElementById('icon-settings-notif').innerHTML = I('bell', 15);
       document.getElementById('icon-settings-data').innerHTML = I('panel', 15);
       document.getElementById('icon-settings-about').innerHTML = I('help', 15);
+      document.getElementById('icon-settings-general-g').innerHTML = I('settings', 15);
+      document.getElementById('icon-settings-voice-g').innerHTML = I('speaker', 15);
+      document.getElementById('icon-settings-about-g').innerHTML = I('help', 15);
+      document.getElementById('icon-settings-signup-g').innerHTML = I('user', 15);
       document.getElementById('mode-start-nav-icon').innerHTML = I('plus', 14);
-      const toolIcons = { 'tool-calc': 'calc', 'tool-timer': 'timer', 'chat': 'chat', 'progress': 'progress', 'courses': 'courses', 'planner': 'planner' };
-      document.querySelectorAll('.floating-tool-icon').forEach(btn => { btn.innerHTML = I(toolIcons[btn.dataset.tool] || 'dashboard', 18); });
       document.querySelectorAll('.widget-header .chevron').forEach(el => el.innerHTML = I('chevron', 14));
       document.querySelectorAll('.nav-section-label .chevron').forEach(el => el.innerHTML = I('chevron', 14));
     } catch (e) { console.error('[initChrome] sidebar/icons failed:', e); }
@@ -1798,17 +2082,26 @@
     }
   }
 
-  // Each floating tool icon opens its target as a tab in the center content
-  // area. Gated ones (marked data-gated) route guests into the sign-up
-  // prompt instead of a broken/empty page.
-  function openToolTab(id) {
-    const btn = document.querySelector(`.floating-tool-icon[data-tool="${id}"]`);
-    if (isGuestMode && btn && btn.dataset.gated === '1') {
-      guestGate('Sign up to unlock this', `${btn.title} is saved to your account - create a free one to turn this on.`);
+  function openCalendarPopover() {
+    if (isGuestMode) {
+      guestGate('Sign up to use the calendar', 'Tasks and reminders are saved to your account - create a free one to turn this on.');
       return;
     }
-    document.querySelectorAll('.floating-tool-icon').forEach(b => b.classList.toggle('active', b.dataset.tool === id));
-    showSection(id);
+    togglePopover('calendar-popover');
+  }
+  function openNotifPopover() {
+    if (isGuestMode) {
+      guestGate('Sign up for notifications', 'Alerts and reminders are saved to your account - create a free one to turn this on.');
+      return;
+    }
+    togglePopover('notif-popover');
+  }
+  function openMessagesPopover() {
+    if (isGuestMode) {
+      guestGate('Sign up to use messages', 'Private messaging is tied to your account - create a free one to turn this on.');
+      return;
+    }
+    togglePopover('messages-popover');
   }
 
   function togglePopover(id) {
@@ -1954,12 +2247,70 @@
     }
   }
 
-  async function handleChangePassword() {
-    const newPassword = prompt('Enter a new password (minimum 6 characters):');
-    if (!newPassword) return;
-    if (newPassword.length < 6) { showToast('Password must be at least 6 characters.'); return; }
-    const { error } = await sb.auth.updateUser({ password: newPassword });
-    showToast(error ? (error.message || 'Failed to update password.') : 'Password updated.');
+  // ---------- Password change: verify -> new password -> confirmation ----------
+  function handleChangePassword() {
+    document.getElementById('pw-current-input').value = '';
+    document.getElementById('pw-new-input').value = '';
+    document.getElementById('pw-confirm-input').value = '';
+    document.getElementById('pw-stage1-msg').textContent = '';
+    document.getElementById('pw-stage2-msg').textContent = '';
+    document.getElementById('pw-strength-bar').style.width = '0%';
+    showPwStage(1);
+    openModal('password-modal');
+  }
+  function showPwStage(n) {
+    document.querySelectorAll('.pw-stage').forEach((el, i) => el.classList.toggle('active', i === n - 1));
+    document.getElementById('pw-step-indicator').textContent = `Step ${n} of 3`;
+  }
+  // Stage 1: re-authenticate with the current password before allowing any
+  // change - a valid session alone isn't treated as sufficient proof of
+  // intent to change the password.
+  async function pwVerifyCurrent() {
+    const pw = document.getElementById('pw-current-input').value;
+    const msgEl = document.getElementById('pw-stage1-msg');
+    if (!pw) { msgEl.textContent = 'Enter your current password.'; return; }
+    msgEl.textContent = 'Verifying…';
+    try {
+      const { error } = await sb.auth.signInWithPassword({ email: currentUserEmail, password: pw });
+      if (error) { msgEl.textContent = 'That password is incorrect.'; return; }
+      msgEl.textContent = '';
+      showPwStage(2);
+    } catch (e) {
+      msgEl.textContent = 'Something went wrong - try again.';
+    }
+  }
+  function pwCheckStrength() {
+    const val = document.getElementById('pw-new-input').value;
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const bar = document.getElementById('pw-strength-bar');
+    const colors = ['var(--red)', 'var(--red)', '#e0a030', '#e0a030', 'var(--green)'];
+    bar.style.width = (score / 4 * 100) + '%';
+    bar.style.background = colors[score];
+  }
+  // Stage 2: require a minimum-strength new password that matches its
+  // confirmation before actually submitting the change.
+  async function pwSubmitNew() {
+    const newPw = document.getElementById('pw-new-input').value;
+    const confirmPw = document.getElementById('pw-confirm-input').value;
+    const msgEl = document.getElementById('pw-stage2-msg');
+    if (newPw.length < 8) { msgEl.textContent = 'Password must be at least 8 characters.'; return; }
+    if (!/[0-9]/.test(newPw)) { msgEl.textContent = 'Include at least one number.'; return; }
+    if (newPw !== confirmPw) { msgEl.textContent = 'Passwords do not match.'; return; }
+    msgEl.textContent = 'Updating…';
+    try {
+      const { error } = await sb.auth.updateUser({ password: newPw });
+      if (error) { msgEl.textContent = error.message || 'Failed to update password.'; return; }
+      document.getElementById('pw-current-input').value = '';
+      document.getElementById('pw-new-input').value = '';
+      document.getElementById('pw-confirm-input').value = '';
+      showPwStage(3);
+    } catch (e) {
+      msgEl.textContent = 'Something went wrong - try again.';
+    }
   }
 
   // ---------- Voice (TTS) selection ----------
