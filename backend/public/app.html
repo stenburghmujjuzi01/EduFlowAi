@@ -285,9 +285,9 @@
   /* Tool tabs (Calculator, Pomodoro Timer) */
   #pomodoro-display { font-size: 28px; font-weight: 700; text-align: center; margin: 10px 0; font-variant-numeric: tabular-nums; }
   .pomodoro-controls { display: flex; gap: 6px; justify-content: center; }
-  #calc-display { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; text-align: right; font-size: 18px; margin-bottom: 8px; min-height: 24px; }
-  #calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  #calc-grid button { padding: 10px 0; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 6px; cursor: pointer; font-size: 14px; }
+  #calc-display { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 18px 16px; text-align: right; font-size: 32px; font-weight: 600; margin-bottom: 14px; min-height: 40px; overflow-x: auto; white-space: nowrap; }
+  #calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  #calc-grid button { padding: 18px 0; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 18px; }
   #calc-grid button:hover { background: var(--surface); }
 
   /* Floating widgets */
@@ -493,17 +493,6 @@
         <button class="nav-icon-btn" id="notif-btn" onclick="openNotifPopover()" title="Notifications"></button>
         <div class="popover" id="notif-popover"><div class="popover-title">Notifications</div><div id="notif-content"></div></div>
       </div>
-      <div class="popover-trigger">
-        <button class="nav-icon-btn" id="messages-btn" title="Messages" onclick="openMessagesPopover()"></button>
-        <div class="popover" id="messages-popover" style="width:280px;">
-          <div class="popover-title">Messages</div>
-          <div id="messages-content">
-            <div class="mode-history-item" style="cursor:default;color:var(--muted);">
-              Private messaging is coming soon. In the meantime, reach us via Help &amp; Support.
-            </div>
-          </div>
-        </div>
-      </div>
       <select id="language-select" title="Language" onchange="handleLanguageChange()">
         <option value="en">English</option>
         <option value="es">Spanish</option>
@@ -567,11 +556,11 @@
             <span class="nav-icon" id="icon-settings-nav"></span>
             <span class="label">Settings</span>
           </div>
-          <div class="nav-item" onclick="openModal('privacy-modal')">
+          <div class="nav-item" onclick="openPrivacyModal()">
             <span class="nav-icon" id="icon-privacy-nav"></span>
             <span class="label">Privacy</span>
           </div>
-          <div class="nav-item" onclick="openModal('help-modal')">
+          <div class="nav-item" onclick="openHelpModal()">
             <span class="nav-icon" id="icon-help-nav"></span>
             <span class="label">Help &amp; Support</span>
           </div>
@@ -1184,9 +1173,21 @@
                     <p style="font-size:13px;color:var(--muted);">EduFlow Ai helps you learn, practice and track progress with an AI tutor across chat, WhatsApp and this platform.</p>
                   </div>
                   <div class="box">
+                    <h3>What you can do here</h3>
+                    <p style="font-size:13px;color:var(--muted);">Six AI modes (Tutor, Coding Assistant, Study Partner, Quiz Master, Research Assistant, Career Coach), plus notes, a study planner, flashcards, quizzes, assignments, a whiteboard, a code editor, a math workspace, and progress tracking with certificates.</p>
+                  </div>
+                  <div class="box">
+                    <h3>Available everywhere</h3>
+                    <p style="font-size:13px;color:var(--muted);">Use it here on the website, or message EduFlow Ai directly on WhatsApp - sign up with the same phone number to keep progress in sync across both.</p>
+                  </div>
+                  <div class="box">
+                    <h3>Version</h3>
+                    <p style="font-size:13px;color:var(--muted);">Web platform, continuously updated. No separate version number to track.</p>
+                  </div>
+                  <div class="box">
                     <h3>More</h3>
-                    <div class="account-pop-link" onclick="closeModal('settings-modal');openModal('privacy-modal')">Privacy</div>
-                    <div class="account-pop-link" onclick="closeModal('settings-modal');openModal('help-modal')">Help &amp; Support</div>
+                    <div class="account-pop-link" onclick="closeModal('settings-modal');openPrivacyModal()">Privacy</div>
+                    <div class="account-pop-link" onclick="closeModal('settings-modal');openHelpModal()">Help &amp; Support</div>
                   </div>
                 </div>
 
@@ -1205,7 +1206,7 @@
 
           <div class="content-section" id="section-tool-calc">
             <h1>Calculator</h1>
-            <div class="box" style="max-width:320px;">
+            <div class="box" style="max-width:360px;">
               <div id="calc-display">0</div>
               <div id="calc-grid"></div>
             </div>
@@ -1338,7 +1339,19 @@
         <div class="settings-pane active" id="privacy-pane-p-overview">
           <h2>Overview</h2>
           <div class="box">
-            <p style="font-size:13px;color:var(--muted);">EduFlow Ai is a learning platform. This page explains, plainly, what we store and why - not a full legal policy, just the practical version.</p>
+            <p style="font-size:13px;color:var(--muted);">EduFlow Ai is a learning platform accessible on the web and WhatsApp. This page explains, plainly, what we store and why - not a full legal policy, just the practical version.</p>
+          </div>
+          <div class="box">
+            <h3>The short version</h3>
+            <p style="font-size:13px;color:var(--muted);">Guests: nothing is saved. Registered users: we save what you create (chats, notes, tasks, flashcards) so you can pick up where you left off. We don't sell your data or show ads.</p>
+          </div>
+          <div class="box">
+            <h3>Who this applies to</h3>
+            <p style="font-size:13px;color:var(--muted);">Anyone using EduFlow Ai on the website or WhatsApp, whether browsing as a guest or with a registered account.</p>
+          </div>
+          <div class="box">
+            <h3>Questions?</h3>
+            <p style="font-size:13px;color:var(--muted);">Use Help &amp; Support → Contact us, or the "Request data / deletion" option under Your choices.</p>
           </div>
         </div>
 
@@ -1346,11 +1359,19 @@
           <h2>Guests vs. accounts</h2>
           <div class="box">
             <h3>Browsing as a guest</h3>
-            <p style="font-size:13px;color:var(--muted);">Nothing you say in guest mode is tied to an account or saved beyond this browser session - no chat history, no progress tracking. Messages are rate-limited per device/IP to prevent abuse, not to identify you.</p>
+            <p style="font-size:13px;color:var(--muted);">Nothing you say in guest mode is tied to an account or saved beyond this browser session - no chat history, no progress tracking. Messages are rate-limited per device/IP to prevent abuse, not to identify you. Closing the tab or clearing your browser erases everything from that session.</p>
           </div>
           <div class="box">
             <h3>With an account</h3>
-            <p style="font-size:13px;color:var(--muted);">We save your chats (organized by mode/session), notes, tasks, flashcards and progress so you can pick up where you left off, on the website or WhatsApp.</p>
+            <p style="font-size:13px;color:var(--muted);">We save your chats (organized by mode/session), notes, tasks, flashcards and progress so you can pick up where you left off, on the website or WhatsApp. Your account is identified by your email (website) and/or phone number (WhatsApp).</p>
+          </div>
+          <div class="box">
+            <h3>Switching from guest to registered</h3>
+            <p style="font-size:13px;color:var(--muted);">Signing up starts a fresh account - anything said as a guest beforehand isn't retroactively imported, since it was never linked to you in the first place.</p>
+          </div>
+          <div class="box">
+            <h3>Linking WhatsApp and web</h3>
+            <p style="font-size:13px;color:var(--muted);">Signing up on the website with the same phone number you use on WhatsApp links the two, so progress carries over either way.</p>
           </div>
         </div>
 
@@ -1358,46 +1379,77 @@
           <h2>What we collect</h2>
           <div class="box">
             <h3>Account info</h3>
-            <p style="font-size:13px;color:var(--muted);">Email, WhatsApp number, and anything you enter (name, chats, notes, tasks).</p>
+            <p style="font-size:13px;color:var(--muted);">Email, WhatsApp number, display name, and anything you enter (chat messages, notes, tasks, flashcards, custom quizzes, community posts).</p>
           </div>
           <div class="box">
-            <h3>Usage</h3>
-            <p style="font-size:13px;color:var(--muted);">Which modes/features you use, quiz scores, and course progress - so we can show your stats and improve the product.</p>
+            <h3>Usage &amp; progress</h3>
+            <p style="font-size:13px;color:var(--muted);">Which modes/features you use, quiz and assessment scores, XP/level, lesson progress, and certificates earned - so we can show your stats and improve the product.</p>
+          </div>
+          <div class="box">
+            <h3>Device preferences</h3>
+            <p style="font-size:13px;color:var(--muted);">Theme, language, text size, voice choice and chat drafts are stored locally in your browser (localStorage), not on our servers, and stay on this device only.</p>
           </div>
           <div class="box">
             <h3>What we don't collect</h3>
-            <p style="font-size:13px;color:var(--muted);">We don't sell your data, and guest sessions aren't linked to any identity.</p>
+            <p style="font-size:13px;color:var(--muted);">We don't sell your data, don't run ads, and guest sessions aren't linked to any identity at all - there's nothing to tie them to you even if we wanted to.</p>
           </div>
         </div>
 
         <div class="settings-pane" id="privacy-pane-p-use">
           <h2>How it's used</h2>
           <div class="box">
-            <p style="font-size:13px;color:var(--muted);">To run the product (show your chats, track progress, issue certificates), respond to support requests, and improve EduFlow Ai. Chat content is sent to our AI provider to generate replies, scoped to the current mode/session only.</p>
+            <h3>Running the product</h3>
+            <p style="font-size:13px;color:var(--muted);">Showing your chat history per mode, tracking progress and streaks, issuing certificates, and powering search across your own notes and chats.</p>
+          </div>
+          <div class="box">
+            <h3>Generating AI replies</h3>
+            <p style="font-size:13px;color:var(--muted);">Chat content is sent to our AI provider to generate replies, scoped strictly to the current mode/session - we don't send your whole account history with every message.</p>
+          </div>
+          <div class="box">
+            <h3>Support &amp; improvement</h3>
+            <p style="font-size:13px;color:var(--muted);">Feedback you submit helps us fix bugs and prioritize features. We may look at aggregate, anonymized usage patterns (e.g. "how many people use Quiz Master") to improve the product.</p>
+          </div>
+          <div class="box">
+            <h3>What we never do</h3>
+            <p style="font-size:13px;color:var(--muted);">Sell your data to advertisers, or use your private chats to train models for other companies.</p>
           </div>
         </div>
 
         <div class="settings-pane" id="privacy-pane-p-third">
           <h2>Third-party services</h2>
           <div class="box">
-            <h3>Profile picture</h3>
-            <p style="font-size:13px;color:var(--muted);">If you use "Use email profile photo," we look up a photo via Gravatar using your email - we don't store or share your email with them beyond that lookup.</p>
+            <h3>Profile picture (Gravatar)</h3>
+            <p style="font-size:13px;color:var(--muted);">If you use "Use email profile photo," we look up a photo via Gravatar using a one-way hash of your email - we don't store or share your actual email address with them.</p>
           </div>
           <div class="box">
-            <h3>Authentication &amp; hosting</h3>
-            <p style="font-size:13px;color:var(--muted);">Accounts and data are managed via Supabase; the AI chat responses are generated via our AI provider.</p>
+            <h3>Authentication &amp; database (Supabase)</h3>
+            <p style="font-size:13px;color:var(--muted);">Accounts, passwords (hashed, never stored in plain text), and all your saved content are managed via Supabase.</p>
+          </div>
+          <div class="box">
+            <h3>AI provider</h3>
+            <p style="font-size:13px;color:var(--muted);">Chat messages are sent to our AI provider solely to generate a reply - scoped to the relevant mode/session, not your whole account.</p>
+          </div>
+          <div class="box">
+            <h3>WhatsApp (Meta)</h3>
+            <p style="font-size:13px;color:var(--muted);">If you message us on WhatsApp, that conversation is also subject to WhatsApp/Meta's own privacy terms in addition to ours.</p>
           </div>
         </div>
 
         <div class="settings-pane" id="privacy-pane-p-choices">
           <h2>Your choices</h2>
           <div class="box">
-            <p class="empty" style="margin:0 0 10px;">Local data (drafts, theme, language) stored in this browser only:</p>
+            <h3>Local device data</h3>
+            <p class="empty" style="margin:0 0 10px;">Theme, language, drafts and voice preference stored in this browser only:</p>
             <button class="btn-outline" onclick="clearAllLocalData()">Clear local data on this device</button>
           </div>
           <div class="box">
-            <p class="empty" style="margin:0 0 10px;">Want a copy of your account data, or want it deleted?</p>
+            <h3>Your account data</h3>
+            <p class="empty" style="margin:0 0 10px;">Want a copy of everything we hold, or want your account and its data deleted?</p>
             <button class="btn-outline" onclick="closeModal('privacy-modal');openModal('feedback-modal')">Request data / deletion</button>
+          </div>
+          <div class="box">
+            <h3>Notification &amp; profile controls</h3>
+            <p style="font-size:13px;color:var(--muted);">Manage what gets saved and shown to you directly in Settings → Notifications and Settings → Account.</p>
           </div>
         </div>
 
@@ -1900,8 +1952,8 @@
       guestGate('Sign up to unlock this', 'This lives on a free account - it only takes a moment to set up.');
       return;
     }
-    document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.toggle('active', el.dataset.pane === pane));
-    document.querySelectorAll('.settings-pane').forEach(el => el.classList.toggle('active', el.id === 'settings-pane-' + pane));
+    document.querySelectorAll('#settings-modal .settings-nav-item').forEach(el => el.classList.toggle('active', el.dataset.pane === pane));
+    document.querySelectorAll('#settings-modal .settings-pane').forEach(el => el.classList.toggle('active', el.id === 'settings-pane-' + pane));
   }
   function setTextSize(size) {
     document.documentElement.dataset.textSize = size;
@@ -1916,6 +1968,11 @@
     document.querySelectorAll('#privacy-modal .settings-nav-item').forEach(el => el.classList.toggle('active', el.dataset.pane === pane));
     document.querySelectorAll('#privacy-modal .settings-pane').forEach(el => el.classList.toggle('active', el.id === 'privacy-pane-' + pane));
   }
+  // Always reset to a known default pane on open - defends against any
+  // future scoping mistake leaving these blank, the same way the Settings
+  // modal already resets to "general" every time it opens.
+  function openHelpModal() { switchHelpPane('h-start'); openModal('help-modal'); }
+  function openPrivacyModal() { switchPrivacyPane('p-overview'); openModal('privacy-modal'); }
 
   function guestGate(title, body) {
     document.getElementById('guest-gate-title').textContent = title || 'Sign up to unlock this';
@@ -2008,7 +2065,6 @@
       document.getElementById('search-icon').innerHTML = I('search', 16);
       document.getElementById('calendar-btn').innerHTML = I('calendar');
       document.getElementById('notif-btn').innerHTML = I('bell');
-      document.getElementById('messages-btn').innerHTML = I('mail');
       document.getElementById('theme-btn').innerHTML = I('sun');
       document.getElementById('profile-btn').innerHTML = I('user');
       document.getElementById('collapse-icon-holder').innerHTML = I('menu');
@@ -2095,13 +2151,6 @@
       return;
     }
     togglePopover('notif-popover');
-  }
-  function openMessagesPopover() {
-    if (isGuestMode) {
-      guestGate('Sign up to use messages', 'Private messaging is tied to your account - create a free one to turn this on.');
-      return;
-    }
-    togglePopover('messages-popover');
   }
 
   function togglePopover(id) {
@@ -2355,10 +2404,16 @@
     localStorage.setItem('eduflow_theme', mode);
   }
   function setTheme(mode) { applyTheme(mode); }
+  // Cycles the theme that's actually being DISPLAYED right now, not the
+  // stored preference string - if that string was "system" and the OS
+  // happens to be in dark mode, the old version's first click silently set
+  // an explicit "dark" (no visible change, since it already looked dark),
+  // and only the second click reached "light". Explicit "Device theme" is
+  // still available as its own choice in Settings - this icon is just a
+  // simple, always-one-click light/dark flip.
   function cycleTheme() {
-    const current = localStorage.getItem('eduflow_theme') || 'system';
-    const next = current === 'dark' ? 'light' : current === 'light' ? 'system' : 'dark';
-    applyTheme(next);
+    const resolved = document.documentElement.getAttribute('data-theme') || 'light';
+    applyTheme(resolved === 'dark' ? 'light' : 'dark');
   }
 
   // ---------- Language (partial i18n demo) ----------
