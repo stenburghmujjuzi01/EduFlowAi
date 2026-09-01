@@ -226,6 +226,49 @@
   .stat-card.accent .value { color: var(--accent); }
 
   .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* ---------- Dashboard redesign (Phase 4) ----------
+     Reuses existing tokens throughout (--accent, --surface, --border,
+     --bg, --muted) - no new colors introduced. */
+  #dash-greeting { margin-bottom: 18px; }
+  #dash-greeting h1 { margin: 0 0 4px; }
+  .dash-subgreeting { margin: 0; color: var(--muted); font-size: 14px; }
+
+  .dash-hero-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+    margin-bottom: 18px; position: relative; overflow: hidden;
+  }
+  .dash-hero-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent);
+  }
+  .dash-hero-label { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 8px; }
+  .dash-hero-title { font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+  .dash-hero-sub { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+  .dash-progress-track { background: var(--bg); border-radius: 999px; height: 8px; overflow: hidden; margin-bottom: 8px; }
+  .dash-progress-fill { background: var(--accent); height: 100%; border-radius: 999px; transition: width 0.3s ease; }
+  .dash-progress-caption { font-size: 12px; color: var(--muted); margin: 0 0 16px; }
+  .dash-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .dash-plan-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-bottom: 1px solid var(--border);
+  }
+  .dash-plan-item:last-child { border-bottom: none; }
+  .dash-plan-icon { flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; background: var(--bg); display: flex; align-items: center; justify-content: center; }
+  .dash-plan-text { flex: 1; min-width: 0; font-size: 13.5px; }
+  .dash-plan-text .muted-sub { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+  .dash-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 800px) { .dash-two-col { grid-template-columns: 1fr; } }
+
+  .dash-lesson-bar-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .dash-lesson-bar-row .dash-progress-track { flex: 1; margin-bottom: 0; }
+  .dash-lesson-bar-row .dash-progress-pct { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+
+  .dash-ai-tutor-card { background: var(--bg); }
+  .dash-ai-tutor-sub { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+  .dash-quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .dash-quick-actions .btn-outline { font-size: 12.5px; padding: 7px 12px; }
+
   .badge-pill { background: rgba(216,173,76,0.12); border: 1px solid var(--accent-dim); color: var(--accent); padding: 5px 11px; border-radius: 999px; font-size: 12px; }
 
   .empty { color: var(--muted); font-size: 13px; }
@@ -579,11 +622,45 @@
           <div id="center-col">
 
             <div class="content-section active" id="section-dashboard">
-              <h1>Dashboard</h1>
-              <div class="box" id="continue-learning-card"></div>
-              <div class="stats-row" id="stats-row"></div>
-              <div class="box"><h3>Badges</h3><div id="badges-row-dash" class="badge-row"></div></div>
-              <div class="box"><h3>Daily AI Recommendation</h3><div id="recommendation-text" class="empty"></div></div>
+              <div id="dash-greeting">
+                <h1 id="dash-greeting-text">Welcome back</h1>
+                <p class="dash-subgreeting" id="dash-subgreeting">Ready to continue learning?</p>
+              </div>
+
+              <div class="dash-hero-card" id="continue-learning-card"></div>
+
+              <div class="box">
+                <h3>Today's Plan</h3>
+                <div id="dash-today-plan"></div>
+              </div>
+
+              <div class="dash-two-col">
+                <div class="box">
+                  <h3>Progress Snapshot</h3>
+                  <div class="stats-row" id="stats-row"></div>
+                  <div id="dash-lesson-progress-wrap"></div>
+                </div>
+                <div class="box">
+                  <h3>Achievements</h3>
+                  <div id="badges-row-dash" class="badge-row"></div>
+                  <div class="account-pop-link" style="margin-top:10px;" onclick="showSection('achievements')">View all achievements</div>
+                </div>
+              </div>
+
+              <div class="box dash-ai-tutor-card">
+                <h3>Ask your AI Tutor</h3>
+                <p class="dash-ai-tutor-sub">What would you like to learn today?</p>
+                <div class="row-flex">
+                  <input type="text" id="dash-ai-quick-input" placeholder="Ask anything..." onkeydown="if(event.key==='Enter'){event.preventDefault();dashAskTutor();}" />
+                  <button class="btn" onclick="dashAskTutor()">Ask</button>
+                </div>
+                <div class="dash-quick-actions">
+                  <button class="btn-outline" onclick="dashQuickAction('explain')">Explain a topic</button>
+                  <button class="btn-outline" onclick="dashQuickAction('quiz')">Quiz me</button>
+                  <button class="btn-outline" onclick="dashQuickAction('study')">Help me study</button>
+                  <button class="btn-outline" onclick="dashQuickAction('plan')">Create a study plan</button>
+                </div>
+              </div>
             </div>
 
             <div class="content-section" id="section-chat">
@@ -2447,35 +2524,144 @@
   }
 
   // ---------- Dashboard ----------
+  function dashboardGreeting() {
+    const hour = new Date().getHours();
+    const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    const name = (currentUser && currentUser.name) ? ', ' + currentUser.name.split(' ')[0] : '';
+    return `${timeGreeting}${name} 👋`;
+  }
+
   function renderDashboard(user) {
+    document.getElementById('dash-greeting-text').textContent = dashboardGreeting();
+    document.getElementById('dash-subgreeting').textContent = user.current_topic
+      ? 'Ready to continue learning?' : 'Ready to start your learning journey?';
+
+    // A. Continue Learning - the most prominent card on the page, with a
+    // real progress bar driven by actual lesson data (never fabricated).
     const cont = document.getElementById('continue-learning-card');
     if (user.current_topic && user.current_lesson_number < 5) {
-      cont.innerHTML = `<h3>Continue Learning</h3><p style="font-size:14px;margin:0;">Pick up <strong>${esc(user.current_topic)}</strong> - Lesson ${user.current_lesson_number}/5. Use AI Chat or WhatsApp to continue.</p>`;
+      const pct = Math.round((user.current_lesson_number / 5) * 100);
+      cont.innerHTML = `
+        <div class="dash-hero-label">Continue Learning</div>
+        <div class="dash-hero-title">${esc(user.current_topic)}</div>
+        <p class="dash-hero-sub">Lesson ${user.current_lesson_number} of 5</p>
+        <div class="dash-progress-track"><div class="dash-progress-fill" style="width:${pct}%;"></div></div>
+        <p class="dash-progress-caption">${pct}% complete - you're making great progress.</p>
+        <div class="dash-hero-actions">
+          <button class="btn" onclick="showSection('chat')">Continue Learning →</button>
+        </div>`;
     } else if (user.current_topic) {
-      cont.innerHTML = `<h3>Continue Learning</h3><p style="font-size:14px;margin:0;">You've finished the lessons for <strong>${esc(user.current_topic)}</strong>. Take your final assessment on WhatsApp to get certified.</p>`;
+      cont.innerHTML = `
+        <div class="dash-hero-label">Almost there</div>
+        <div class="dash-hero-title">${esc(user.current_topic)}</div>
+        <div class="dash-progress-track"><div class="dash-progress-fill" style="width:100%;"></div></div>
+        <p class="dash-progress-caption">All 5 lessons complete - take your final assessment on WhatsApp to get certified.</p>
+        <div class="dash-hero-actions">
+          <button class="btn" onclick="showSection('chat')">Review with AI Chat</button>
+        </div>`;
     } else {
-      cont.innerHTML = `<h3>Continue Learning</h3><p class="empty">No course started yet. Message EduFlow Ai on WhatsApp or use AI Chat to begin.</p>`;
+      cont.innerHTML = `
+        <div class="dash-hero-label">Get started</div>
+        <div class="dash-hero-title">Start your learning journey</div>
+        <p class="dash-hero-sub">Choose a course or ask the AI Tutor to build a learning path for you.</p>
+        <div class="dash-hero-actions">
+          <button class="btn" onclick="showSection('courses')">Explore Courses</button>
+          <button class="btn-outline" onclick="showSection('chat')">Ask AI Tutor</button>
+        </div>`;
     }
 
+    // D. Progress Snapshot - real fields only (no streak/quiz-average field
+    // exists in the data model, so those are intentionally omitted rather
+    // than fabricated).
     document.getElementById('stats-row').innerHTML = `
       <div class="stat-card"><div class="label">XP</div><div class="value">${user.xp || 0}</div></div>
       <div class="stat-card accent"><div class="label">Level</div><div class="value" style="font-size:15px">${esc(user.level)}</div></div>
       <div class="stat-card"><div class="label">Lesson</div><div class="value">${user.current_lesson_number || 0}/5</div></div>
       <div class="stat-card"><div class="label">Certified</div><div class="value" style="font-size:15px">${user.certificate_issued ? 'Yes' : 'No'}</div></div>
     `;
+    const lessonPct = Math.round(((user.current_lesson_number || 0) / 5) * 100);
+    document.getElementById('dash-lesson-progress-wrap').innerHTML = `
+      <div class="dash-lesson-bar-row">
+        <div class="dash-progress-track"><div class="dash-progress-fill" style="width:${lessonPct}%;"></div></div>
+        <span class="dash-progress-pct">${lessonPct}%</span>
+      </div>`;
 
-    const badgeHtml = user.badges.length ? user.badges.map(b => `<span class="badge-pill">${esc(b.name)}</span>`).join('') : '<span class="empty">No badges yet.</span>';
+    // F. Achievements
+    const badgeHtml = user.badges.length ? user.badges.map(b => `<span class="badge-pill">${esc(b.name)}</span>`).join('') : '<span class="empty">No badges yet - keep learning to earn your first one.</span>';
     document.getElementById('badges-row-dash').innerHTML = badgeHtml;
     document.getElementById('badges-row-ach').innerHTML = badgeHtml;
 
-    const rec = document.getElementById('recommendation-text');
-    if (!user.current_topic) rec.textContent = 'Start a course to get personalized recommendations.';
-    else if (user.current_lesson_number < 5) rec.textContent = `Keep going on ${user.current_topic} - you're ${user.current_lesson_number}/5 lessons in.`;
-    else rec.textContent = `Take your final assessment for ${user.current_topic} to earn your certificate.`;
+    // C. Today's Plan - built from real state: the existing "daily
+    // recommendation" logic, plus real due tasks fetched separately (see
+    // loadDashboardPlan), plus a standing suggestion to practice.
+    let recText;
+    if (!user.current_topic) recText = { icon: 'chat', text: 'Start a course', sub: 'Tell your AI Tutor what you want to learn.', action: "showSection('chat')" };
+    else if (user.current_lesson_number < 5) recText = { icon: 'courses', text: `Continue ${user.current_topic}`, sub: `Lesson ${user.current_lesson_number} of 5`, action: "showSection('chat')" };
+    else recText = { icon: 'certificates', text: `Take your final assessment`, sub: `Finish ${user.current_topic} on WhatsApp to earn your certificate`, action: null };
+    window.__dashPrimaryPlanItem = recText;
+    renderDashboardPlan([]);
+    loadDashboardPlan();
 
     document.getElementById('courses-info').innerHTML = user.current_topic
       ? `<p style="margin:0 0 6px 0;font-size:14px;">Topic: <strong>${esc(user.current_topic)}</strong></p><p style="margin:0 0 6px 0;font-size:14px;">Skill level: <strong>${esc(user.skill_level) || 'Not yet assessed'}</strong></p><p style="margin:0;font-size:14px;">Progress: <strong>${user.current_lesson_number || 0}/5 lessons</strong></p>`
       : '<span class="empty">No course started yet.</span>';
+  }
+
+  // Today's Plan items: the primary recommendation (always shown) plus any
+  // real tasks due today from the Study Planner (never fabricated - if
+  // there are none, that item is simply omitted).
+  function renderDashboardPlan(dueTasks) {
+    const primary = window.__dashPrimaryPlanItem;
+    const items = [];
+    if (primary) items.push(`
+      <div class="dash-plan-item">
+        <span class="dash-plan-icon">${I(primary.icon, 16)}</span>
+        <div class="dash-plan-text">${esc(primary.text)}<span class="muted-sub">${esc(primary.sub)}</span></div>
+        ${primary.action ? `<button class="btn-outline" style="flex-shrink:0;" onclick="${primary.action}">Go</button>` : ''}
+      </div>`);
+    dueTasks.forEach(t => items.push(`
+      <div class="dash-plan-item">
+        <span class="dash-plan-icon">${I('planner', 16)}</span>
+        <div class="dash-plan-text">${esc(t.title)}<span class="muted-sub">Due today</span></div>
+        <button class="btn-outline" style="flex-shrink:0;" onclick="showSection('planner')">Go</button>
+      </div>`));
+    items.push(`
+      <div class="dash-plan-item">
+        <span class="dash-plan-icon">${I('quizzes', 16)}</span>
+        <div class="dash-plan-text">Take a short quiz<span class="muted-sub">Test what you've learned so far</span></div>
+        <button class="btn-outline" style="flex-shrink:0;" onclick="showSection('quizzes')">Go</button>
+      </div>`);
+    document.getElementById('dash-today-plan').innerHTML = items.join('');
+  }
+  async function loadDashboardPlan() {
+    try {
+      const { tasks } = await apiGet('/api/web/planner');
+      const today = new Date().toDateString();
+      const dueToday = (tasks || []).filter(t => !t.done && t.due_at && new Date(t.due_at).toDateString() === today);
+      renderDashboardPlan(dueToday);
+    } catch (e) { /* keep the primary + quiz items already shown */ }
+  }
+
+  // E. AI Tutor quick actions - prefill + focus + let the user confirm
+  // before sending, matching the existing "Start new course" pattern
+  // elsewhere in the app rather than firing a blind AI query.
+  function dashAskTutor() {
+    const val = document.getElementById('dash-ai-quick-input').value.trim();
+    showSection('chat');
+    if (val) { usePrompt(val); document.getElementById('dash-ai-quick-input').value = ''; }
+  }
+  function dashQuickAction(kind) {
+    const prompts = {
+      explain: 'Can you explain a topic to me? Ask me what I want explained.',
+      quiz: "I'd like a quick quiz to test what I know. What topic should we cover?",
+      study: "I'd like help studying. Where should I focus first?",
+      plan: "Can you help me create a study plan? Ask me about my goal and timeline.",
+    };
+    showSection('chat');
+    const ta = document.getElementById('chat-textarea');
+    ta.value = prompts[kind] || '';
+    ta.focus();
+    ta.select();
   }
 
   function loadProgressSection() {
