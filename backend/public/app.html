@@ -46,6 +46,13 @@
     --bubble-user: #eef1f6; --bubble-ai: #ffffff;
   }
   * { box-sizing: border-box; }
+  /* Visible keyboard focus everywhere, using the existing accent color -
+     was entirely absent app-wide before this. :focus-visible (not :focus)
+     so it only shows for keyboard navigation, not every mouse click. */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+  textarea:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px;
+  }
   @keyframes btn-bounce {
     0% { transform: scale(1); }
     35% { transform: scale(0.93); }
@@ -82,6 +89,14 @@
   #navbar {
     height: 56px; min-height: 56px; border-bottom: 1px solid var(--border); display: flex; align-items: center;
     padding: 0 16px; gap: 12px; background: var(--sidebar-bg); flex-shrink: 0; position: relative; z-index: 20;
+  }
+  /* Mobile: rather than wrapping/overlapping (or hiding controls, which
+     would violate "preserve all functionality"), the navbar scrolls
+     horizontally - every control stays reachable, just via a swipe. */
+  @media (max-width: 768px) {
+    #navbar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    #navbar > * { flex-shrink: 0; }
+    #search-wrap { flex: 0 0 auto; width: 220px; min-width: 220px; }
   }
   #navbar .nav-logo { font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; }
   #navbar .nav-logo span { color: var(--accent); }
@@ -163,6 +178,26 @@
 
   #sidebar { width: 240px; min-width: 240px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: width 0.15s ease, min-width 0.15s ease; overflow: hidden; }
   #sidebar.collapsed { width: 56px; min-width: 56px; }
+  #sidebar-backdrop { display: none; }
+  /* ---------- Mobile: sidebar becomes an overlay drawer ----------
+     Reuses the same .collapsed class the desktop icon-rail toggle already
+     uses, but repurposes what it means: on mobile "collapsed" = fully
+     off-screen, "expanded" = a full overlay drawer with a backdrop, rather
+     than a permanently visible 240px column eating most of a phone's
+     width. No new toggle mechanism - same hamburger button, same class. */
+  @media (max-width: 768px) {
+    #sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; z-index: 70; width: 260px; min-width: 260px;
+      transform: translateX(0); transition: transform 0.2s ease; box-shadow: 4px 0 16px rgba(0,0,0,0.2);
+    }
+    #sidebar.collapsed { width: 260px; min-width: 260px; transform: translateX(-100%); }
+    #sidebar.collapsed .nav-item .label,
+    #sidebar.collapsed .nav-section-label,
+    #sidebar.collapsed .sidebar-top-label,
+    #sidebar.collapsed .soon-tag { display: block; }
+    #sidebar.collapsed .nav-item { justify-content: flex-start; }
+    #sidebar-backdrop.visible { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 65; }
+  }
   .sidebar-top { padding: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .sidebar-top-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
   #sidebar.collapsed .sidebar-top-label { display: none; }
@@ -289,7 +324,11 @@
   .btn { background: var(--accent); color: #1a1404; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
   .btn-outline { background: none; border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
   .btn-danger { background: var(--red); color: #2a0d10; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-  .row-flex { display: flex; gap: 10px; align-items: center; }
+  .row-flex { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-wrap table { width: 100%; border-collapse: collapse; }
+  .table-wrap th, .table-wrap td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; white-space: nowrap; }
+  .table-wrap th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
   .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .list-item:last-child { border-bottom: none; }
 
@@ -326,6 +365,7 @@
   #chat-input-area { border: 1px solid var(--border); border-radius: 16px; padding: 6px; background: var(--surface); margin: 0; }
   #chat-input-area textarea { border: none; background: none; resize: none; padding: 6px 8px; font-size: 14px; max-height: 120px; min-height: 20px; line-height: 1.4; }
   #chat-input-area textarea:focus { outline: none; }
+  #chat-input-area:focus-within { border-color: var(--accent); }
   #chat-toolbar { display: flex; align-items: center; gap: 4px; padding-top: 4px; }
   #chat-toolbar .nav-icon-btn { padding: 6px; }
   #chat-send-btn { margin-left: auto; background: var(--accent); color: #1a1404; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-size: 13px; }
@@ -363,6 +403,7 @@
   }
   .mode-history-search-wrap input { border: none; background: none; font-size: 12.5px; color: var(--text); width: 100%; padding: 0; }
   .mode-history-search-wrap input:focus { outline: none; }
+  .mode-history-search-wrap:focus-within { border-color: var(--accent); }
   .mode-history-search-wrap .icon-slot { color: var(--muted); flex-shrink: 0; display: flex; }
   .mode-history-search-wrap.hidden-for-guest { display: none; }
   .mode-history-dropdown {
@@ -465,7 +506,7 @@
         <label class="field-label">Password</label>
         <div class="password-wrap">
           <input type="password" id="login-password" placeholder="Password" />
-          <button type="button" class="eye-btn" onclick="toggleEye('login-password', this)" id="login-eye"></button>
+          <button type="button" class="eye-btn" onclick="toggleEye('login-password', this)" id="login-eye" title="Show password" aria-label="Show password"></button>
         </div>
       </div>
       <button class="submit-btn" onclick="handleLogin()">Log In</button>
@@ -483,7 +524,7 @@
         <label class="field-label">Password</label>
         <div class="password-wrap">
           <input type="password" id="signup-password" placeholder="Password" />
-          <button type="button" class="eye-btn" onclick="toggleEye('signup-password', this)" id="signup-eye"></button>
+          <button type="button" class="eye-btn" onclick="toggleEye('signup-password', this)" id="signup-eye" title="Show password" aria-label="Show password"></button>
         </div>
       </div>
       <div class="field-wrap"><label class="field-label">Phone number</label><input type="text" id="signup-phone" placeholder="e.g. 256700000000" /></div>
@@ -531,7 +572,7 @@
       </div>
       <div class="nav-spacer"></div>
       <div class="popover-trigger">
-        <button class="nav-icon-btn" id="calendar-btn" onclick="openCalendarPopover()" title="Calendar"></button>
+        <button class="nav-icon-btn" id="calendar-btn" onclick="openCalendarPopover()" title="Calendar" aria-label="Calendar"></button>
         <div class="popover" id="calendar-popover">
           <div class="popover-title">Today</div>
           <div id="calendar-content"></div>
@@ -539,7 +580,7 @@
         </div>
       </div>
       <div class="popover-trigger">
-        <button class="nav-icon-btn" id="notif-btn" onclick="openNotifPopover()" title="Notifications"></button>
+        <button class="nav-icon-btn" id="notif-btn" onclick="openNotifPopover()" title="Notifications" aria-label="Notifications"></button>
         <div class="popover" id="notif-popover"><div class="popover-title">Notifications</div><div id="notif-content"></div></div>
       </div>
       <select id="language-select" title="Language" onchange="handleLanguageChange()">
@@ -556,9 +597,9 @@
         <option value="sw">Swahili</option>
         <option value="lg">Luganda</option>
       </select>
-      <button class="nav-icon-btn" id="theme-btn" onclick="cycleTheme()" title="Theme"></button>
+      <button class="nav-icon-btn" id="theme-btn" onclick="cycleTheme()" title="Theme" aria-label="Theme"></button>
       <div class="popover-trigger">
-        <button class="nav-icon-btn" id="profile-btn" onclick="togglePopover('account-popover')" title="Account"></button>
+        <button class="nav-icon-btn" id="profile-btn" onclick="togglePopover('account-popover')" title="Account" aria-label="Account"></button>
         <div class="popover" id="account-popover">
         <div class="account-pop-header">
           <div class="account-avatar" id="account-avatar-lg"></div>
@@ -594,10 +635,11 @@
     </div>
 
     <div id="app-body">
+      <div id="sidebar-backdrop" onclick="toggleSidebar()"></div>
       <div id="sidebar">
         <div class="sidebar-top">
           <span class="sidebar-top-label">Menu</span>
-          <button class="collapse-btn" onclick="toggleSidebar()" id="collapse-icon-holder"></button>
+          <button class="collapse-btn" onclick="toggleSidebar()" id="collapse-icon-holder" title="Collapse sidebar" aria-label="Collapse sidebar"></button>
         </div>
         <div class="nav-list" id="nav-list"></div>
         <div id="sidebar-bottom-icons">
@@ -686,13 +728,13 @@
                   <div id="chat-file-name"></div>
                   <textarea id="chat-textarea" rows="1" placeholder="Ask EduFlow Ai..."></textarea>
                   <div id="chat-toolbar">
-                    <button class="nav-icon-btn" id="attach-btn" title="Attach file"></button>
+                    <button class="nav-icon-btn" id="attach-btn" title="Attach file" aria-label="Attach file"></button>
                     <input type="file" id="file-input" style="display:none" onchange="handleFileAttach(event)" />
-                    <button class="nav-icon-btn" id="camera-btn" title="Camera"></button>
+                    <button class="nav-icon-btn" id="camera-btn" title="Camera" aria-label="Camera"></button>
                     <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="handleFileAttach(event)" />
-                    <button class="nav-icon-btn" id="mic-btn" onclick="toggleVoiceInput()" title="Voice input"></button>
-                    <button class="nav-icon-btn" id="voice-out-btn" onclick="toggleVoiceOutput()" title="Voice response"></button>
-                    <button class="nav-icon-btn" id="imagegen-btn" onclick="alert('Image generation is coming soon.')" title="Generate image"></button>
+                    <button class="nav-icon-btn" id="mic-btn" onclick="toggleVoiceInput()" title="Voice input" aria-label="Voice input"></button>
+                    <button class="nav-icon-btn" id="voice-out-btn" onclick="toggleVoiceOutput()" title="Voice response" aria-label="Voice response"></button>
+                    <button class="nav-icon-btn" id="imagegen-btn" onclick="alert('Image generation is coming soon.')" title="Generate image" aria-label="Generate image"></button>
                     <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
                   </div>
                 </div>
@@ -1094,7 +1136,7 @@
 
           <div class="modal-overlay" id="settings-modal">
             <div class="settings-modal-box">
-              <button class="modal-close" onclick="closeModal('settings-modal')">&times;</button>
+              <button class="modal-close" aria-label="Close" onclick="closeModal('settings-modal')">&times;</button>
               <div class="settings-modal-sidebar">
                 <div class="settings-modal-search">
                   <span class="icon-slot" id="settings-search-icon"></span>
@@ -1335,12 +1377,12 @@
     </div>
   </div>
 
-  <button id="floating-chat-btn" onclick="showSection('chat')" title="Open AI Chat"></button>
+  <button id="floating-chat-btn" onclick="showSection('chat')" title="Open AI Chat" aria-label="Open AI Chat"></button>
   <div id="toast-stack"></div>
 
   <div class="modal-overlay" id="help-modal">
     <div class="settings-modal-box">
-      <button class="modal-close" onclick="closeModal('help-modal')">&times;</button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('help-modal')">&times;</button>
       <div class="settings-modal-sidebar">
         <div class="settings-nav-label">Help &amp; Support</div>
         <div class="settings-nav-item active" data-pane="h-start" onclick="switchHelpPane('h-start')">Getting started</div>
@@ -1430,7 +1472,7 @@
 
   <div class="modal-overlay" id="privacy-modal">
     <div class="settings-modal-box">
-      <button class="modal-close" onclick="closeModal('privacy-modal')">&times;</button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('privacy-modal')">&times;</button>
       <div class="settings-modal-sidebar">
         <div class="settings-nav-label">Privacy</div>
         <div class="settings-nav-item active" data-pane="p-overview" onclick="switchPrivacyPane('p-overview')">Overview</div>
@@ -1566,7 +1608,7 @@
 
   <div class="modal-overlay" id="feedback-modal">
     <div class="modal-box">
-      <button class="modal-close" onclick="closeModal('feedback-modal')">&times;</button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('feedback-modal')">&times;</button>
       <h3>Send Feedback</h3>
       <textarea id="feedback-text" rows="4" placeholder="Bug reports, feature requests, suggestions..."></textarea>
       <button class="btn" style="margin-top:10px;" onclick="submitFeedback()">Submit</button>
@@ -1576,7 +1618,7 @@
 
   <div class="modal-overlay" id="review-modal">
     <div class="modal-box">
-      <button class="modal-close" onclick="closeModal('review-modal')">&times;</button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('review-modal')">&times;</button>
       <h3>Tell us what went wrong</h3>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-4px;">Your feedback helps EduFlow Ai improve. This is optional.</p>
       <div class="star-row" id="review-star-row"></div>
@@ -1588,7 +1630,7 @@
 
   <div class="modal-overlay" id="export-modal">
     <div class="modal-box" style="width:300px;">
-      <button class="modal-close" onclick="closeModal('export-modal')">&times;</button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('export-modal')">&times;</button>
       <h3>Export response</h3>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-4px;">Choose how you'd like to export this message.</p>
       <div class="export-choice-row">
@@ -1600,7 +1642,7 @@
 
   <div class="modal-overlay" id="guest-gate-modal">
     <div class="modal-box" style="width:320px;text-align:center;">
-      <button class="modal-close" onclick="closeModal('guest-gate-modal')">&times;</button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('guest-gate-modal')">&times;</button>
       <h3 id="guest-gate-title">Sign up to unlock this</h3>
       <p style="font-size:13px;color:var(--muted);" id="guest-gate-body">This feature is only available to registered users. Create a free account to unlock every AI tool and save your progress.</p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
@@ -1616,7 +1658,7 @@
        silently changing the password with no re-verification step. -->
   <div class="modal-overlay" id="password-modal">
     <div class="modal-box" style="width:340px;">
-      <button class="modal-close" onclick="closeModal('password-modal')">&times;</button>
+      <button class="modal-close" aria-label="Close" onclick="closeModal('password-modal')">&times;</button>
       <div id="pw-step-indicator" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;">Step 1 of 3</div>
 
       <div class="pw-stage active" id="pw-stage-1">
@@ -1813,7 +1855,11 @@
   }
   function toggleEye(inputId, btn) {
     const input = document.getElementById(inputId);
-    input.type = input.type === 'password' ? 'text' : 'password';
+    const showing = input.type === 'password';
+    input.type = showing ? 'text' : 'password';
+    const label = showing ? 'Hide password' : 'Show password';
+    btn.setAttribute('title', label);
+    btn.setAttribute('aria-label', label);
   }
 
   // Wraps a promise with a hard timeout so a stalled network call surfaces
@@ -2142,7 +2188,7 @@
             <button class="btn" style="flex:1;padding:7px 10px;font-size:12.5px;" onclick="showScreen('signup-screen')">Sign up</button>
           </div>
         </div>
-        <button class="guest-footer-collapsed-btn" id="guest-footer-collapsed-btn" onclick="showScreen('login-screen')" title="Log in or sign up"></button>`;
+        <button class="guest-footer-collapsed-btn" id="guest-footer-collapsed-btn" onclick="showScreen('login-screen')" title="Log in or sign up" aria-label="Log in or sign up"></button>`;
       const collapsedBtn = document.getElementById('guest-footer-collapsed-btn');
       if (collapsedBtn) collapsedBtn.innerHTML = I('user', 16);
     } else {
@@ -2177,6 +2223,10 @@
 
     try {
       buildSidebar();
+      // On mobile the sidebar is an overlay drawer (see the 768px media
+      // query) - start it closed so first load shows the actual content,
+      // not a full-screen nav drawer.
+      if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('collapsed');
       document.getElementById('search-icon').innerHTML = I('search', 16);
       document.getElementById('calendar-btn').innerHTML = I('calendar');
       document.getElementById('notif-btn').innerHTML = I('bell');
@@ -2239,7 +2289,14 @@
     } catch (e) { console.error('[initChrome] chat/whiteboard init failed:', e); }
   }
 
-  function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('collapsed');
+    // On mobile the sidebar is an overlay drawer - show/hide the backdrop
+    // behind it in step; on desktop this class is simply unused (backdrop
+    // stays display:none via its default, non-mobile CSS).
+    document.getElementById('sidebar-backdrop').classList.toggle('visible', !sidebar.classList.contains('collapsed'));
+  }
 
   function toggleNavGroup(headerEl) {
     const wasClosed = headerEl.classList.contains('closed');
@@ -2631,6 +2688,7 @@
     document.getElementById('badges-row-ach').innerHTML = hasBadges ? badgeHtml : '';
     const achEmpty = document.getElementById('achievements-empty');
     if (achEmpty) achEmpty.style.display = hasBadges ? 'none' : 'block';
+    celebrateNewBadges(user.badges);
 
     // C. Today's Plan - built from real state: the existing "daily
     // recommendation" logic, plus real due tasks fetched separately (see
@@ -2681,6 +2739,32 @@
       const dueToday = (tasks || []).filter(t => !t.done && t.due_at && new Date(t.due_at).toDateString() === today);
       renderDashboardPlan(dueToday);
     } catch (e) { /* keep the primary + quiz items already shown */ }
+  }
+
+  // Gamification "moment" (brief section 10): celebrate a badge the FIRST
+  // time it's seen, rather than presenting achievements as a flat database
+  // list. Compares against what's already been shown before, so existing
+  // users don't get spammed with toasts for badges they've had for weeks -
+  // only genuinely new ones on this or a later visit trigger a celebration.
+  function celebrateNewBadges(badges) {
+    const seenKey = 'eduflow_seen_badges';
+    let seen;
+    try { seen = JSON.parse(localStorage.getItem(seenKey) || 'null'); } catch (e) { seen = null; }
+    const currentCodes = badges.map(b => b.code || b.name);
+    if (seen === null) {
+      // First time we've ever tracked this - just record the baseline,
+      // don't retroactively celebrate badges the user may have earned
+      // long ago before this feature existed.
+      localStorage.setItem(seenKey, JSON.stringify(currentCodes));
+      return;
+    }
+    const newlyEarned = badges.filter(b => !seen.includes(b.code || b.name));
+    newlyEarned.forEach((b, i) => {
+      setTimeout(() => {
+        showToast(`🎉 New achievement unlocked! ${b.name}${b.description ? ' — ' + b.description : ''}`, 5000);
+      }, i * 600);
+    });
+    localStorage.setItem(seenKey, JSON.stringify(currentCodes));
   }
 
   // E. AI Tutor quick actions - prefill + focus + let the user confirm
@@ -3009,7 +3093,7 @@
         return `<div class="code-block">
           <div class="code-block-header">
             <span>${esc(p.lang || 'code')}</span>
-            <button class="code-copy-btn" onclick="copyCodeBlock(this)" title="Copy code">${I('copy', 13)}</button>
+            <button class="code-copy-btn" onclick="copyCodeBlock(this)" title="Copy code" aria-label="Copy code">${I('copy', 13)}</button>
           </div>
           <pre><code>${esc(p.value)}</code></pre>
         </div>`;
