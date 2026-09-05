@@ -325,6 +325,7 @@
   .btn-outline { background: none; border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
   .btn-danger { background: var(--red); color: #2a0d10; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
   .row-flex { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .form-select { padding: 8px; border-radius: 8px; background: var(--bg); color: var(--text); border: 1px solid var(--border); }
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .table-wrap table { width: 100%; border-collapse: collapse; }
   .table-wrap th, .table-wrap td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; white-space: nowrap; }
@@ -777,7 +778,7 @@
                     <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="handleFileAttach(event)" />
                     <button class="nav-icon-btn" id="mic-btn" onclick="toggleVoiceInput()" title="Voice input" aria-label="Voice input"></button>
                     <button class="nav-icon-btn" id="voice-out-btn" onclick="toggleVoiceOutput()" title="Voice response" aria-label="Voice response"></button>
-                    <button class="nav-icon-btn" id="imagegen-btn" onclick="alert('Image generation is coming soon.')" title="Generate image" aria-label="Generate image"></button>
+                    <button class="nav-icon-btn" id="imagegen-btn" onclick="showToast('Image generation is coming soon.')" title="Generate image" aria-label="Generate image"></button>
                     <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
                   </div>
                 </div>
@@ -891,13 +892,13 @@
             <div class="content-section" id="section-code-editor">
               <h1>Code Editor</h1>
               <div class="box" id="code-editor-area">
-                <select id="code-lang-select" style="margin-bottom:10px;padding:6px;border-radius:6px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
+                <select id="code-lang-select" class="form-select" style="margin-bottom:10px;">
                   <option>JavaScript</option><option>Python</option><option>Java</option><option>C++</option>
                 </select>
                 <textarea id="code-textarea" rows="10" placeholder="// write code here"></textarea>
                 <div class="row-flex" style="margin-top:10px;">
                   <button class="btn" onclick="runCode()">Run</button>
-                  <span class="empty">Execution requires a Judge0 API key - add yours in Settings to enable. Currently: coming soon.</span>
+                  <span class="empty">Code execution isn't available yet - you can still write, review and share code here.</span>
                 </div>
                 <pre id="code-output" style="margin-top:10px;font-size:12.5px;color:var(--muted);"></pre>
               </div>
@@ -1043,7 +1044,7 @@
                 <h3>Citation Generator</h3>
                 <div class="row-flex">
                   <input type="text" id="tool-citation-source" placeholder="Source details (author, title, year, publisher...)" />
-                  <select id="tool-citation-style" style="padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
+                  <select id="tool-citation-style" class="form-select">
                     <option>APA</option><option>MLA</option><option>Chicago</option>
                   </select>
                   <button class="btn" onclick="runTool('citation')">Generate</button>
@@ -1178,7 +1179,7 @@
 
           </div>
 
-          <div class="modal-overlay" id="settings-modal">
+          <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
             <div class="settings-modal-box">
               <button class="modal-close" aria-label="Close" onclick="closeModal('settings-modal')">&times;</button>
               <div class="settings-modal-sidebar">
@@ -1244,7 +1245,7 @@
                   <div class="box">
                     <h3>Language</h3>
                     <p class="empty" style="margin:0 0 10px;">Choose the language used across the interface. Change it any time from the navbar too.</p>
-                    <select id="settings-language-select" onchange="document.getElementById('language-select').value=this.value; handleLanguageChange();" style="max-width:260px;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);"></select>
+                    <select id="settings-language-select" class="form-select" onchange="document.getElementById('language-select').value=this.value; handleLanguageChange();" style="max-width:260px;"></select>
                   </div>
                   <div class="box">
                     <h3>Text size</h3>
@@ -1300,11 +1301,11 @@
                   <div class="box">
                     <div class="row-flex" style="margin-bottom:10px;">
                       <label style="font-size:13px;color:var(--muted);min-width:140px;">Read-back voice</label>
-                      <select id="settings-voice-select" onchange="setPreferredVoice(this.value)" style="flex:1;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);"></select>
+                      <select id="settings-voice-select" class="form-select" onchange="setPreferredVoice(this.value)" style="flex:1;"></select>
                     </div>
                     <div class="row-flex">
                       <label style="font-size:13px;color:var(--muted);min-width:140px;">Voice input language</label>
-                      <select id="settings-voice-input-lang" onchange="localStorage.setItem('eduflow_voice_input_lang', this.value)" style="flex:1;padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
+                      <select id="settings-voice-input-lang" class="form-select" onchange="localStorage.setItem('eduflow_voice_input_lang', this.value)" style="flex:1;">
                         <option value="en-US">English (US)</option>
                         <option value="en-GB">English (UK)</option>
                         <option value="fr-FR">French</option>
@@ -1424,7 +1425,7 @@
   <button id="floating-chat-btn" onclick="showSection('chat')" title="Open AI Chat" aria-label="Open AI Chat"></button>
   <div id="toast-stack"></div>
 
-  <div class="modal-overlay" id="help-modal">
+  <div class="modal-overlay" id="help-modal" role="dialog" aria-modal="true" aria-label="Help &amp; Support">
     <div class="settings-modal-box">
       <button class="modal-close" aria-label="Close" onclick="closeModal('help-modal')">&times;</button>
       <div class="settings-modal-sidebar">
@@ -1514,7 +1515,7 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="privacy-modal">
+  <div class="modal-overlay" id="privacy-modal" role="dialog" aria-modal="true" aria-label="Privacy">
     <div class="settings-modal-box">
       <button class="modal-close" aria-label="Close" onclick="closeModal('privacy-modal')">&times;</button>
       <div class="settings-modal-sidebar">
@@ -1650,20 +1651,20 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="feedback-modal">
+  <div class="modal-overlay" id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-modal-title">
     <div class="modal-box">
       <button class="modal-close" aria-label="Close" onclick="closeModal('feedback-modal')">&times;</button>
-      <h3>Send Feedback</h3>
+      <h3 id="feedback-modal-title">Send Feedback</h3>
       <textarea id="feedback-text" rows="4" placeholder="Bug reports, feature requests, suggestions..."></textarea>
       <button class="btn" style="margin-top:10px;" onclick="submitFeedback()">Submit</button>
       <div id="feedback-msg" style="font-size:12px;margin-top:8px;color:var(--green)"></div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="review-modal">
+  <div class="modal-overlay" id="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
     <div class="modal-box">
       <button class="modal-close" aria-label="Close" onclick="closeModal('review-modal')">&times;</button>
-      <h3>Tell us what went wrong</h3>
+      <h3 id="review-modal-title">Tell us what went wrong</h3>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-4px;">Your feedback helps EduFlow Ai improve. This is optional.</p>
       <div class="star-row" id="review-star-row"></div>
       <textarea id="review-text" rows="4" placeholder="What was wrong with this response?"></textarea>
@@ -1672,10 +1673,10 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="export-modal">
+  <div class="modal-overlay" id="export-modal" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
     <div class="modal-box" style="width:300px;">
       <button class="modal-close" aria-label="Close" onclick="closeModal('export-modal')">&times;</button>
-      <h3>Export response</h3>
+      <h3 id="export-modal-title">Export response</h3>
       <p style="font-size:12.5px;color:var(--muted);margin-top:-4px;">Choose how you'd like to export this message.</p>
       <div class="export-choice-row">
         <button class="btn-outline" onclick="doExportDownload()">Download</button>
@@ -1684,7 +1685,7 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="guest-gate-modal">
+  <div class="modal-overlay" id="guest-gate-modal" role="dialog" aria-modal="true" aria-labelledby="guest-gate-title">
     <div class="modal-box" style="width:320px;text-align:center;">
       <button class="modal-close" aria-label="Close" onclick="closeModal('guest-gate-modal')">&times;</button>
       <h3 id="guest-gate-title">Sign up to unlock this</h3>
@@ -1700,7 +1701,7 @@
        new password -> confirmation) rather than a single prompt(), so
        there's an actual guard against someone with a hijacked session
        silently changing the password with no re-verification step. -->
-  <div class="modal-overlay" id="password-modal">
+  <div class="modal-overlay" id="password-modal" role="dialog" aria-modal="true" aria-label="Change password">
     <div class="modal-box" style="width:340px;">
       <button class="modal-close" aria-label="Close" onclick="closeModal('password-modal')">&times;</button>
       <div id="pw-step-indicator" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;">Step 1 of 3</div>
@@ -3387,7 +3388,7 @@
   let recognition = null;
   function toggleVoiceInput() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert('Voice input is not supported in this browser.'); return; }
+    if (!SR) { showToast('Voice input is not supported in this browser.'); return; }
     if (recognizing) { recognition.stop(); return; }
     recognition = new SR();
     recognition.lang = localStorage.getItem('eduflow_voice_input_lang') || 'en-US';
@@ -3630,7 +3631,7 @@
   async function downloadCert(code) {
     const { data: { session } } = await sb.auth.getSession();
     const res = await fetch('/api/web/certificates/' + code + '/pdf', { headers: { Authorization: `Bearer ${session.access_token}` } });
-    if (!res.ok) { alert('Failed to download certificate.'); return; }
+    if (!res.ok) { showToast('Failed to download certificate.'); return; }
     const blob = await res.blob();
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -3886,7 +3887,7 @@
           </div>
         `).join('')}
       `;
-    } catch (e) { alert(e.message); }
+    } catch (e) { showToast(e.message || 'Something went wrong.'); }
   }
 
   function exitQuizResults() {
@@ -3982,7 +3983,7 @@
       document.getElementById('assignment-result-area').style.display = 'block';
       document.getElementById('assignment-score').textContent = `Score: ${assignment.score}/10`;
       document.getElementById('assignment-feedback').textContent = assignment.feedback;
-    } catch (e) { alert(e.message); }
+    } catch (e) { showToast(e.message || 'Something went wrong.'); }
   }
 
   // ---------- Community ----------
@@ -4006,7 +4007,7 @@
       document.getElementById('community-title-input').value = '';
       document.getElementById('community-body-input').value = '';
       loadCommunityPosts();
-    } catch (e) { alert(e.message); }
+    } catch (e) { showToast(e.message || 'Something went wrong.'); }
   }
 
   async function openCommunityPost(id) {
@@ -4035,7 +4036,7 @@
       await apiPost('/api/web/community/posts/' + currentCommunityPostId + '/replies', { body });
       document.getElementById('community-reply-input').value = '';
       openCommunityPost(currentCommunityPostId);
-    } catch (e) { alert(e.message); }
+    } catch (e) { showToast(e.message || 'Something went wrong.'); }
   }
 
   // ---------- Live Classes ----------
@@ -4055,7 +4056,7 @@
       await apiPost('/api/web/live-classes', { title });
       document.getElementById('liveclass-title-input').value = '';
       loadLiveClasses();
-    } catch (e) { alert(e.message); }
+    } catch (e) { showToast(e.message || 'Something went wrong.'); }
   }
 
   function joinJitsi(roomName) {
@@ -4170,7 +4171,7 @@
           ${q.options.map((opt, oi) => `<label style="display:block;font-size:13.5px;padding:5px 0;"><input type="radio" name="sq${qi}" value="${oi}"/> ${esc(opt)}</label>`).join('')}
         </div>
       `).join('');
-    } catch (e) { alert(e.message); }
+    } catch (e) { showToast(e.message || 'Something went wrong.'); }
   }
 
   function exitSharedQuiz() {
@@ -4186,7 +4187,7 @@
     try {
       const result = await apiPost('/api/web/custom-quizzes/' + sharedQuiz.id + '/submit', { answers });
       document.getElementById('shared-quiz-result').textContent = `Score: ${result.score}/${result.total}`;
-    } catch (e) { alert(e.message); }
+    } catch (e) { showToast(e.message || 'Something went wrong.'); }
   }
 
   updatePomodoroDisplay();
