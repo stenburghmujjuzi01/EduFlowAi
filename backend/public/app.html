@@ -798,7 +798,7 @@
                   <input type="text" id="learning-goal-input" placeholder="e.g. Become a data analyst" />
                   <button class="btn" onclick="generateLearningPath(this)">Generate</button>
                 </div>
-                <div id="learning-path-result" style="margin-top:14px;white-space:pre-wrap;font-size:13.5px;"></div>
+                <div id="learning-path-result" class="empty" style="margin-top:14px;white-space:pre-wrap;font-size:13.5px;">Enter a goal above and EduFlow Ai will map out a step-by-step roadmap to get you there.</div>
               </div>
             </div>
 
@@ -1006,13 +1006,13 @@
                   <input type="text" id="tool-translate-lang" placeholder="Target language (e.g. Spanish)" />
                   <button class="btn" onclick="runTool('translate')">Translate</button>
                 </div>
-                <div id="tool-translate-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+                <div id="tool-translate-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Your translation will appear here.</div>
               </div>
               <div class="box">
                 <h3>Summarizer</h3>
                 <textarea id="tool-summarize-text" rows="4" placeholder="Paste text to summarize"></textarea>
                 <button class="btn" style="margin-top:8px;" onclick="runTool('summarize')">Summarize</button>
-                <div id="tool-summarize-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+                <div id="tool-summarize-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Paste some text above and get a concise summary here.</div>
               </div>
               <div class="box">
                 <h3>Math Solver</h3>
@@ -1020,7 +1020,7 @@
                   <input type="text" id="tool-math-problem" placeholder="e.g. Solve 2x + 5 = 17" />
                   <button class="btn" onclick="runTool('math')">Solve</button>
                 </div>
-                <div id="tool-math-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+                <div id="tool-math-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Enter a problem above for a step-by-step solution.</div>
               </div>
 
               <h3 class="tools-group-label">Create</h3>
@@ -1031,13 +1031,13 @@
                   <input type="text" id="tool-essay-words" placeholder="Word count (e.g. 300)" style="max-width:140px;" />
                   <button class="btn" onclick="runTool('essay')">Write</button>
                 </div>
-                <div id="tool-essay-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+                <div id="tool-essay-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Your drafted essay will appear here.</div>
               </div>
               <div class="box">
                 <h3>Grammar Checker</h3>
                 <textarea id="tool-grammar-text" rows="3" placeholder="Text to proofread"></textarea>
                 <button class="btn" style="margin-top:8px;" onclick="runTool('grammar')">Check</button>
-                <div id="tool-grammar-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+                <div id="tool-grammar-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Corrections and suggestions will appear here.</div>
               </div>
               <div class="box">
                 <h3>Citation Generator</h3>
@@ -1048,7 +1048,7 @@
                   </select>
                   <button class="btn" onclick="runTool('citation')">Generate</button>
                 </div>
-                <div id="tool-citation-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+                <div id="tool-citation-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Your formatted citation will appear here.</div>
               </div>
             </div>
 
@@ -1134,18 +1134,19 @@
                   <input type="text" id="career-interest-input" placeholder="e.g. Data Science, UX Design" />
                   <button class="btn" onclick="generateCareerRoadmap(this)">Generate</button>
                 </div>
-                <div id="career-roadmap-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+                <div id="career-roadmap-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Tell EduFlow Ai a field you're interested in, and it'll sketch out the skills and steps to break into it.</div>
               </div>
               <div class="box">
                 <h3>Resume Review</h3>
                 <textarea id="career-resume-input" rows="6" placeholder="Paste your resume text here..."></textarea>
                 <button class="btn" style="margin-top:8px;" onclick="reviewResume(this)">Get Feedback</button>
-                <div id="career-resume-result" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;"></div>
+                <div id="career-resume-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Paste your resume above for specific, actionable feedback.</div>
               </div>
             </div>
 
             <div class="content-section" id="section-admin">
               <h1>Instructor Tools</h1>
+              <p class="dash-subgreeting" style="margin-bottom:18px;">Build a custom quiz and share it with your students (or classmates) using a share code - anyone with an account can create one.</p>
               <div id="instructor-builder-view">
                 <div class="box">
                   <h3>Build a Custom Quiz</h3>
@@ -1861,7 +1862,7 @@
       const div = document.createElement('div');
       div.className = 'content-section';
       div.id = 'section-' + item.id;
-      div.innerHTML = `<h1>${item.label}</h1><div class="box"><span class="empty">${item.label} is coming in a future update.</span></div>`;
+      div.innerHTML = `<h1>${item.label}</h1><div class="empty-state"><p>${item.label} isn't available yet - we're still building this one out.</p><button class="btn-outline" onclick="showSection('chat')">Ask your AI Tutor instead</button></div>`;
       mainCenter.appendChild(div);
     });
   }
@@ -3426,6 +3427,7 @@
     const goal = document.getElementById('learning-goal-input').value.trim();
     if (!goal) return;
     const resultEl = document.getElementById('learning-path-result');
+    resultEl.classList.remove('empty');
     resultEl.textContent = 'Generating...';
     const signal = beginGeneration('learning-path', btnEl);
     try {
@@ -3445,7 +3447,7 @@
       notesCache = notes;
       document.getElementById('notes-list').innerHTML = notes.length
         ? notes.map(n => `<div class="list-item"><span>${esc(n.title)}</span><button class="btn-danger" onclick="deleteNote('${n.id}')">Delete</button></div>`).join('')
-        : '<span class="empty">No notes yet.</span>';
+        : '<span class="empty">No notes yet - jot down key points while you learn.</span>';
     } catch (e) { /* silent */ }
   }
   async function createNote() {
@@ -3699,16 +3701,16 @@
       const { lessons, notes, flashcardSets, quizAttempts } = await apiGet('/api/web/library');
       document.getElementById('library-lessons').innerHTML = lessons.length
         ? lessons.map(l => `<div class="list-item"><span>${esc(l.topic)} - Lesson ${l.lesson_number}</span><span class="empty">${new Date(l.created_at).toLocaleDateString()}</span></div>`).join('')
-        : '<span class="empty">No lessons yet.</span>';
+        : '<span class="empty">No completed lessons yet - they will show up here as you progress.</span>';
       document.getElementById('library-notes').innerHTML = notes.length
         ? notes.map(n => `<div class="list-item"><span>${esc(n.title)}</span></div>`).join('')
-        : '<span class="empty">No notes yet.</span>';
+        : '<span class="empty">No notes yet - jot down key points while you learn.</span>';
       document.getElementById('library-flashcards').innerHTML = flashcardSets.length
         ? flashcardSets.map(s => `<div class="list-item"><span>${esc(s.topic)} (${s.cardCount} cards)</span></div>`).join('')
-        : '<span class="empty">No flashcard sets yet.</span>';
+        : '<span class="empty">No flashcard sets yet - generate one from the Flashcards page.</span>';
       document.getElementById('library-quizzes').innerHTML = quizAttempts.length
         ? quizAttempts.map(a => `<div class="list-item"><span>${esc(a.topic)}</span><span>${a.score}/${a.total}</span></div>`).join('')
-        : '<span class="empty">No quiz attempts yet.</span>';
+        : '<span class="empty">No quiz attempts yet - take a quiz to see your score here.</span>';
     } catch (e) { /* silent */ }
   }
 
@@ -3806,7 +3808,7 @@
       const { attempts } = await apiGet('/api/web/quiz/history');
       document.getElementById('quiz-history-list').innerHTML = attempts.length
         ? attempts.map(a => `<div class="list-item"><span>${esc(a.topic)}</span><span>${a.score}/${a.total} - ${new Date(a.created_at).toLocaleDateString()}</span></div>`).join('')
-        : '<span class="empty">No quiz attempts yet.</span>';
+        : '<span class="empty">No quiz attempts yet - take a quiz to see your score here.</span>';
     } catch (e) { /* silent */ }
   }
 
@@ -3884,6 +3886,7 @@
     };
     const cfg = configs[tool];
     const resultEl = document.getElementById(cfg.resultEl);
+    resultEl.classList.remove('empty');
     resultEl.textContent = 'Working...';
     try {
       const { result } = await apiPost(cfg.endpoint, cfg.body());
@@ -4048,6 +4051,7 @@
     const interest = document.getElementById('career-interest-input').value.trim();
     if (!interest) return;
     const resultEl = document.getElementById('career-roadmap-result');
+    resultEl.classList.remove('empty');
     resultEl.textContent = 'Generating...';
     const signal = beginGeneration('career-roadmap', btnEl);
     try {
@@ -4064,6 +4068,7 @@
     const resumeText = document.getElementById('career-resume-input').value.trim();
     if (!resumeText) return;
     const resultEl = document.getElementById('career-resume-result');
+    resultEl.classList.remove('empty');
     resultEl.textContent = 'Reviewing...';
     const signal = beginGeneration('resume-review', btnEl);
     try {
