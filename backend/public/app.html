@@ -2096,6 +2096,19 @@
 
   function esc(str) { const div = document.createElement('div'); div.textContent = str ?? ''; return div.innerHTML; }
 
+  // A failed fetch left these lists blank - identical to "you have none",
+  // which is misleading (brief section 7/8: error states need their own
+  // treatment, not silence). retryFn is optional - a couple of these loaders
+  // aren't simple no-arg calls, so a plain message-only fallback is used.
+  function showLoadError(elId, itemLabel, retryFn) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = `<div class="empty-state" style="padding:14px 0;">
+      <p style="margin:0 0 10px;">Couldn't load your ${itemLabel} - check your connection and try again.</p>
+      ${retryFn ? `<button class="btn-outline" onclick="${retryFn}">Try again</button>` : ''}
+    </div>`;
+  }
+
   function showToast(text, ms) {
     const stack = document.getElementById('toast-stack');
     const el = document.createElement('div');
@@ -3127,7 +3140,7 @@
       // conversation, they'd just be clutter, so skip rendering them.
       const suggestBox = document.getElementById('suggested-prompts');
       if (suggestBox) suggestBox.innerHTML = history.length ? '' : suggestBox.innerHTML;
-    } catch (e) { /* silent */ }
+    } catch (e) { showToast("Couldn't load your chat history - check your connection and try again."); }
   }
 
   function appendMessage(role, content, animate) {
@@ -3448,7 +3461,7 @@
       document.getElementById('notes-list').innerHTML = notes.length
         ? notes.map(n => `<div class="list-item"><span>${esc(n.title)}</span><button class="btn-danger" onclick="deleteNote('${n.id}')">Delete</button></div>`).join('')
         : '<span class="empty">No notes yet - jot down key points while you learn.</span>';
-    } catch (e) { /* silent */ }
+    } catch (e) { showLoadError('notes-list', 'notes', 'loadNotes()'); }
   }
   async function createNote() {
     const title = document.getElementById('note-title-input').value.trim();
@@ -3554,7 +3567,7 @@
       plannerTasksCache = tasks;
       renderCalendarGrid();
       renderPlannerList();
-    } catch (e) { /* silent */ }
+    } catch (e) { showToast("Couldn't load your calendar - check your connection and try again."); }
   }
   async function createTask() {
     const title = document.getElementById('task-title-input').value.trim();
@@ -3578,19 +3591,27 @@
   async function deleteTask(id) { await apiDelete('/api/web/planner/' + id); loadPlanner(); }
 
   // ---------- Leaderboard ----------
+  const LEADERBOARD_EMPTY_HTML = `<p>The leaderboard fills up as learners earn XP. Complete lessons and quizzes to climb the ranks.</p><button class="btn-outline" onclick="showSection('chat')">Start earning XP</button>`;
   async function loadLeaderboard() {
     try {
       const { leaderboard } = await apiGet('/api/web/leaderboard');
       const table = document.getElementById('leaderboard-table');
+      const emptyEl = document.getElementById('leaderboard-empty');
       if (!leaderboard.length) {
-        document.getElementById('leaderboard-empty').style.display = 'block';
+        emptyEl.innerHTML = LEADERBOARD_EMPTY_HTML;
+        emptyEl.style.display = 'block';
         table.innerHTML = '';
         return;
       }
-      document.getElementById('leaderboard-empty').style.display = 'none';
+      emptyEl.style.display = 'none';
       table.innerHTML = `<tr><th>Rank</th><th>Name</th><th>XP</th></tr>` +
         leaderboard.map((u, i) => `<tr><td>${i+1}</td><td>${esc(u.name) || 'Anonymous'}</td><td>${u.xp}</td></tr>`).join('');
-    } catch (e) { /* silent */ }
+    } catch (e) {
+      document.getElementById('leaderboard-table').innerHTML = '';
+      const emptyEl = document.getElementById('leaderboard-empty');
+      emptyEl.style.display = 'block';
+      emptyEl.innerHTML = `<p>Couldn't load the leaderboard - check your connection and try again.</p><button class="btn-outline" onclick="loadLeaderboard()">Try again</button>`;
+    }
   }
 
   // ---------- Certificates ----------
@@ -3604,7 +3625,7 @@
             <p>Certificates prove you've completed a course - pass your final assessment (6/10 or higher) to earn one.</p>
             <button class="btn-outline" onclick="showSection('chat')">Continue your course</button>
           </div>`;
-    } catch (e) { /* silent */ }
+    } catch (e) { showLoadError('certificates-list', 'certificates', 'loadCertificates()'); }
   }
   async function downloadCert(code) {
     const { data: { session } } = await sb.auth.getSession();
@@ -3711,7 +3732,7 @@
       document.getElementById('library-quizzes').innerHTML = quizAttempts.length
         ? quizAttempts.map(a => `<div class="list-item"><span>${esc(a.topic)}</span><span>${a.score}/${a.total}</span></div>`).join('')
         : '<span class="empty">No quiz attempts yet - take a quiz to see your score here.</span>';
-    } catch (e) { /* silent */ }
+    } catch (e) { showToast("Couldn't load your library - check your connection and try again."); }
   }
 
   // ---------- Flashcards ----------
@@ -3723,7 +3744,7 @@
       document.getElementById('flashcard-sets-list').innerHTML = sets.length
         ? sets.map(s => `<div class="list-item"><span>${esc(s.topic)} (${s.cardCount} cards)</span><span class="row-flex"><button class="btn-outline" onclick="openFlashcardSet('${s.id}')">Review</button><button class="btn-danger" onclick="deleteFlashcardSet('${s.id}')">Delete</button></span></div>`).join('')
         : '<span class="empty">No flashcard sets yet - generate one above.</span>';
-    } catch (e) { /* silent */ }
+    } catch (e) { showLoadError('flashcard-sets-list', 'flashcard sets', 'loadFlashcardSets()'); }
   }
 
   async function generateFlashcardSet(btnEl) {
@@ -3809,7 +3830,7 @@
       document.getElementById('quiz-history-list').innerHTML = attempts.length
         ? attempts.map(a => `<div class="list-item"><span>${esc(a.topic)}</span><span>${a.score}/${a.total} - ${new Date(a.created_at).toLocaleDateString()}</span></div>`).join('')
         : '<span class="empty">No quiz attempts yet - take a quiz to see your score here.</span>';
-    } catch (e) { /* silent */ }
+    } catch (e) { showLoadError('quiz-history-list', 'quiz history', 'loadQuizHistory()'); }
   }
 
   async function generateQuiz(btnEl) {
@@ -3906,7 +3927,7 @@
         ? assignments.map(a => `<div class="list-item"><span>${esc(a.topic)}${a.score != null ? ' - ' + a.score + '/10' : ' - not submitted'}</span><button class="btn-outline" onclick="openAssignment('${a.id}')">Open</button></div>`).join('')
         : '<span class="empty">No assignments yet - generate one above.</span>';
       window.__assignments = assignments;
-    } catch (e) { /* silent */ }
+    } catch (e) { showLoadError('assignments-list', 'assignments', 'loadAssignments()'); }
   }
 
   async function generateAssignment(btnEl) {
@@ -3973,7 +3994,7 @@
       document.getElementById('community-posts-list').innerHTML = posts.length
         ? posts.map(p => `<div class="list-item"><span>${esc(p.title)} <span class="empty">by ${esc(p.author_name)}</span></span><button class="btn-outline" onclick="openCommunityPost('${p.id}')">${p.replyCount} replies</button></div>`).join('')
         : '<span class="empty">No discussions yet - start one above.</span>';
-    } catch (e) { /* silent */ }
+    } catch (e) { showLoadError('community-posts-list', 'discussions', 'loadCommunityPosts()'); }
   }
 
   async function createCommunityPost() {
@@ -4024,7 +4045,7 @@
       document.getElementById('live-classes-list').innerHTML = classes.length
         ? classes.map(c => `<div class="list-item"><span>${esc(c.title)}</span><button class="btn-outline" onclick="joinJitsi('${c.room_name}')">Join</button></div>`).join('')
         : '<span class="empty">No rooms yet - create one above.</span>';
-    } catch (e) { /* silent */ }
+    } catch (e) { showLoadError('live-classes-list', 'live classes', 'loadLiveClasses()'); }
   }
 
   async function createLiveClass() {
@@ -4129,7 +4150,7 @@
       document.getElementById('my-custom-quizzes-list').innerHTML = quizzes.length
         ? quizzes.map(q => `<div class="list-item"><span>${esc(q.title)}</span><span>Code: <strong>${esc(q.share_code)}</strong></span></div>`).join('')
         : '<span class="empty">You haven\'t created any quizzes yet.</span>';
-    } catch (e) { /* silent */ }
+    } catch (e) { showLoadError('my-custom-quizzes-list', 'quizzes', 'loadMyCustomQuizzes()'); }
   }
 
   let sharedQuiz = null;
