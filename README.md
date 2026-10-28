@@ -28,3 +28,7 @@ Visit `http://localhost:3000` — you should see `EduFlow Ai API is running...`
 Visit `http://localhost:3000/health` — you should see a JSON status. Until you
 add real Supabase credentials to `.env`, `database.connected` will be `false`
 with an explanatory error — that's expected at this stage.
+
+For local development, set both `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY`, or leave both empty. If only one is configured,
+the server exits at startup with a configuration error.
