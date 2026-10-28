@@ -2717,7 +2717,7 @@
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     const name = (currentUser && currentUser.name) ? ', ' + currentUser.name.split(' ')[0] : '';
-    return `${timeGreeting}${name} 👋`;
+    return `${timeGreeting}${name}`;
   }
 
   function renderDashboard(user) {
