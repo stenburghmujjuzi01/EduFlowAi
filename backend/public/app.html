@@ -27,6 +27,20 @@
     } catch (e) { /* ignore */ }
   })();
 </script>
+<script>
+  // Boot skeleton helper. Defined in <head> (before anything that can fail)
+  // so the loading screen can ALWAYS be dismissed, even if a later script
+  // throws or the network stalls. The main boot sequence calls this as soon
+  // as the real layout is fully built; the timer is only a safety net.
+  window.hideBootSkeleton = function () {
+    var el = document.getElementById('boot-skeleton');
+    if (!el || el.getAttribute('data-done')) return;
+    el.setAttribute('data-done', '1');
+    el.classList.add('bs-hide');
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+  };
+  setTimeout(window.hideBootSkeleton, 10000);
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
 <style>
@@ -504,9 +518,103 @@
   #code-editor-area textarea { font-family: ui-monospace, monospace; min-height: 200px; }
   #math-input { font-family: ui-monospace, monospace; }
   #math-render { border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 10px; min-height: 40px; }
+  /* ---------- Boot skeleton ----------
+     Covers the page from the very first paint until the real layout is
+     fully built, so the user never sees the half-empty "raw HTML" layout
+     flash before the real one. Uses the same theme variables as the app,
+     so it matches light/dark automatically. */
+  #boot-skeleton {
+    position: fixed; inset: 0; z-index: 9999; background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; opacity: 1; transition: opacity 0.25s ease;
+  }
+  #boot-skeleton.bs-hide { opacity: 0; pointer-events: none; }
+  @keyframes bs-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  #boot-skeleton .bs {
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--border) 25%, var(--surface) 50%, var(--border) 75%);
+    background-size: 200% 100%; animation: bs-shimmer 1.6s linear infinite;
+  }
+  #boot-skeleton .bs-nav {
+    height: 56px; min-height: 56px; border-bottom: 1px solid var(--border); background: var(--sidebar-bg);
+    display: flex; align-items: center; gap: 12px; padding: 0 16px; flex-shrink: 0; overflow: hidden;
+  }
+  #boot-skeleton .bs-logo { font-weight: 700; font-size: 15px; white-space: nowrap; }
+  #boot-skeleton .bs-logo span { color: var(--accent); }
+  #boot-skeleton .bs-body { display: flex; flex: 1; min-height: 0; }
+  #boot-skeleton .bs-side {
+    width: 240px; min-width: 240px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+    padding: 16px 12px; display: flex; flex-direction: column; gap: 12px;
+  }
+  #boot-skeleton .bs-main { flex: 1; min-width: 0; padding: 28px 32px; overflow: hidden; }
+  #boot-skeleton .bs-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 12px;
+  }
+  #boot-skeleton .bs-two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  #boot-skeleton .bs-two .bs-card { margin-bottom: 0; }
+  @media (max-width: 800px) { #boot-skeleton .bs-two { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) {
+    #boot-skeleton .bs-side { display: none; }
+    #boot-skeleton .bs-main { padding: 20px 16px; }
+    #boot-skeleton .bs-hide-sm { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #boot-skeleton .bs { animation: none; }
+    #boot-skeleton { transition: none; }
+  }
 </style>
 </head>
 <body>
+
+  <!-- Boot skeleton: shown immediately, removed by hideBootSkeleton() once the real layout is ready -->
+  <div id="boot-skeleton" aria-hidden="true">
+    <div class="bs-nav">
+      <div class="bs-logo">EduFlow <span>Ai</span></div>
+      <div class="bs" style="height:36px;width:300px;max-width:30vw;"></div>
+      <div class="bs bs-hide-sm" style="height:36px;width:110px;"></div>
+      <div class="bs bs-hide-sm" style="height:36px;width:160px;border-radius:18px;"></div>
+      <div class="bs bs-hide-sm" style="height:36px;width:220px;"></div>
+      <div style="flex:1;"></div>
+      <div class="bs" style="height:32px;width:32px;border-radius:50%;"></div>
+      <div class="bs bs-hide-sm" style="height:32px;width:32px;border-radius:50%;"></div>
+      <div class="bs bs-hide-sm" style="height:32px;width:90px;"></div>
+      <div class="bs" style="height:32px;width:32px;border-radius:50%;"></div>
+    </div>
+    <div class="bs-body">
+      <div class="bs-side">
+        <div class="bs" style="height:16px;width:60px;"></div>
+        <div class="bs" style="height:36px;"></div>
+        <div class="bs" style="height:36px;"></div>
+        <div class="bs" style="height:36px;"></div>
+        <div class="bs" style="height:36px;"></div>
+        <div class="bs" style="height:36px;"></div>
+        <div class="bs" style="height:36px;"></div>
+        <div style="flex:1;"></div>
+        <div class="bs" style="height:32px;"></div>
+        <div class="bs" style="height:32px;"></div>
+        <div class="bs" style="height:32px;"></div>
+      </div>
+      <div class="bs-main">
+        <div class="bs" style="height:30px;width:260px;max-width:70%;margin-bottom:12px;"></div>
+        <div class="bs" style="height:16px;width:340px;max-width:85%;margin-bottom:28px;"></div>
+        <div class="bs-card" style="border-left:3px solid var(--accent);">
+          <div class="bs" style="height:12px;width:90px;"></div>
+          <div class="bs" style="height:24px;width:320px;max-width:80%;"></div>
+          <div class="bs" style="height:14px;width:60%;"></div>
+          <div style="display:flex;gap:10px;"><div class="bs" style="height:40px;width:130px;"></div><div class="bs" style="height:40px;width:110px;"></div></div>
+        </div>
+        <div class="bs-card">
+          <div class="bs" style="height:14px;width:120px;"></div>
+          <div class="bs" style="height:44px;"></div>
+          <div class="bs" style="height:44px;"></div>
+        </div>
+        <div class="bs-two">
+          <div class="bs-card"><div class="bs" style="height:14px;width:140px;"></div><div class="bs" style="height:56px;"></div></div>
+          <div class="bs-card"><div class="bs" style="height:14px;width:120px;"></div><div class="bs" style="height:56px;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div id="login-screen" class="screen auth-screen">
     <div class="brand-lockup">EduFlow <span>Ai</span></div>
@@ -4193,11 +4301,17 @@
   updatePomodoroDisplay();
 
   (async () => {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      try { await afterAuth(); } catch (e) { bootGuestMode(); }
-    } else {
-      bootGuestMode();
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        try { await afterAuth(); } catch (e) { bootGuestMode(); }
+      } else {
+        bootGuestMode();
+      }
+    } finally {
+      // Real layout is fully built (or a screen has been chosen) - reveal it.
+      // Runs on every path so the skeleton can never get stuck.
+      if (window.hideBootSkeleton) window.hideBootSkeleton();
     }
   })();
 </script>
