@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>EduFlow Ai</title>
+<title>EduFlow</title>
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%27-60%20-60%20120%20120%27%3E%3Crect%20x=%27-60%27%20y=%27-60%27%20width=%27120%27%20height=%27120%27%20rx=%2728%27%20fill=%27%230f172a%27/%3E%3Cg%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%278%27%20stroke-linecap=%27round%27%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%28-30%29%27/%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%2830%29%27/%3E%3Cpath%20d=%27M0%20-30C4%20-10%2010%20-4%2030%200C10%204%204%2010%200%2030C-4%2010%20-10%204%20-30%200C-10%20-4%20-4%20-10%200%20-30Z%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%2740%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%27-40%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3C/g%3E%3C/svg%3E">
 <script>
   // Applies the theme immediately, before any other script - all color
   // variables live inside [data-theme="..."] selectors with nothing in the
@@ -38,6 +39,13 @@
     el.setAttribute('data-done', '1');
     el.classList.add('bs-hide');
     setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+  };
+  // Tab icon + title: the logo lives here only. It switches to an alert version (red dot, count in title) when there are unread notifications.
+  var FAV_N="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%27-60%20-60%20120%20120%27%3E%3Crect%20x=%27-60%27%20y=%27-60%27%20width=%27120%27%20height=%27120%27%20rx=%2728%27%20fill=%27%230f172a%27/%3E%3Cg%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%278%27%20stroke-linecap=%27round%27%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%28-30%29%27/%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%2830%29%27/%3E%3Cpath%20d=%27M0%20-30C4%20-10%2010%20-4%2030%200C10%204%204%2010%200%2030C-4%2010%20-10%204%20-30%200C-10%20-4%20-4%20-10%200%20-30Z%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%2740%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%27-40%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3C/g%3E%3C/svg%3E", FAV_A="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%27-60%20-60%20120%20120%27%3E%3Crect%20x=%27-60%27%20y=%27-60%27%20width=%27120%27%20height=%27120%27%20rx=%2728%27%20fill=%27%230f172a%27/%3E%3Cg%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%278%27%20stroke-linecap=%27round%27%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%28-30%29%27/%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%2830%29%27/%3E%3Cpath%20d=%27M0%20-30C4%20-10%2010%20-4%2030%200C10%204%204%2010%200%2030C-4%2010%20-10%204%20-30%200C-10%20-4%20-4%20-10%200%20-30Z%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%2740%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%27-40%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3C/g%3E%3Ccircle%20cx=%2738%27%20cy=%27-38%27%20r=%2720%27%20fill=%27%23ef4444%27%20stroke=%27%230f172a%27%20stroke-width=%276%27/%3E%3C/svg%3E";
+  window.setTabAlert = function (n) {
+    var l = document.getElementById('app-favicon');
+    if (l) l.href = n > 0 ? FAV_A : FAV_N;
+    document.title = n > 0 ? '(' + n + ') EduFlow' : 'EduFlow';
   };
   setTimeout(window.hideBootSkeleton, 10000);
 </script>
@@ -562,6 +570,21 @@
     #boot-skeleton .bs { animation: none; }
     #boot-skeleton { transition: none; }
   }
+  /* ---------- Brand + calmer UI refinements ---------- */
+  .box h3, .tools-group-label, .dash-hero-label, .stat-card .label, .sidebar-top-label,
+  .popover .popover-title, .onboard-step-indicator, th, .table-wrap th {
+    text-transform: none; letter-spacing: 0;
+  }
+  .box h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+  .tools-group-label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .dash-hero-label { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .stat-card .label, th, .table-wrap th { font-size: 12px; }
+  .dash-hero-card::before { display: none; }
+  .pulsate-account { animation: none; }
+  #floating-chat-btn { box-shadow: none; }
+  #navbar .nav-logo { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+  .brand-lockup { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
+  #boot-skeleton .bs-logo { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
 </style>
 </head>
 <body>
@@ -569,7 +592,7 @@
   <!-- Boot skeleton: shown immediately, removed by hideBootSkeleton() once the real layout is ready -->
   <div id="boot-skeleton" aria-hidden="true">
     <div class="bs-nav">
-      <div class="bs-logo">EduFlow <span>Ai</span></div>
+      <div class="bs-logo">Edu<span>Flow</span></div>
       <div class="bs" style="height:36px;width:300px;max-width:30vw;"></div>
       <div class="bs bs-hide-sm" style="height:36px;width:110px;"></div>
       <div class="bs bs-hide-sm" style="height:36px;width:160px;border-radius:18px;"></div>
@@ -597,7 +620,7 @@
       <div class="bs-main">
         <div class="bs" style="height:30px;width:260px;max-width:70%;margin-bottom:12px;"></div>
         <div class="bs" style="height:16px;width:340px;max-width:85%;margin-bottom:28px;"></div>
-        <div class="bs-card" style="border-left:3px solid var(--accent);">
+        <div class="bs-card">
           <div class="bs" style="height:12px;width:90px;"></div>
           <div class="bs" style="height:24px;width:320px;max-width:80%;"></div>
           <div class="bs" style="height:14px;width:60%;"></div>
@@ -617,7 +640,7 @@
   </div>
 
   <div id="login-screen" class="screen auth-screen">
-    <div class="brand-lockup">EduFlow <span>Ai</span></div>
+    <div class="brand-lockup">Edu<span>Flow</span></div>
     <div class="auth-box">
       <div class="field-wrap"><label class="field-label">Email</label><input type="email" id="login-email" placeholder="you@example.com" /></div>
       <div class="field-wrap">
@@ -635,7 +658,7 @@
   </div>
 
   <div id="signup-screen" class="screen auth-screen">
-    <div class="brand-lockup">EduFlow <span>Ai</span></div>
+    <div class="brand-lockup">Edu<span>Flow</span></div>
     <div class="auth-box">
       <div class="onboard-step-indicator" id="onboard-step-indicator">Step 1 of 3</div>
 
@@ -654,10 +677,10 @@
       <div class="onboard-step" id="onboard-step-2">
         <h3 style="margin-top:0;">What's your goal?</h3>
         <div class="onboard-choice-grid">
-          <button type="button" class="onboard-choice" onclick="selectOnboardGoal('pass an exam')">🎯 Pass an exam</button>
-          <button type="button" class="onboard-choice" onclick="selectOnboardGoal('learn a new skill')">🧠 Learn a new skill</button>
-          <button type="button" class="onboard-choice" onclick="selectOnboardGoal('prepare for a career')">🚀 Prepare for a career</button>
-          <button type="button" class="onboard-choice" onclick="selectOnboardGoal('improve at school')">📚 Improve at school</button>
+          <button type="button" class="onboard-choice" onclick="selectOnboardGoal('pass an exam')">Pass an exam</button>
+          <button type="button" class="onboard-choice" onclick="selectOnboardGoal('learn a new skill')">Learn a new skill</button>
+          <button type="button" class="onboard-choice" onclick="selectOnboardGoal('prepare for a career')">Prepare for a career</button>
+          <button type="button" class="onboard-choice" onclick="selectOnboardGoal('improve at school')">Improve at school</button>
           <button type="button" class="onboard-choice" onclick="selectOnboardGoal('personal growth')">🌱 Personal development</button>
         </div>
         <div class="switch-link" style="margin-top:12px;"><a onclick="onboardGoBack(1)">← Back</a></div>
@@ -677,7 +700,7 @@
           </div>
         </div>
         <div class="field-wrap"><label class="field-label">Phone number</label><input type="text" id="signup-phone" placeholder="e.g. 256700000000" /></div>
-        <p style="font-size:12px;color:var(--muted);margin:-6px 0 14px 0;">Already used EduFlow Ai on WhatsApp? Enter that same number to bring in your existing progress.</p>
+        <p style="font-size:12px;color:var(--muted);margin:-6px 0 14px 0;">Already used EduFlow on WhatsApp? Enter that same number to bring in your existing progress.</p>
         <button class="submit-btn" onclick="handleSignup()">Create Account</button>
         <div class="switch-link" style="margin-top:8px;"><a onclick="onboardGoBack(2)">← Back</a></div>
       </div>
@@ -691,7 +714,7 @@
   <div id="phone-link-screen" class="screen auth-screen">
     <div class="brand-lockup" style="font-size:18px;">One more step</div>
     <div class="auth-box">
-      <p style="font-size:13px;color:var(--muted);margin-top:0">We need a phone number to load (or start) your EduFlow Ai profile.</p>
+      <p style="font-size:13px;color:var(--muted);margin-top:0">We need a phone number to load (or start) your EduFlow profile.</p>
       <div class="field-wrap"><input type="text" id="phone-input" placeholder="Phone number (digits only)" /></div>
       <button class="submit-btn" onclick="handleLinkPhone()">Continue</button>
       <div class="auth-msg" id="phone-msg"></div>
@@ -707,7 +730,7 @@
       </div>
     </div>
     <div id="navbar">
-      <div class="nav-logo" onclick="showSection('dashboard')">EduFlow <span>Ai</span></div>
+      <div class="nav-logo" onclick="showSection('dashboard')">Edu<span>Flow</span></div>
       <div id="search-wrap">
         <span class="icon-slot" id="search-icon"></span>
         <input type="text" id="search-input" placeholder="Search courses, notes, chat..." oninput="handleSearch()" onfocus="handleSearch()" />
@@ -869,7 +892,7 @@
                   <div id="chat-avatar">AI</div>
                   <div>
                     <div style="font-weight:600;font-size:14px;" id="chat-mode-title">Tutor</div>
-                    <div style="font-size:11px;color:var(--muted)">EduFlow Ai Chat</div>
+                    <div style="font-size:11px;color:var(--muted)">EduFlow Chat</div>
                   </div>
                 </div>
                 <div id="chat-messages"></div>
@@ -878,7 +901,7 @@
                 <div class="suggested-prompts" id="suggested-prompts"></div>
                 <div id="chat-input-area">
                   <div id="chat-file-name"></div>
-                  <textarea id="chat-textarea" rows="1" placeholder="Ask EduFlow Ai..."></textarea>
+                  <textarea id="chat-textarea" rows="1" placeholder="Ask EduFlow..."></textarea>
                   <div id="chat-toolbar">
                     <button class="nav-icon-btn" id="attach-btn" title="Attach file" aria-label="Attach file"></button>
                     <input type="file" id="file-input" style="display:none" onchange="handleFileAttach(event)" />
@@ -907,7 +930,7 @@
                   <input type="text" id="learning-goal-input" placeholder="e.g. Become a data analyst" />
                   <button class="btn" onclick="generateLearningPath(this)">Generate</button>
                 </div>
-                <div id="learning-path-result" class="empty" style="margin-top:14px;white-space:pre-wrap;font-size:13.5px;">Enter a goal above and EduFlow Ai will map out a step-by-step roadmap to get you there.</div>
+                <div id="learning-path-result" class="empty" style="margin-top:14px;white-space:pre-wrap;font-size:13.5px;">Enter a goal above and EduFlow will map out a step-by-step roadmap to get you there.</div>
               </div>
             </div>
 
@@ -1243,7 +1266,7 @@
                   <input type="text" id="career-interest-input" placeholder="e.g. Data Science, UX Design" />
                   <button class="btn" onclick="generateCareerRoadmap(this)">Generate</button>
                 </div>
-                <div id="career-roadmap-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Tell EduFlow Ai a field you're interested in, and it'll sketch out the skills and steps to break into it.</div>
+                <div id="career-roadmap-result" class="empty" style="margin-top:10px;white-space:pre-wrap;font-size:13.5px;">Tell EduFlow a field you're interested in, and it'll sketch out the skills and steps to break into it.</div>
               </div>
               <div class="box">
                 <h3>Resume Review</h3>
@@ -1306,7 +1329,7 @@
                     <span class="nav-icon" id="icon-settings-voice-g"></span> Voice
                   </div>
                   <div class="settings-nav-item" data-pane="about" onclick="switchSettingsPane('about')">
-                    <span class="nav-icon" id="icon-settings-about-g"></span> About EduFlow Ai
+                    <span class="nav-icon" id="icon-settings-about-g"></span> About EduFlow
                   </div>
                   <div class="settings-nav-label">Account</div>
                   <div class="settings-nav-item" data-pane="signup-cta" onclick="switchSettingsPane('signup-cta')">
@@ -1334,7 +1357,7 @@
                     <span class="nav-icon" id="icon-settings-data"></span> Data
                   </div>
                   <div class="settings-nav-item" data-pane="about" onclick="switchSettingsPane('about')">
-                    <span class="nav-icon" id="icon-settings-about"></span> About EduFlow Ai
+                    <span class="nav-icon" id="icon-settings-about"></span> About EduFlow
                   </div>
                 </div>
               </div>
@@ -1470,9 +1493,9 @@
                 </div>
 
                 <div class="settings-pane" id="settings-pane-about">
-                  <h2>About EduFlow Ai</h2>
+                  <h2>About EduFlow</h2>
                   <div class="box">
-                    <p style="font-size:13px;color:var(--muted);">EduFlow Ai helps you learn, practice and track progress with an AI tutor across chat, WhatsApp and this platform.</p>
+                    <p style="font-size:13px;color:var(--muted);">EduFlow helps you learn, practice and track progress with an AI tutor across chat, WhatsApp and this platform.</p>
                   </div>
                   <div class="box">
                     <h3>What you can do here</h3>
@@ -1480,7 +1503,7 @@
                   </div>
                   <div class="box">
                     <h3>Available everywhere</h3>
-                    <p style="font-size:13px;color:var(--muted);">Use it here on the website, or message EduFlow Ai directly on WhatsApp - sign up with the same phone number to keep progress in sync across both.</p>
+                    <p style="font-size:13px;color:var(--muted);">Use it here on the website, or message EduFlow directly on WhatsApp - sign up with the same phone number to keep progress in sync across both.</p>
                   </div>
                   <div class="box">
                     <h3>Version</h3>
@@ -1551,7 +1574,7 @@
           <h2>Getting started</h2>
           <div class="box">
             <h3>How do I start a course?</h3>
-            <p style="font-size:13px;color:var(--muted);">Open AI Chat and tell EduFlow Ai what you'd like to learn, or use the "Start new course" button next to the mode switcher. You can also message EduFlow Ai directly on WhatsApp.</p>
+            <p style="font-size:13px;color:var(--muted);">Open AI Chat and tell EduFlow what you'd like to learn, or use the "Start new course" button next to the mode switcher. You can also message EduFlow directly on WhatsApp.</p>
           </div>
           <div class="box">
             <h3>What are modes?</h3>
@@ -1575,7 +1598,7 @@
           </div>
           <div class="box">
             <h3>How is my skill level decided?</h3>
-            <p style="font-size:13px;color:var(--muted);">EduFlow Ai asks a few quick questions when you start a topic and adjusts as you go based on your answers and quiz results.</p>
+            <p style="font-size:13px;color:var(--muted);">EduFlow asks a few quick questions when you start a topic and adjusts as you go based on your answers and quiz results.</p>
           </div>
         </div>
 
@@ -1641,7 +1664,7 @@
         <div class="settings-pane active" id="privacy-pane-p-overview">
           <h2>Overview</h2>
           <div class="box">
-            <p style="font-size:13px;color:var(--muted);">EduFlow Ai is a learning platform accessible on the web and WhatsApp. This page explains, plainly, what we store and why - not a full legal policy, just the practical version.</p>
+            <p style="font-size:13px;color:var(--muted);">EduFlow is a learning platform accessible on the web and WhatsApp. This page explains, plainly, what we store and why - not a full legal policy, just the practical version.</p>
           </div>
           <div class="box">
             <h3>The short version</h3>
@@ -1649,7 +1672,7 @@
           </div>
           <div class="box">
             <h3>Who this applies to</h3>
-            <p style="font-size:13px;color:var(--muted);">Anyone using EduFlow Ai on the website or WhatsApp, whether browsing as a guest or with a registered account.</p>
+            <p style="font-size:13px;color:var(--muted);">Anyone using EduFlow on the website or WhatsApp, whether browsing as a guest or with a registered account.</p>
           </div>
           <div class="box">
             <h3>Questions?</h3>
@@ -1773,7 +1796,7 @@
     <div class="modal-box">
       <button class="modal-close" aria-label="Close" onclick="closeModal('review-modal')">&times;</button>
       <h3 id="review-modal-title">Tell us what went wrong</h3>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:-4px;">Your feedback helps EduFlow Ai improve. This is optional.</p>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-4px;">Your feedback helps EduFlow improve. This is optional.</p>
       <div class="star-row" id="review-star-row"></div>
       <textarea id="review-text" rows="4" placeholder="What was wrong with this response?"></textarea>
       <button class="btn" style="margin-top:10px;" onclick="submitReview()">Submit review</button>
@@ -1812,7 +1835,7 @@
   <div class="modal-overlay" id="password-modal" role="dialog" aria-modal="true" aria-label="Change password">
     <div class="modal-box" style="width:340px;">
       <button class="modal-close" aria-label="Close" onclick="closeModal('password-modal')">&times;</button>
-      <div id="pw-step-indicator" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;">Step 1 of 3</div>
+      <div id="pw-step-indicator" style="font-size:11px;color:var(--muted);margin-bottom:10px;">Step 1 of 3</div>
 
       <div class="pw-stage active" id="pw-stage-1">
         <h3 style="margin-top:0;">Verify your identity</h3>
@@ -2535,6 +2558,7 @@
       lastSeenNotifCount = window.__lastNotifTotal || 0;
       localStorage.setItem('eduflow_notif_seen', lastSeenNotifCount);
       setNavBadge('notif-btn', 0);
+      if (window.setTabAlert) setTabAlert(0);
     }
   }
   document.addEventListener('click', (e) => {
@@ -2831,7 +2855,7 @@
   function renderDashboard(user) {
     document.getElementById('dash-greeting-text').textContent = dashboardGreeting();
     document.getElementById('dash-subgreeting').textContent = user.current_topic
-      ? 'Ready to continue learning?' : 'Ready to start your learning journey?';
+      ? 'Ready to continue learning?' : 'What do you want to learn today?';
 
     // A. Continue Learning - the most prominent card on the page, with a
     // real progress bar driven by actual lesson data (never fabricated).
@@ -2839,18 +2863,16 @@
     if (user.current_topic && user.current_lesson_number < 5) {
       const pct = Math.round((user.current_lesson_number / 5) * 100);
       cont.innerHTML = `
-        <div class="dash-hero-label">Continue Learning</div>
-        <div class="dash-hero-title">${esc(user.current_topic)}</div>
+                <div class="dash-hero-title">${esc(user.current_topic)}</div>
         <p class="dash-hero-sub">Lesson ${user.current_lesson_number} of 5</p>
         <div class="dash-progress-track"><div class="dash-progress-fill" style="width:${pct}%;"></div></div>
-        <p class="dash-progress-caption">${pct}% complete - you're making great progress.</p>
+        <p class="dash-progress-caption">${pct}% complete</p>
         <div class="dash-hero-actions">
-          <button class="btn" onclick="showSection('chat')">Continue Learning →</button>
+          <button class="btn" onclick="showSection('chat')">Continue</button>
         </div>`;
     } else if (user.current_topic) {
       cont.innerHTML = `
-        <div class="dash-hero-label">Almost there</div>
-        <div class="dash-hero-title">${esc(user.current_topic)}</div>
+                <div class="dash-hero-title">${esc(user.current_topic)}</div>
         <div class="dash-progress-track"><div class="dash-progress-fill" style="width:100%;"></div></div>
         <p class="dash-progress-caption">All 5 lessons complete - take your final assessment on WhatsApp to get certified.</p>
         <div class="dash-hero-actions">
@@ -2858,12 +2880,11 @@
         </div>`;
     } else {
       cont.innerHTML = `
-        <div class="dash-hero-label">Get started</div>
-        <div class="dash-hero-title">Start your learning journey</div>
-        <p class="dash-hero-sub">Choose a course or ask the AI Tutor to build a learning path for you.</p>
+        <div class="dash-hero-title">Start learning</div>
+        <p class="dash-hero-sub">Pick a course, or ask the tutor to build a path for you.</p>
         <div class="dash-hero-actions">
-          <button class="btn" onclick="showSection('courses')">Explore Courses</button>
-          <button class="btn-outline" onclick="showSection('chat')">Ask AI Tutor</button>
+          <button class="btn" onclick="showSection('courses')">Explore courses</button>
+          <button class="btn-outline" onclick="showSection('chat')">Ask the tutor</button>
         </div>`;
     }
 
@@ -3086,6 +3107,7 @@
 
       const unseenCount = Math.max(0, notifItems.length - lastSeenNotifCount);
       setNavBadge('notif-btn', unseenCount);
+      if (window.setTabAlert) setTabAlert(unseenCount);
       window.__lastNotifTotal = notifItems.length;
     } catch (e) { /* silent */ }
   }
@@ -3136,7 +3158,7 @@
     pendingNewSession[mode] = true;
     document.getElementById('chat-messages').innerHTML = '';
     showSection('chat');
-    showToast(ux.start + ' - tell EduFlow Ai what you have in mind, then hit send.');
+    showToast(ux.start + ' - tell EduFlow what you have in mind, then hit send.');
     const ta = document.getElementById('chat-textarea');
     ta.value = ux.prompt;
     ta.focus();
@@ -3402,7 +3424,7 @@
     const text = bubbleTextFor(exportTargetBtn);
     closeModal('export-modal');
     if (navigator.share) {
-      try { await navigator.share({ text, title: 'EduFlow Ai response' }); } catch (e) { /* user cancelled */ }
+      try { await navigator.share({ text, title: 'EduFlow response' }); } catch (e) { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(text);
       showToast('Sharing isn\'t supported on this device - copied to clipboard instead.');
