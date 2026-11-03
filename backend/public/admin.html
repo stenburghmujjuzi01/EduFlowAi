@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>EduFlow Ai — Admin</title>
+<title>EduFlow — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -73,12 +73,22 @@
   .team-card .team-name { font-weight: 700; }
   .member-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
   .member-row:last-child { border-bottom: none; }
+  /* Scrollbars: thin, rounded, transparent track, no arrows (Claude-style) */
+  * { scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, 0.35) transparent; }
+  *:hover { scrollbar-color: rgba(148, 163, 184, 0.55) transparent; }
+  @supports not (scrollbar-width: thin) {
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+    ::-webkit-scrollbar-button { display: none; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.55); background-clip: content-box; }
+  }
 </style>
 </head>
 <body>
 
   <div id="gate">
-    <div class="brand">EduFlow <span>Ai</span> — Admin</div>
+    <div class="brand">Edu<span>Flow</span> — Admin</div>
     <input type="password" id="key-input" placeholder="Admin key" />
     <button onclick="tryLogin()">Enter</button>
     <div id="gate-error"></div>
@@ -87,7 +97,7 @@
   <div id="dashboard">
     <header class="top">
       <div>
-        <div class="brand">EduFlow <span>Ai</span></div>
+        <div class="brand">Edu<span>Flow</span></div>
         <div class="subtitle">Admin Dashboard</div>
       </div>
       <div class="subtitle" id="refreshed"></div>
