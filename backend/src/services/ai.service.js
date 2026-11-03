@@ -19,7 +19,7 @@ const LEVEL_GUIDANCE = {
   master: { words: '300-350', instruction: 'Write the most detailed and comprehensive lesson of all levels - covering subtle distinctions, deep technical detail, and expert-level insight others would miss.' },
 };
 
-async function callGemini(prompt) {
+async function callGemini(prompt, opts = {}) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
   const response = await fetch(url, {
@@ -29,7 +29,9 @@ async function callGemini(prompt) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: opts.contents || [{ parts: [{ text: prompt }] }],
+      ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}),
+      ...(opts.maxOutputTokens ? { generationConfig: { maxOutputTokens: opts.maxOutputTokens } } : {}),
     }),
   });
 
@@ -165,7 +167,7 @@ async function answerQuestion(question, topic, learnerName) {
   const prompt = `You are a friendly, knowledgeable tutor chatting with ${learnerName || 'a learner'} on WhatsApp.
 ${context}
 They just asked: "${question}"
-Give a clear, conversational answer (under 150 words, plain text, no markdown).`;
+Give a clear, conversational answer (under 150 words, plain text, no markdown). Answer directly - never ask permission to proceed and don't end by offering more help.`;
 
   return callGemini(prompt);
 }
@@ -215,7 +217,7 @@ Respond with EXACTLY one word, nothing else: BEGINNER, ELEMENTARY, INTERMEDIATE,
 }
 
 const CHAT_MODES = {
-  tutor: 'a patient, encouraging tutor who explains things clearly and checks understanding',
+  tutor: 'an expert tutor who teaches thoroughly, with clear explanations and worked examples',
   study_partner: 'a friendly study partner working through problems alongside the learner',
   quiz_master: 'a quiz master who challenges the learner with questions and tracks their answers',
   research_assistant: 'a thorough research assistant who gives well-organized, factual answers',
@@ -223,20 +225,41 @@ const CHAT_MODES = {
   career_coach: 'a supportive career coach helping with skills, resumes, and career direction',
 };
 
+const CHAT_SYSTEM_RULES = `You are the AI tutor inside EduFlow, a learning platform. Respond like a top-tier AI assistant.
+
+- Act on the request immediately. Never ask for permission or confirmation before answering (no "Does that sound good?", "Shall we begin?", "Would you like me to start?"). If the request is clear, deliver the complete answer in this reply.
+- Be thorough. When asked to teach a topic, deliver an actual lesson: a one-paragraph intro, then numbered sections that each explain one idea clearly, with concrete examples (and their output, for code), a table when comparing things, a short practice exercise or quick quiz with answers to check, and a brief "What to learn next" list. Teach from zero unless the learner states their level.
+- Ask a clarifying question only if the request is truly ambiguous. Even then, give your best answer first and ask at most one question at the end.
+- Format with Markdown: ## headings, **bold** for key terms, bullet and numbered lists, tables where useful, and fenced code blocks with a language tag for all code, commands and program output.
+- Be direct. No filler openers ("Great question!", "Absolutely!", "Fantastic!"), no repeating the question back, no emojis unless the learner uses them, and no closing paragraph that just offers more help.
+- Match length to the request: simple questions get short, direct answers; teaching requests get full lessons.
+- Reply in the same language the learner writes in.`;
+
 async function generateChatReply(mode, history, message) {
   if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const persona = CHAT_MODES[mode] || CHAT_MODES.tutor;
-  const historyText = (history || [])
-    .map((m) => `${m.role === 'user' ? 'Learner' : 'You'}: ${m.content}`)
-    .join('\n');
 
-  const prompt = `You are ${persona}, chatting with a learner on EduFlow Ai.
-${historyText ? `Recent conversation:\n${historyText}\n` : ''}
-Learner just said: "${message}"
-Reply naturally and helpfully (plain text, no markdown headers, under 200 words unless the request needs more detail).`;
+  // Build a proper multi-turn conversation (user / model turns).
+  const contents = [];
+  for (const m of history || []) {
+    const role = m.role === 'user' ? 'user' : 'model';
+    const text = String(m.content || '').trim();
+    if (!text) continue;
+    const prev = contents[contents.length - 1];
+    if (prev && prev.role === role) prev.parts[0].text += '\n\n' + text;
+    else contents.push({ role, parts: [{ text }] });
+  }
+  while (contents.length && contents[0].role === 'model') contents.shift();
+  const last = contents[contents.length - 1];
+  if (last && last.role === 'user') last.parts[0].text += '\n\n' + message;
+  else contents.push({ role: 'user', parts: [{ text: message }] });
 
-  return callGemini(prompt);
+  return callGemini(null, {
+    contents,
+    system: `You are ${persona}, working inside EduFlow.\n\n${CHAT_SYSTEM_RULES}`,
+    maxOutputTokens: 8192,
+  });
 }
 
 async function generateLearningPath(goal) {
