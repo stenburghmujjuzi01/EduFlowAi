@@ -617,6 +617,14 @@
     ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.55); background-clip: content-box; }
   }
+  /* Chat: user prompts hug their text and only wrap when they hit the width limit;
+     AI replies sit directly on the page (code blocks keep their own box + copy button). */
+  .msg-row > div { min-width: 0; max-width: 75%; }
+  .msg-row.user > div { margin-left: auto; }
+  .msg-row.assistant > div { max-width: 100%; width: 100%; }
+  .msg-bubble { max-width: none; overflow-wrap: break-word; }
+  .msg-row.user .msg-bubble { width: fit-content; max-width: 100%; margin-left: auto; padding: 10px 16px; border-radius: 18px; }
+  .msg-row.assistant .msg-bubble { background: transparent; border: none; padding: 2px 0; font-size: 15px; line-height: 1.7; border-radius: 0; }
 </style>
 </head>
 <body>
