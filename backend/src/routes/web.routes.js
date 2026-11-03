@@ -20,6 +20,19 @@ const { supabase } = require('../config/supabase');
 
 const router = express.Router();
 
+const BLOCKED_REPLY = "I can't help with that request. Try rephrasing it or asking something else.";
+
+// Per-user chat limit: 20 messages per minute (in memory; resets on redeploy).
+const userChatHits = new Map();
+function chatRateLimited(userId) {
+  const now = Date.now();
+  const recent = (userChatHits.get(userId) || []).filter((t) => now - t < 60000);
+  const limited = recent.length >= 20;
+  if (!limited) recent.push(now);
+  userChatHits.set(userId, recent);
+  return limited;
+}
+
 // --- Guest (unauthenticated) chat ---
 // Registered BEFORE requireWebAuth below, so unregistered visitors can use a
 // limited AI Chat on the landing page. No user record, no saved history -
@@ -56,6 +69,7 @@ router.post('/guest/chat', async (req, res) => {
     const reply = await aiService.generateChatReply('tutor', [], message);
     res.json({ reply, remaining: Math.max(0, GUEST_DAILY_LIMIT - entry.count) });
   } catch (err) {
+    if (err.code === 'blocked') return res.json({ reply: BLOCKED_REPLY });
     console.error('[web] Guest chat failed:', err.details || err);
     res.status(500).json({ error: 'Failed to get a response right now. Try again in a moment.' });
   }
@@ -287,11 +301,15 @@ router.get('/chat/mode-session-messages', async (req, res) => {
 
 router.post('/chat', async (req, res) => {
   const { message, mode } = req.body;
-  if (!message) return res.status(400).json({ error: 'message is required' });
+  if (!message || typeof message !== 'string') return res.status(400).json({ error: 'message is required' });
+  if (message.length > 4000) return res.status(400).json({ error: 'Message is too long (max 4000 characters).' });
 
   try {
     const user = await getProfile(req);
     if (!user) return res.status(400).json({ error: 'Profile not linked yet' });
+    if (chatRateLimited(user.id)) {
+      return res.status(429).json({ error: 'You are sending messages too quickly. Please wait a moment and try again.' });
+    }
 
     const history = await chatService.getModeContinuationMessages(user.id, mode);
     const reply = await aiService.generateChatReply(mode, history, message);
@@ -301,6 +319,7 @@ router.post('/chat', async (req, res) => {
 
     res.json({ reply });
   } catch (err) {
+    if (err.code === 'blocked') return res.json({ reply: BLOCKED_REPLY });
     console.error('[web] Chat failed:', err.details || err);
     res.status(500).json({ error: 'Failed to get a response right now. Try again in a moment.' });
   }

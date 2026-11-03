@@ -59,14 +59,14 @@ async function getModeContinuationMessages(user_id, mode) {
     .eq('user_id', user_id).eq('mode', mode)
     .in('role', ['user', 'assistant'])
     .not('content', 'like', `${SESSION_MARKER}%`)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false }) // newest first, so the limit keeps the LATEST messages
     .limit(MODE_HISTORY_LIMIT);
 
   if (markers && markers.length) query = query.gte('created_at', markers[0].created_at);
 
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  return (data || []).reverse(); // back to oldest-first for the model
 }
 
 // Session HEADINGS only for the history panel - never raw message content,

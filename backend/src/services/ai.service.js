@@ -19,38 +19,66 @@ const LEVEL_GUIDANCE = {
   master: { words: '300-350', instruction: 'Write the most detailed and comprehensive lesson of all levels - covering subtle distinctions, deep technical detail, and expert-level insight others would miss.' },
 };
 
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Calls Gemini with a timeout and automatic retries (rate limits / overload / network blips),
+// reads every part of the reply, and reports blocked or cut-off answers properly.
 async function callGemini(prompt, opts = {}) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'x-goog-api-key': GEMINI_API_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      contents: opts.contents || [{ parts: [{ text: prompt }] }],
-      ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}),
-      ...(opts.maxOutputTokens ? { generationConfig: { maxOutputTokens: opts.maxOutputTokens } } : {}),
-    }),
+  const body = JSON.stringify({
+    contents: opts.contents || [{ parts: [{ text: prompt }] }],
+    ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}),
+    ...(opts.maxOutputTokens ? { generationConfig: { maxOutputTokens: opts.maxOutputTokens } } : {}),
   });
 
-  const data = await response.json();
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await sleep(1000 * 2 ** (attempt - 1) + Math.random() * 300);
 
-  if (!response.ok) {
-    const err = new Error(data.error?.message || 'Gemini API request failed');
-    err.details = data;
-    throw err;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60000);
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'x-goog-api-key': GEMINI_API_KEY, 'Content-Type': 'application/json' },
+        body,
+        signal: controller.signal,
+      });
+    } catch (e) {
+      lastErr = e; // network error or timeout: try again
+      continue;
+    } finally {
+      clearTimeout(timer);
+    }
+
+    let data = {};
+    try { data = await response.json(); } catch (e) { data = {}; }
+
+    if (!response.ok) {
+      const err = new Error(data.error?.message || 'Gemini API request failed');
+      err.details = data;
+      err.status = response.status;
+      if (RETRYABLE_STATUS.has(response.status)) { lastErr = err; continue; }
+      throw err;
+    }
+
+    const candidate = data.candidates?.[0];
+    const text = (candidate?.content?.parts || []).map((p) => p.text || '').join('').trim();
+    if (!text) {
+      const blocked = Boolean(data.promptFeedback?.blockReason) || candidate?.finishReason === 'SAFETY';
+      const err = new Error(blocked ? 'Gemini blocked this request' : 'Gemini returned no text');
+      err.code = blocked ? 'blocked' : 'empty';
+      err.details = data;
+      throw err;
+    }
+    if (candidate?.finishReason === 'MAX_TOKENS' && opts.truncationNote) {
+      return text + '\n\n*(The answer was cut off because it was very long. Ask me to continue.)*';
+    }
+    return text;
   }
-
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    const err = new Error('Gemini returned no text');
-    err.details = data;
-    throw err;
-  }
-
-  return text.trim();
+  throw lastErr || new Error('Gemini request failed');
 }
 
 function cleanJson(text) {
@@ -259,6 +287,7 @@ async function generateChatReply(mode, history, message) {
     contents,
     system: `You are ${persona}, working inside EduFlow.\n\n${CHAT_SYSTEM_RULES}`,
     maxOutputTokens: 8192,
+    truncationNote: true,
   });
 }
 

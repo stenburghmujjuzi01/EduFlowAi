@@ -10,6 +10,7 @@ const cronRoutes = require('./routes/cron.routes');
 const webRoutes = require('./routes/web.routes');
 
 const app = express();
+app.set('trust proxy', 1); // behind Render's proxy: use the real client IP for rate limits
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());

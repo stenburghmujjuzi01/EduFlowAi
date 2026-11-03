@@ -645,6 +645,23 @@
   .spinner-ring { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: ef-spin 0.8s linear infinite; vertical-align: middle; }
   @keyframes ef-spin { to { transform: rotate(360deg); } }
   .msg-row.thinking .msg-bubble { padding: 8px 0; }
+  /* Chat: room below the answer while it is written (so the view can stay at its start), and the scroll-down arrow */
+  #chat-scroll.reserve-space::after { content: ''; display: block; height: 70vh; }
+  #scroll-down-wrap { position: sticky; bottom: 12px; height: 0; display: flex; justify-content: center; overflow: visible; z-index: 5; pointer-events: none; }
+  #scroll-down-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; transform: translateY(-100%) scale(0.9); opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
+  #scroll-down-btn.show { opacity: 1; transform: translateY(-100%) scale(1); pointer-events: auto; }
+  #scroll-down-btn:hover { border-color: var(--muted); }
+  /* Copyable code blocks stand out from the page */
+  .code-block { background: #070b14; border: 1px solid #3a4c72; box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset; }
+  .code-block-header { background: #1f2c47; color: var(--accent); border-bottom: 1px solid #3a4c72; }
+  .code-block code { color: #e6edf7; }
+  .code-copy-btn { color: #b6c4db; }
+  .code-copy-btn:hover { color: #fff; }
+  :root[data-theme="light"] .code-block { background: #f1f3f8; border-color: #c6cedd; box-shadow: none; }
+  :root[data-theme="light"] .code-block-header { background: #dde3ef; color: #7a5a10; border-bottom-color: #c6cedd; }
+  :root[data-theme="light"] .code-block code { color: #1b2333; }
+  :root[data-theme="light"] .code-copy-btn { color: #4b5870; }
+  :root[data-theme="light"] .code-copy-btn:hover { color: #0f172a; }
 </style>
 </head>
 <body>
@@ -956,12 +973,13 @@
                   </div>
                 </div>
                 <div id="chat-messages"></div>
+                <div id="scroll-down-wrap"><button type="button" id="scroll-down-btn" aria-label="Scroll to bottom" onclick="scrollChatDown()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
               </div>
               <div id="chat-bottom-bar">
                 <div class="suggested-prompts" id="suggested-prompts"></div>
                 <div id="chat-input-area">
                   <div id="chat-file-name"></div>
-                  <textarea id="chat-textarea" rows="1" placeholder="Ask EduFlow..."></textarea>
+                  <textarea id="chat-textarea" rows="1" maxlength="4000" placeholder="Ask EduFlow..."></textarea>
                   <div id="chat-toolbar">
                     <button class="nav-icon-btn" id="attach-btn" title="Attach file" aria-label="Attach file"></button>
                     <input type="file" id="file-input" style="display:none" onchange="handleFileAttach(event)" />
@@ -3334,7 +3352,7 @@
     } catch (e) { showToast("Couldn't load your chat history - check your connection and try again."); }
   }
 
-  function appendMessage(role, content, animate) {
+  function appendMessage(role, content, animate, noScroll) {
     const box = document.getElementById('chat-messages');
     const row = document.createElement('div');
     row.className = 'msg-row ' + role;
@@ -3354,7 +3372,8 @@
         </div>` : ''}
       </div>`;
     box.appendChild(row);
-    scrollChatToBottom();
+    if (!noScroll) scrollChatToBottom();
+    updateScrollDownBtn();
     return row;
   }
 
@@ -3584,17 +3603,49 @@
     row.className = 'msg-row assistant thinking';
     row.innerHTML = '<div><div class="msg-bubble"><span class="spinner-ring" role="status" aria-label="Thinking"></span></div></div>';
     box.appendChild(row);
-    scrollChatToBottom();
     return row;
   }
+  // When a reply starts, park the user's question at the top of the view so the start of the
+  // answer is what they see. The page never auto-scrolls while the answer is being written.
+  function startGenerationScroll() {
+    const scroller = document.getElementById('chat-scroll');
+    if (!scroller) return;
+    scroller.classList.add('reserve-space');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const rows = document.querySelectorAll('#chat-messages .msg-row.user');
+      const last = rows[rows.length - 1];
+      if (!last) return;
+      const delta = last.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 12;
+      scroller.scrollTo({ top: scroller.scrollTop + delta, behavior: 'smooth' });
+    }));
+  }
+  function updateScrollDownBtn() {
+    const scroller = document.getElementById('chat-scroll');
+    const box = document.getElementById('chat-messages');
+    const btn = document.getElementById('scroll-down-btn');
+    if (!scroller || !box || !btn) return;
+    const below = box.getBoundingClientRect().bottom - scroller.getBoundingClientRect().bottom;
+    btn.classList.toggle('show', below > 80);
+  }
+  function scrollChatDown() {
+    const scroller = document.getElementById('chat-scroll');
+    const box = document.getElementById('chat-messages');
+    if (!scroller || !box) return;
+    const below = box.getBoundingClientRect().bottom - scroller.getBoundingClientRect().bottom;
+    scroller.scrollTo({ top: scroller.scrollTop + below + 24, behavior: 'smooth' });
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const scroller = document.getElementById('chat-scroll');
+    if (scroller) scroller.addEventListener('scroll', updateScrollDownBtn, { passive: true });
+    window.addEventListener('resize', updateScrollDownBtn);
+  });
   async function typeReply(content, signal, thinkingRow) {
     if (thinkingRow) thinkingRow.remove();
-    const row = appendMessage('assistant', content);
+    const row = appendMessage('assistant', content, undefined, true); // no auto-scroll
     const bubble = row.querySelector('.msg-bubble');
     const actions = row.querySelector('.msg-actions');
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce || !content) return row;
-    const scroller = document.getElementById('chat-scroll');
     const partial = (txt) => ((txt.match(/```/g) || []).length % 2 ? txt + '\n```' : txt); // close an open code fence while typing
     const perFrame = Math.max(3, Math.ceil(content.length / 220)); // always finishes in about 3-4 seconds
     if (actions) actions.style.visibility = 'hidden';
@@ -3602,10 +3653,9 @@
     let shown = 0;
     while (shown < content.length) {
       if (signal && signal.aborted) break;
-      const stick = scroller ? scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 140 : false;
       shown = Math.min(content.length, shown + perFrame);
       bubble.innerHTML = renderMessageContent(partial(content.slice(0, shown)), 'assistant');
-      if (stick && scroller) scroller.scrollTop = scroller.scrollHeight;
+      updateScrollDownBtn();
       await new Promise(r => requestAnimationFrame(r));
     }
     if (shown < content.length) {           // stopped by the user: keep what was typed
@@ -3614,6 +3664,7 @@
       bubble.innerHTML = renderMessageContent(content, 'assistant');
     }
     if (actions) actions.style.visibility = '';
+    updateScrollDownBtn();
     return row;
   }
 
@@ -3636,6 +3687,7 @@
     const sendBtn = document.getElementById('chat-send-btn');
     const signal = beginGeneration('chat', sendBtn);
     const thinking = showThinkingRow();
+    startGenerationScroll();
     try {
       if (isGuestMode) {
         const res = await fetch('/api/web/guest/chat', {
@@ -3661,6 +3713,9 @@
       else { appendMessage('assistant', 'Sorry, something went wrong. Try again.'); }
     } finally {
       thinking.remove();
+      const cs = document.getElementById('chat-scroll');
+      if (cs) cs.classList.remove('reserve-space');
+      updateScrollDownBtn();
       endGeneration('chat', () => sendChatMessage());
     }
   }
