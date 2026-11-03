@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>EduFlow</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%27-60%20-60%20120%20120%27%3E%3Crect%20x=%27-60%27%20y=%27-60%27%20width=%27120%27%20height=%27120%27%20rx=%2728%27%20fill=%27%230f172a%27/%3E%3Cg%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%278%27%20stroke-linecap=%27round%27%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%28-30%29%27/%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%2830%29%27/%3E%3Cpath%20d=%27M0%20-30C4%20-10%2010%20-4%2030%200C10%204%204%2010%200%2030C-4%2010%20-10%204%20-30%200C-10%20-4%20-4%20-10%200%20-30Z%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%2740%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%27-40%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3C/g%3E%3C/svg%3E">
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cg%20transform=%27rotate%28-28%2032%2032%29%27%3E%3Cellipse%20cx=%2732%27%20cy=%2732%27%20rx=%2731%27%20ry=%2712%27%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%276.5%27/%3E%3C/g%3E%3Cpath%20d=%27M32%202C38%2019%2045%2026%2062%2032C45%2038%2038%2045%2032%2062C26%2045%2019%2038%202%2032C19%2026%2026%2019%2032%202Z%27%20fill=%27%23d8ad4c%27/%3E%3C/svg%3E">
 <script>
   // Applies the theme immediately, before any other script - all color
   // variables live inside [data-theme="..."] selectors with nothing in the
@@ -41,7 +41,7 @@
     setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
   };
   // Tab icon + title: the logo lives here only. It switches to an alert version (red dot, count in title) when there are unread notifications.
-  var FAV_N="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%27-60%20-60%20120%20120%27%3E%3Crect%20x=%27-60%27%20y=%27-60%27%20width=%27120%27%20height=%27120%27%20rx=%2728%27%20fill=%27%230f172a%27/%3E%3Cg%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%278%27%20stroke-linecap=%27round%27%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%28-30%29%27/%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%2830%29%27/%3E%3Cpath%20d=%27M0%20-30C4%20-10%2010%20-4%2030%200C10%204%204%2010%200%2030C-4%2010%20-10%204%20-30%200C-10%20-4%20-4%20-10%200%20-30Z%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%2740%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%27-40%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3C/g%3E%3C/svg%3E", FAV_A="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%27-60%20-60%20120%20120%27%3E%3Crect%20x=%27-60%27%20y=%27-60%27%20width=%27120%27%20height=%27120%27%20rx=%2728%27%20fill=%27%230f172a%27/%3E%3Cg%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%278%27%20stroke-linecap=%27round%27%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%28-30%29%27/%3E%3Cellipse%20rx=%2746%27%20ry=%2717%27%20transform=%27rotate%2830%29%27/%3E%3Cpath%20d=%27M0%20-30C4%20-10%2010%20-4%2030%200C10%204%204%2010%200%2030C-4%2010%20-10%204%20-30%200C-10%20-4%20-4%20-10%200%20-30Z%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%2740%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3Ccircle%20cx=%27-40%27%20cy=%27-23%27%20r=%278%27%20fill=%27%23d8ad4c%27%20stroke=%27none%27/%3E%3C/g%3E%3Ccircle%20cx=%2738%27%20cy=%27-38%27%20r=%2720%27%20fill=%27%23ef4444%27%20stroke=%27%230f172a%27%20stroke-width=%276%27/%3E%3C/svg%3E";
+  var FAV_N="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cg%20transform=%27rotate%28-28%2032%2032%29%27%3E%3Cellipse%20cx=%2732%27%20cy=%2732%27%20rx=%2731%27%20ry=%2712%27%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%276.5%27/%3E%3C/g%3E%3Cpath%20d=%27M32%202C38%2019%2045%2026%2062%2032C45%2038%2038%2045%2032%2062C26%2045%2019%2038%202%2032C19%2026%2026%2019%2032%202Z%27%20fill=%27%23d8ad4c%27/%3E%3C/svg%3E", FAV_A="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cg%20transform=%27rotate%28-28%2032%2032%29%27%3E%3Cellipse%20cx=%2732%27%20cy=%2732%27%20rx=%2731%27%20ry=%2712%27%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%276.5%27/%3E%3C/g%3E%3Cpath%20d=%27M32%202C38%2019%2045%2026%2062%2032C45%2038%2038%2045%2032%2062C26%2045%2019%2038%202%2032C19%2026%2026%2019%2032%202Z%27%20fill=%27%23d8ad4c%27/%3E%3Ccircle%20cx=%2751%27%20cy=%2713%27%20r=%2712%27%20fill=%27%23ef4444%27/%3E%3C/svg%3E";
   window.setTabAlert = function (n) {
     var l = document.getElementById('app-favicon');
     if (l) l.href = n > 0 ? FAV_A : FAV_N;
@@ -585,6 +585,20 @@
   #navbar .nav-logo { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
   .brand-lockup { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
   #boot-skeleton .bs-logo { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+  /* Wordmark: one plain colour, medium weight, like other AI products */
+  #navbar .nav-logo, .brand-lockup { color: var(--text); font-weight: 600; letter-spacing: 0; }
+  #navbar .nav-logo { font-size: 18px; }
+  #navbar .nav-logo span, .brand-lockup span, #boot-skeleton .bs-logo span { color: inherit; }
+  #boot-skeleton .bs-logo { font-weight: 600; letter-spacing: 0; }
+  /* Language selector */
+  #navbar select#language-select {
+    -webkit-appearance: none; appearance: none; background: var(--bg) url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272.5%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27M6%209l6%206%206-6%27/%3E%3C/svg%3E") no-repeat right 10px center;
+    border: 1px solid var(--border); color: var(--text); padding: 7px 30px 7px 12px; border-radius: 8px;
+    font-size: 12px; font-family: inherit; cursor: pointer; outline: none;
+  }
+  #navbar select#language-select:hover { border-color: var(--muted); }
+  #navbar select#language-select:focus-visible { border-color: var(--accent); }
+  #navbar select#language-select option { background: var(--surface); color: var(--text); }
 </style>
 </head>
 <body>
