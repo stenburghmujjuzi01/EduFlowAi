@@ -662,6 +662,14 @@
   :root[data-theme="light"] .code-block code { color: #1b2333; }
   :root[data-theme="light"] .code-copy-btn { color: #4b5870; }
   :root[data-theme="light"] .code-copy-btn:hover { color: #0f172a; }
+  /* Scroll-down arrow: high-visibility gold */
+  #scroll-down-btn { width: 38px; height: 38px; background: var(--accent); color: #0f172a; border-color: var(--accent); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+  #scroll-down-btn:hover { filter: brightness(1.1); border-color: var(--accent); }
+  #scroll-down-btn:active { transform: translateY(-100%) scale(0.94); }
+  /* Light theme: greyer copy blocks */
+  :root[data-theme="light"] .code-block { background: #e4e7ec; border-color: #a9b0bd; }
+  :root[data-theme="light"] .code-block-header { background: #cdd2db; color: #5b4a1a; border-bottom-color: #a9b0bd; }
+  :root[data-theme="light"] .code-block code { color: #1b2333; }
 </style>
 </head>
 <body>
@@ -3627,20 +3635,30 @@
     const below = box.getBoundingClientRect().bottom - scroller.getBoundingClientRect().bottom;
     btn.classList.toggle('show', below > 80);
   }
-  function scrollChatDown() {
+  let followBottom = false; // true after the user clicks the arrow, until they scroll by hand
+  function jumpToBottom() {
     const scroller = document.getElementById('chat-scroll');
     const box = document.getElementById('chat-messages');
     if (!scroller || !box) return;
     const below = box.getBoundingClientRect().bottom - scroller.getBoundingClientRect().bottom;
-    scroller.scrollTo({ top: scroller.scrollTop + below + 24, behavior: 'smooth' });
+    scroller.scrollTop += below + 24; // instant, no animation
+  }
+  function scrollChatDown() {
+    jumpToBottom();
+    followBottom = !!activeGenerations['chat']; // keep following only while a reply is still being written
+    updateScrollDownBtn();
   }
   document.addEventListener('DOMContentLoaded', () => {
     const scroller = document.getElementById('chat-scroll');
-    if (scroller) scroller.addEventListener('scroll', updateScrollDownBtn, { passive: true });
+    if (scroller) {
+      scroller.addEventListener('scroll', updateScrollDownBtn, { passive: true });
+      ['wheel', 'touchmove'].forEach(ev => scroller.addEventListener(ev, () => { followBottom = false; }, { passive: true }));
+    }
     window.addEventListener('resize', updateScrollDownBtn);
   });
   async function typeReply(content, signal, thinkingRow) {
     if (thinkingRow) thinkingRow.remove();
+    followBottom = false;
     const row = appendMessage('assistant', content, undefined, true); // no auto-scroll
     const bubble = row.querySelector('.msg-bubble');
     const actions = row.querySelector('.msg-actions');
@@ -3655,6 +3673,7 @@
       if (signal && signal.aborted) break;
       shown = Math.min(content.length, shown + perFrame);
       bubble.innerHTML = renderMessageContent(partial(content.slice(0, shown)), 'assistant');
+      if (followBottom) jumpToBottom();
       updateScrollDownBtn();
       await new Promise(r => requestAnimationFrame(r));
     }
@@ -3664,6 +3683,7 @@
       bubble.innerHTML = renderMessageContent(content, 'assistant');
     }
     if (actions) actions.style.visibility = '';
+    followBottom = false;
     updateScrollDownBtn();
     return row;
   }
