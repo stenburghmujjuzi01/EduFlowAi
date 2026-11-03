@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>EduFlow</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cg%20transform=%27rotate%28-28%2032%2032%29%27%3E%3Cellipse%20cx=%2732%27%20cy=%2732%27%20rx=%2731%27%20ry=%2712%27%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%276.5%27/%3E%3C/g%3E%3Cpath%20d=%27M32%202C38%2019%2045%2026%2062%2032C45%2038%2038%2045%2032%2062C26%2045%2019%2038%202%2032C19%2026%2026%2019%2032%202Z%27%20fill=%27%23d8ad4c%27/%3E%3C/svg%3E">
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2032%2032%27%20shape-rendering=%27geometricPrecision%27%3E%3Cdefs%3E%3Cmask%20id=%27m%27%3E%3Crect%20width=%2732%27%20height=%2732%27%20fill=%27white%27/%3E%3Ccircle%20cx=%2716%27%20cy=%2716%27%20r=%279.8%27%20fill=%27black%27/%3E%3C/mask%3E%3C/defs%3E%3Cg%20mask=%27url%28%23m%29%27%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%271.7%27%3E%3Ccircle%20cx=%2716%27%20cy=%2716%27%20r=%2714.5%27/%3E%3Cellipse%20cx=%2716%27%20cy=%2716%27%20rx=%2714.5%27%20ry=%277%27%20transform=%27rotate%28-30%2016%2016%29%27/%3E%3Cellipse%20cx=%2716%27%20cy=%2716%27%20rx=%2714.5%27%20ry=%277%27%20transform=%27rotate%2830%2016%2016%29%27/%3E%3Cellipse%20cx=%2716%27%20cy=%2716%27%20rx=%2714.5%27%20ry=%277%27%20transform=%27rotate%2890%2016%2016%29%27/%3E%3C/g%3E%3Cpath%20d=%27M16%207C16.3%2013%2019%2015.7%2025%2016C19%2016.3%2016.3%2019%2016%2025C15.7%2019%2013%2016.3%207%2016C13%2015.7%2015.7%2013%2016%207Z%27%20fill=%27%23d8ad4c%27/%3E%3C/svg%3E">
 <script>
   // Applies the theme immediately, before any other script - all color
   // variables live inside [data-theme="..."] selectors with nothing in the
@@ -41,7 +41,7 @@
     setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
   };
   // Tab icon + title: the logo lives here only. It switches to an alert version (red dot, count in title) when there are unread notifications.
-  var FAV_N="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cg%20transform=%27rotate%28-28%2032%2032%29%27%3E%3Cellipse%20cx=%2732%27%20cy=%2732%27%20rx=%2731%27%20ry=%2712%27%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%276.5%27/%3E%3C/g%3E%3Cpath%20d=%27M32%202C38%2019%2045%2026%2062%2032C45%2038%2038%2045%2032%2062C26%2045%2019%2038%202%2032C19%2026%2026%2019%2032%202Z%27%20fill=%27%23d8ad4c%27/%3E%3C/svg%3E", FAV_A="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2064%2064%27%3E%3Cg%20transform=%27rotate%28-28%2032%2032%29%27%3E%3Cellipse%20cx=%2732%27%20cy=%2732%27%20rx=%2731%27%20ry=%2712%27%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%276.5%27/%3E%3C/g%3E%3Cpath%20d=%27M32%202C38%2019%2045%2026%2062%2032C45%2038%2038%2045%2032%2062C26%2045%2019%2038%202%2032C19%2026%2026%2019%2032%202Z%27%20fill=%27%23d8ad4c%27/%3E%3Ccircle%20cx=%2751%27%20cy=%2713%27%20r=%2712%27%20fill=%27%23ef4444%27/%3E%3C/svg%3E";
+  var FAV_N="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2032%2032%27%20shape-rendering=%27geometricPrecision%27%3E%3Cdefs%3E%3Cmask%20id=%27m%27%3E%3Crect%20width=%2732%27%20height=%2732%27%20fill=%27white%27/%3E%3Ccircle%20cx=%2716%27%20cy=%2716%27%20r=%279.8%27%20fill=%27black%27/%3E%3C/mask%3E%3C/defs%3E%3Cg%20mask=%27url%28%23m%29%27%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%271.7%27%3E%3Ccircle%20cx=%2716%27%20cy=%2716%27%20r=%2714.5%27/%3E%3Cellipse%20cx=%2716%27%20cy=%2716%27%20rx=%2714.5%27%20ry=%277%27%20transform=%27rotate%28-30%2016%2016%29%27/%3E%3Cellipse%20cx=%2716%27%20cy=%2716%27%20rx=%2714.5%27%20ry=%277%27%20transform=%27rotate%2830%2016%2016%29%27/%3E%3Cellipse%20cx=%2716%27%20cy=%2716%27%20rx=%2714.5%27%20ry=%277%27%20transform=%27rotate%2890%2016%2016%29%27/%3E%3C/g%3E%3Cpath%20d=%27M16%207C16.3%2013%2019%2015.7%2025%2016C19%2016.3%2016.3%2019%2016%2025C15.7%2019%2013%2016.3%207%2016C13%2015.7%2015.7%2013%2016%207Z%27%20fill=%27%23d8ad4c%27/%3E%3C/svg%3E", FAV_A="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2032%2032%27%20shape-rendering=%27geometricPrecision%27%3E%3Cdefs%3E%3Cmask%20id=%27m%27%3E%3Crect%20width=%2732%27%20height=%2732%27%20fill=%27white%27/%3E%3Ccircle%20cx=%2716%27%20cy=%2716%27%20r=%279.8%27%20fill=%27black%27/%3E%3C/mask%3E%3C/defs%3E%3Cg%20mask=%27url%28%23m%29%27%20fill=%27none%27%20stroke=%27%23d8ad4c%27%20stroke-width=%271.7%27%3E%3Ccircle%20cx=%2716%27%20cy=%2716%27%20r=%2714.5%27/%3E%3Cellipse%20cx=%2716%27%20cy=%2716%27%20rx=%2714.5%27%20ry=%277%27%20transform=%27rotate%28-30%2016%2016%29%27/%3E%3Cellipse%20cx=%2716%27%20cy=%2716%27%20rx=%2714.5%27%20ry=%277%27%20transform=%27rotate%2830%2016%2016%29%27/%3E%3Cellipse%20cx=%2716%27%20cy=%2716%27%20rx=%2714.5%27%20ry=%277%27%20transform=%27rotate%2890%2016%2016%29%27/%3E%3C/g%3E%3Cpath%20d=%27M16%207C16.3%2013%2019%2015.7%2025%2016C19%2016.3%2016.3%2019%2016%2025C15.7%2019%2013%2016.3%207%2016C13%2015.7%2015.7%2013%2016%207Z%27%20fill=%27%23d8ad4c%27/%3E%3Ccircle%20cx=%2726%27%20cy=%276%27%20r=%275.5%27%20fill=%27%23ef4444%27/%3E%3C/svg%3E";
   window.setTabAlert = function (n) {
     var l = document.getElementById('app-favicon');
     if (l) l.href = n > 0 ? FAV_A : FAV_N;
@@ -599,6 +599,14 @@
   #navbar select#language-select:hover { border-color: var(--muted); }
   #navbar select#language-select:focus-visible { border-color: var(--accent); }
   #navbar select#language-select option { background: var(--surface); color: var(--text); }
+  /* Wordmark: ChatGPT-style type settings. "Edu" in the main text colour, "Flow" in gold. */
+  #navbar .nav-logo, .brand-lockup, #boot-skeleton .bs-logo {
+    font-family: -apple-system-body, ui-sans-serif, -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 18px; line-height: 26px; font-weight: 600; letter-spacing: 0; color: var(--text);
+    -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; user-select: none;
+  }
+  .brand-lockup { font-size: 30px; line-height: 1.25; }
+  #navbar .nav-logo span, .brand-lockup span, #boot-skeleton .bs-logo span { color: var(--accent); }
 </style>
 </head>
 <body>
