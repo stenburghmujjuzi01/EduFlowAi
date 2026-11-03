@@ -641,6 +641,10 @@
   .md table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 0 0 14px; }
   .md th, .md td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; }
   .md th { background: var(--surface); font-weight: 600; }
+  /* Chat: rotating "thinking" circle shown before a reply starts */
+  .spinner-ring { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: ef-spin 0.8s linear infinite; vertical-align: middle; }
+  @keyframes ef-spin { to { transform: rotate(360deg); } }
+  .msg-row.thinking .msg-bubble { padding: 8px 0; }
 </style>
 </head>
 <body>
@@ -3351,6 +3355,7 @@
       </div>`;
     box.appendChild(row);
     scrollChatToBottom();
+    return row;
   }
 
   // ---- Minimal, safe Markdown renderer for AI replies (all text is HTML-escaped first) ----
@@ -3572,6 +3577,46 @@
     if (lastUserMessage) sendChatMessage(lastUserMessage, true);
   }
 
+  // ---- Chat: "thinking" spinner + fast typing effect for AI replies ----
+  function showThinkingRow() {
+    const box = document.getElementById('chat-messages');
+    const row = document.createElement('div');
+    row.className = 'msg-row assistant thinking';
+    row.innerHTML = '<div><div class="msg-bubble"><span class="spinner-ring" role="status" aria-label="Thinking"></span></div></div>';
+    box.appendChild(row);
+    scrollChatToBottom();
+    return row;
+  }
+  async function typeReply(content, signal, thinkingRow) {
+    if (thinkingRow) thinkingRow.remove();
+    const row = appendMessage('assistant', content);
+    const bubble = row.querySelector('.msg-bubble');
+    const actions = row.querySelector('.msg-actions');
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !content) return row;
+    const scroller = document.getElementById('chat-scroll');
+    const partial = (txt) => ((txt.match(/```/g) || []).length % 2 ? txt + '\n```' : txt); // close an open code fence while typing
+    const perFrame = Math.max(3, Math.ceil(content.length / 220)); // always finishes in about 3-4 seconds
+    if (actions) actions.style.visibility = 'hidden';
+    bubble.innerHTML = '';
+    let shown = 0;
+    while (shown < content.length) {
+      if (signal && signal.aborted) break;
+      const stick = scroller ? scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 140 : false;
+      shown = Math.min(content.length, shown + perFrame);
+      bubble.innerHTML = renderMessageContent(partial(content.slice(0, shown)), 'assistant');
+      if (stick && scroller) scroller.scrollTop = scroller.scrollHeight;
+      await new Promise(r => requestAnimationFrame(r));
+    }
+    if (shown < content.length) {           // stopped by the user: keep what was typed
+      bubble.setAttribute('data-raw', encodeURIComponent(content.slice(0, shown)));
+    } else {
+      bubble.innerHTML = renderMessageContent(content, 'assistant');
+    }
+    if (actions) actions.style.visibility = '';
+    return row;
+  }
+
   async function sendChatMessage(forcedText, isRegenerate) {
     const textarea = document.getElementById('chat-textarea');
     const text = forcedText || textarea.value.trim();
@@ -3590,6 +3635,7 @@
     if (!isRegenerate && !isGuestMode) await ensureSessionMarker(mode, text);
     const sendBtn = document.getElementById('chat-send-btn');
     const signal = beginGeneration('chat', sendBtn);
+    const thinking = showThinkingRow();
     try {
       if (isGuestMode) {
         const res = await fetch('/api/web/guest/chat', {
@@ -3603,17 +3649,18 @@
           return;
         }
         if (!res.ok) throw new Error(data.error || 'Request failed');
-        appendMessage('assistant', data.reply);
+        await typeReply(data.reply, signal, thinking);
         if (voiceOutputEnabled) speak(data.reply);
       } else {
         const { reply } = await apiPost('/api/web/chat', { message: text, mode }, signal);
-        appendMessage('assistant', reply);
+        await typeReply(reply, signal, thinking);
         if (voiceOutputEnabled) speak(reply);
       }
     } catch (e) {
       if (e.name === 'AbortError') { appendMessage('assistant', 'Stopped.'); }
       else { appendMessage('assistant', 'Sorry, something went wrong. Try again.'); }
     } finally {
+      thinking.remove();
       endGeneration('chat', () => sendChatMessage());
     }
   }
