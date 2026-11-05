@@ -20,6 +20,7 @@ const { supabase } = require('../config/supabase');
 
 const router = express.Router();
 
+const STUDY_LEVEL_VALUES = ['', 'primary', 'o-level', 'a-level', 'university', 'professional'];
 const BLOCKED_REPLY = "I can't help with that request. Try rephrasing it or asking something else.";
 
 // Per-user chat limit: 20 messages per minute (in memory; resets on redeploy).
@@ -188,8 +189,9 @@ router.get('/me', async (req, res) => {
 
 // Update display name and/or WhatsApp-linked phone number from the account panel.
 router.patch('/me', async (req, res) => {
-  const { name, phone_number } = req.body;
+  const { name, phone_number, study_level } = req.body;
   const fields = {};
+  if (typeof study_level === 'string' && STUDY_LEVEL_VALUES.includes(study_level)) fields.study_level = study_level || null;
   if (typeof name === 'string') fields.name = name.trim() || null;
   if (typeof phone_number === 'string' && phone_number.trim()) {
     fields.phone_number = phone_number.replace(/[^\d]/g, '');
@@ -312,7 +314,7 @@ router.post('/chat', async (req, res) => {
     }
 
     const history = await chatService.getModeContinuationMessages(user.id, mode);
-    const reply = await aiService.generateChatReply(mode, history, message, req.body.level);
+    const reply = await aiService.generateChatReply(mode, history, message, req.body.level !== undefined ? req.body.level : user.study_level);
 
     await chatService.saveMessage(user.id, 'user', message, mode);
     await chatService.saveMessage(user.id, 'assistant', reply, mode);

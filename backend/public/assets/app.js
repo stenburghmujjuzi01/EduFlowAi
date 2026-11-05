@@ -393,6 +393,13 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
     isGuestMode = false;
     document.body.classList.remove('is-guest');
     currentUser = me.user;
+    // Study level: the account is the source of truth; push a local choice up if the account has none yet.
+    if (typeof currentUser.study_level === 'string' && currentUser.study_level) {
+      try { localStorage.setItem('eduflow_level', currentUser.study_level); } catch (e) {}
+      const lvlSel = document.getElementById('study-level'); if (lvlSel) lvlSel.value = currentUser.study_level;
+    } else if (getStudyLevel()) {
+      apiPatch('/api/web/me', { study_level: getStudyLevel() }).catch(() => {});
+    }
     const { data: { session } } = await sb.auth.getSession();
     currentUserEmail = session.user.email;
     // Guest mode may have already swapped out the sidebar footer / settings
@@ -1711,7 +1718,11 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
 
   // ---- EduFlow's learning loop: study level, recent topics, weak topics, review-today ----
   function getStudyLevel() { try { return localStorage.getItem('eduflow_level') || ''; } catch (e) { return ''; } }
-  function setStudyLevel(v) { try { localStorage.setItem('eduflow_level', v); } catch (e) {} showToast(v ? 'Tutor will teach at your level.' : 'Level cleared.'); }
+  function setStudyLevel(v) {
+    try { localStorage.setItem('eduflow_level', v); } catch (e) {}
+    if (!isGuestMode) apiPatch('/api/web/me', { study_level: v }).catch(() => {}); // save to the account so it follows the learner
+    showToast(v ? 'Tutor will teach at your level.' : 'Level cleared.');
+  }
   document.addEventListener('DOMContentLoaded', () => { const sel = document.getElementById('study-level'); if (sel) sel.value = getStudyLevel(); });
 
   function getRecentTopics() { try { return JSON.parse(localStorage.getItem('eduflow_recent_topics') || '[]'); } catch (e) { return []; } }
