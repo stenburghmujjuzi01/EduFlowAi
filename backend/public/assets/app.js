@@ -1425,6 +1425,12 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
           <button onclick="dislikeMessage(this)" title="Dislike">Dislike</button>
           <button onclick="exportMessage(this)" title="Export">Export</button>
         </div>` : ''}
+        ${role === 'assistant' && content.length >= 300 ? `<div class="msg-study">
+          <span class="msg-study-label">Practice this:</span>
+          <button type="button" onclick="studyAction(this, 'quiz')">Quiz me</button>
+          <button type="button" onclick="studyAction(this, 'flashcards')">Make flashcards</button>
+          <button type="button" onclick="studyAction(this, 'note')">Save to notes</button>
+        </div>` : ''}
       </div>`;
     box.appendChild(row);
     if (!noScroll) scrollChatToBottom();
@@ -1705,6 +1711,51 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
     let t; new MutationObserver(() => { clearTimeout(t); t = setTimeout(labelFormControls, 300); }).observe(document.body, { childList: true, subtree: true });
   });
 
+  // ---- "Practice this": every lesson in the chat links into quizzes, flashcards and notes ----
+  function studyTopicFor(row) {
+    const bubble = row.querySelector('.msg-bubble');
+    const heading = bubble && bubble.querySelector('h1, h2, h3');
+    let t = heading ? heading.textContent : '';
+    if (!t) {
+      let prev = row.previousElementSibling;
+      while (prev && !prev.classList.contains('user')) prev = prev.previousElementSibling;
+      if (prev) t = (prev.querySelector('.msg-bubble') || prev).textContent;
+    }
+    t = (t || 'This lesson').replace(/^(lesson|unit|chapter)\s*\d+\s*[:\-\u2013]\s*/i, '').replace(/^\d+[.)]\s*/, '').trim();
+    return t.length > 80 ? t.slice(0, 77) + '...' : t;
+  }
+  async function studyAction(btn, kind) {
+    if (isGuestMode) { showToast('Sign up free to turn lessons into quizzes, flashcards and notes.'); return; }
+    const row = btn.closest('.msg-row');
+    const topic = studyTopicFor(row);
+    if (kind === 'quiz') {
+      showSection('quizzes');
+      document.getElementById('quiz-topic-input').value = topic;
+      generateQuiz(document.querySelector('#quiz-topic-input + button'));
+      return;
+    }
+    const raw = decodeURIComponent(row.querySelector('.msg-bubble').getAttribute('data-raw') || '');
+    const label = btn.textContent;
+    btn.disabled = true;
+    try {
+      if (kind === 'flashcards') {
+        btn.textContent = 'Creating...';
+        await apiPost('/api/web/flashcards/generate', { topic, count: 8 });
+        btn.textContent = 'Flashcards ready';
+        showToast('Flashcards created. Find them under Practice > Flashcards.');
+      } else {
+        btn.textContent = 'Saving...';
+        await apiPost('/api/web/notes', { title: topic, content: raw });
+        btn.textContent = 'Saved to notes';
+        showToast('Saved to your notes.');
+      }
+    } catch (e) {
+      btn.textContent = label;
+      btn.disabled = false;
+      showToast('Could not do that right now. Please try again.');
+    }
+  }
+
   function showThinkingRow() {
     const box = document.getElementById('chat-messages');
     const row = document.createElement('div');
@@ -1768,7 +1819,9 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
     if (reduce || !content) { logBox.removeAttribute('aria-busy'); return row; }
     const partial = (txt) => ((txt.match(/```/g) || []).length % 2 ? txt + '\n```' : txt); // close an open code fence while typing
     const perFrame = Math.max(3, Math.ceil(content.length / 220)); // always finishes in about 3-4 seconds
+    const study = row.querySelector('.msg-study');
     if (actions) actions.style.visibility = 'hidden';
+    if (study) study.style.visibility = 'hidden';
     bubble.innerHTML = '';
     let shown = 0;
     while (shown < content.length) {
@@ -1785,6 +1838,7 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
       bubble.innerHTML = renderMessageContent(content, 'assistant');
     }
     if (actions) actions.style.visibility = '';
+    if (study) study.style.visibility = '';
     logBox.removeAttribute('aria-busy');
     followBottom = false;
     updateScrollDownBtn();
