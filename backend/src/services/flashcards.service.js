@@ -19,13 +19,27 @@ async function createSet(user_id, topic, cards) {
 }
 
 async function listSets(user_id) {
-  const { data, error } = await supabase
+  const now = Date.now();
+  let { data, error } = await supabase
     .from('flashcard_sets')
-    .select('*, flashcards(id)')
+    .select('*, flashcards(id, next_review_at)')
     .eq('user_id', user_id)
     .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data.map((s) => ({ ...s, cardCount: s.flashcards.length, flashcards: undefined }));
+  if (error) {
+    // Older databases without next_review_at: fall back to plain counts.
+    ({ data, error } = await supabase
+      .from('flashcard_sets')
+      .select('*, flashcards(id)')
+      .eq('user_id', user_id)
+      .order('created_at', { ascending: false }));
+    if (error) throw error;
+  }
+  return data.map((s) => ({
+    ...s,
+    cardCount: s.flashcards.length,
+    dueCount: s.flashcards.filter((f) => !f.next_review_at || new Date(f.next_review_at).getTime() <= now).length,
+    flashcards: undefined,
+  }));
 }
 
 async function getSetWithCards(user_id, set_id) {

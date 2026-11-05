@@ -263,7 +263,15 @@ const CHAT_SYSTEM_RULES = `You are the AI tutor inside EduFlow, a learning platf
 - Match length to the request: simple questions get short, direct answers; teaching requests get full lessons.
 - Reply in the same language the learner writes in.`;
 
-async function generateChatReply(mode, history, message) {
+const STUDY_LEVELS = {
+  primary: 'primary school (Uganda PLE)',
+  'o-level': 'secondary O-level (Uganda UCE)',
+  'a-level': 'secondary A-level (Uganda UACE)',
+  university: 'university',
+  professional: 'professional / self-study',
+};
+
+async function generateChatReply(mode, history, message, level) {
   if (!isConfigured()) throw new Error('Gemini is not configured (missing GEMINI_API_KEY)');
 
   const persona = CHAT_MODES[mode] || CHAT_MODES.tutor;
@@ -285,7 +293,10 @@ async function generateChatReply(mode, history, message) {
 
   return callGemini(null, {
     contents,
-    system: `You are ${persona}, working inside EduFlow.\n\n${CHAT_SYSTEM_RULES}`,
+    system: `You are ${persona}, working inside EduFlow.\n\n${CHAT_SYSTEM_RULES}`
+      + (STUDY_LEVELS[level]
+        ? `\n\nThe learner studies at the ${STUDY_LEVELS[level]} level. Pitch explanations, vocabulary and examples to that level and, where relevant, align with the Ugandan syllabus for it.`
+        : ''),
     maxOutputTokens: 8192,
     truncationNote: true,
   });

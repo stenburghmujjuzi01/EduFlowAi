@@ -66,7 +66,7 @@ router.post('/guest/chat', async (req, res) => {
   entry.count += 1;
 
   try {
-    const reply = await aiService.generateChatReply('tutor', [], message);
+    const reply = await aiService.generateChatReply('tutor', [], message, req.body.level);
     res.json({ reply, remaining: Math.max(0, GUEST_DAILY_LIMIT - entry.count) });
   } catch (err) {
     if (err.code === 'blocked') return res.json({ reply: BLOCKED_REPLY });
@@ -312,7 +312,7 @@ router.post('/chat', async (req, res) => {
     }
 
     const history = await chatService.getModeContinuationMessages(user.id, mode);
-    const reply = await aiService.generateChatReply(mode, history, message);
+    const reply = await aiService.generateChatReply(mode, history, message, req.body.level);
 
     await chatService.saveMessage(user.id, 'user', message, mode);
     await chatService.saveMessage(user.id, 'assistant', reply, mode);

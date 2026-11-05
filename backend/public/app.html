@@ -327,6 +327,7 @@
               </div>
 
               <div class="dash-hero-card" id="continue-learning-card"></div>
+              <div class="box" id="dash-focus-box" style="display:none;"><h3>Review today</h3><div id="dash-focus-body"></div></div>
 
               <div class="box">
                 <h3>Today's plan</h3>
@@ -370,6 +371,14 @@
                     <div style="font-weight:600;font-size:14px;" id="chat-mode-title">Tutor</div>
                     <div style="font-size: 12px;color:var(--muted)">EduFlow Chat</div>
                   </div>
+                  <select id="study-level" class="level-select" aria-label="Study level" title="Study level" onchange="setStudyLevel(this.value)">
+                    <option value="">Any level</option>
+                    <option value="primary">Primary (PLE)</option>
+                    <option value="o-level">O-level (UCE)</option>
+                    <option value="a-level">A-level (UACE)</option>
+                    <option value="university">University</option>
+                    <option value="professional">Professional</option>
+                  </select>
                 </div>
                 <div id="chat-messages" role="log" aria-live="polite" aria-label="Conversation"></div>
                 <div id="scroll-down-wrap"><button type="button" id="scroll-down-btn" aria-label="Scroll to bottom" onclick="scrollChatDown()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
@@ -396,7 +405,6 @@
             <div class="content-section" id="section-courses">
               <h1>My Courses</h1>
               <div class="box" id="courses-info"></div>
-              <p class="empty">Support for multiple concurrent courses is coming soon - for now your active course is shown above.</p>
             </div>
 
             <div class="content-section" id="section-learning-paths">
@@ -415,8 +423,9 @@
               <h1>Progress</h1>
               <div class="stats-row" id="progress-stats-row"></div>
               <div class="box">
-                <h3>Weak Topics</h3>
-                <div class="empty-state">
+                <h3>Weak topics</h3>
+                <div id="weak-topics-body"></div>
+                <div class="empty-state" id="weak-topics-empty">
                   <p>Once you've completed a few quizzes, EduFlow will identify topics that need more practice.</p>
                   <button class="btn-outline" onclick="showSection('quizzes')">Take a quiz</button>
                 </div>

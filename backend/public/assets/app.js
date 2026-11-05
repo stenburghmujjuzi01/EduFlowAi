@@ -79,13 +79,6 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
       { id: 'certificates', label: 'Certificates', icon: 'certificates', live: true },
       { id: 'leaderboard', label: 'Leaderboard', icon: 'leaderboard', live: true },
     ]},
-    { group: 'Community', items: [
-      { id: 'community', label: 'Community', icon: 'community', live: true },
-      { id: 'live-classes', label: 'Live Classes', icon: 'liveclasses', live: true },
-    ]},
-    { group: 'Career', items: [
-      { id: 'career-center', label: 'Career Center', icon: 'career', live: true },
-    ]},
     { group: 'Tools', items: [
       { id: 'notes', label: 'Notes', icon: 'notes', live: true },
       { id: 'planner', label: 'Study Planner', icon: 'planner', live: true },
@@ -96,7 +89,10 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
       { id: 'tool-timer', label: 'Pomodoro Timer', icon: 'timer', live: true, noGuestLock: true },
       { id: 'ai-tools', label: 'AI Tools', icon: 'aitools', live: true },
     ]},
-    { group: 'Instructor', items: [
+    { group: 'More', items: [
+      { id: 'community', label: 'Community', icon: 'community', live: true },
+      { id: 'live-classes', label: 'Live Classes', icon: 'liveclasses', live: true },
+      { id: 'career-center', label: 'Career Center', icon: 'career', live: true },
       { id: 'admin', label: 'Instructor Tools', icon: 'admin', live: true },
     ]},
   ];
@@ -132,6 +128,7 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
 
   function showSection(name) {
     document.body.setAttribute('data-section', name);
+    if (typeof afterSectionShown === 'function') setTimeout(() => afterSectionShown(name), 0);
     document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
     const target = document.getElementById('section-' + name);
     if (target) target.classList.add('active');
@@ -1056,10 +1053,11 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
     window.__dashPrimaryPlanItem = recText;
     renderDashboardPlan([]);
     loadDashboardPlan();
+    loadDashboardFocus();
 
     document.getElementById('courses-info').innerHTML = user.current_topic
       ? `<p style="margin:0 0 6px 0;font-size:14px;">Topic: <strong>${esc(user.current_topic)}</strong></p><p style="margin:0 0 6px 0;font-size:14px;">Skill level: <strong>${esc(user.skill_level) || 'Not yet assessed'}</strong></p><p style="margin:0;font-size:14px;">Progress: <strong>${user.current_lesson_number || 0}/5 lessons</strong></p>`
-      : '<span class="empty">No course started yet.</span>';
+      : '<div class="empty-state"><p>No course yet. Tell the tutor what you want to learn and it will build one for you.</p><button class="btn" onclick="showSection(\'chat\')">Start a course</button></div>';
   }
 
   // Today's Plan items: the primary recommendation (always shown) plus any
@@ -1711,6 +1709,73 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
     let t; new MutationObserver(() => { clearTimeout(t); t = setTimeout(labelFormControls, 300); }).observe(document.body, { childList: true, subtree: true });
   });
 
+  // ---- EduFlow's learning loop: study level, recent topics, weak topics, review-today ----
+  function getStudyLevel() { try { return localStorage.getItem('eduflow_level') || ''; } catch (e) { return ''; } }
+  function setStudyLevel(v) { try { localStorage.setItem('eduflow_level', v); } catch (e) {} showToast(v ? 'Tutor will teach at your level.' : 'Level cleared.'); }
+  document.addEventListener('DOMContentLoaded', () => { const sel = document.getElementById('study-level'); if (sel) sel.value = getStudyLevel(); });
+
+  function getRecentTopics() { try { return JSON.parse(localStorage.getItem('eduflow_recent_topics') || '[]'); } catch (e) { return []; } }
+  function rememberTopic(text) {
+    const t = String(text || '').replace(/\s+/g, ' ').trim();
+    if (t.length < 4 || t.length > 120) return;
+    const short = t.length > 60 ? t.slice(0, 57) + '...' : t;
+    const list = [short, ...getRecentTopics().filter(x => x.toLowerCase() !== short.toLowerCase())].slice(0, 6);
+    try { localStorage.setItem('eduflow_recent_topics', JSON.stringify(list)); } catch (e) {}
+  }
+  function ensureTopicChips(name) {
+    if (!['quizzes', 'flashcards', 'assignments', 'learning-paths'].includes(name)) return;
+    const section = document.getElementById('section-' + name);
+    const input = section && section.querySelector('input[type="text"]');
+    if (!input) return;
+    const old = document.getElementById('chips-' + name); if (old) old.remove();
+    const topics = getRecentTopics();
+    if (!topics.length) return;
+    const wrap = document.createElement('div');
+    wrap.id = 'chips-' + name; wrap.className = 'topic-chips';
+    wrap.innerHTML = '<span class="topic-chips-label">From your chats:</span>' + topics.map(t => '<button type="button" class="topic-chip" data-topic="' + esc(t) + '">' + esc(t) + '</button>').join('');
+    wrap.addEventListener('click', (e) => { const b = e.target.closest('.topic-chip'); if (b) { input.value = b.dataset.topic; input.focus(); } });
+    (input.closest('.row-flex') || input).insertAdjacentElement('afterend', wrap);
+  }
+  function weakTopicsFrom(attempts) {
+    const by = {};
+    (attempts || []).forEach(a => { const k = String(a.topic || '').trim(); if (!k || !a.total) return; const e = by[k.toLowerCase()] || (by[k.toLowerCase()] = { topic: k, score: 0, total: 0 }); e.score += a.score; e.total += a.total; });
+    return Object.values(by).map(e => ({ ...e, pct: e.score / e.total })).filter(e => e.pct < 0.7).sort((x, y) => x.pct - y.pct).slice(0, 3);
+  }
+  function practiceTopic(topic) {
+    showSection('quizzes');
+    document.getElementById('quiz-topic-input').value = topic;
+    generateQuiz(document.querySelector('#quiz-topic-input + button'));
+  }
+  async function loadDashboardFocus() {
+    const box = document.getElementById('dash-focus-box'); const body = document.getElementById('dash-focus-body');
+    if (!box || !body) return;
+    const [sets, hist] = await Promise.allSettled([apiGet('/api/web/flashcards/sets'), apiGet('/api/web/quiz/history')]);
+    const rows = [];
+    const setList = sets.status === 'fulfilled' ? (sets.value.sets || []) : [];
+    const due = setList.reduce((n, s) => n + (s.dueCount || 0), 0);
+    if (due > 0) rows.push({ title: due + ' flashcard' + (due === 1 ? '' : 's') + ' due', sub: 'Quick review keeps what you learned from fading.', label: 'Review', action: "showSection('flashcards')" });
+    weakTopicsFrom(hist.status === 'fulfilled' ? hist.value.attempts : []).slice(0, 2).forEach(w => rows.push({ title: 'Practise ' + w.topic, sub: 'You scored ' + w.score + '/' + w.total + ' so far. A fresh quiz will help.', label: 'Practise', topic: w.topic }));
+    if (!rows.length) rows.push({ title: 'Turn what you learn into practice', sub: 'Under any lesson in chat, tap "Quiz me" or "Make flashcards". Your reviews and weak topics show up here.', label: 'Open chat', action: "showSection('chat')" });
+    body.innerHTML = rows.map(r => '<div class="focus-row"><div><div class="focus-title">' + esc(r.title) + '</div><div class="focus-sub">' + esc(r.sub) + '</div></div>'
+      + '<button type="button" class="btn-outline"' + (r.topic ? ' data-topic="' + esc(r.topic) + '" onclick="practiceTopic(this.dataset.topic)"' : ' onclick="' + r.action + '"') + '>' + esc(r.label) + '</button></div>').join('');
+    box.style.display = '';
+  }
+  async function loadProgressWeakTopics() {
+    const body = document.getElementById('weak-topics-body'); const empty = document.getElementById('weak-topics-empty');
+    if (!body) return;
+    try {
+      const { attempts } = await apiGet('/api/web/quiz/history');
+      const weak = weakTopicsFrom(attempts);
+      body.innerHTML = weak.map(w => '<div class="focus-row"><div><div class="focus-title">' + esc(w.topic) + '</div><div class="focus-sub">' + Math.round(w.pct * 100) + '% correct across ' + w.total + ' questions</div></div>'
+        + '<button type="button" class="btn-outline" data-topic="' + esc(w.topic) + '" onclick="practiceTopic(this.dataset.topic)">Practise</button></div>').join('');
+      if (empty) empty.style.display = weak.length ? 'none' : '';
+    } catch (e) { /* keep the empty state */ }
+  }
+  function afterSectionShown(name) {
+    ensureTopicChips(name);
+    if (name === 'progress') loadProgressWeakTopics();
+  }
+
   // ---- "Practice this": every lesson in the chat links into quizzes, flashcards and notes ----
   function studyTopicFor(row) {
     const bubble = row.querySelector('.msg-bubble');
@@ -1851,6 +1916,7 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
     if (!text) return;
     if (!isRegenerate) {
       appendMessage('user', text);
+      rememberTopic(text);
       lastUserMessage = text;
       textarea.value = '';
       localStorage.removeItem('eduflow_chat_draft');
@@ -1869,7 +1935,7 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
       if (isGuestMode) {
         const res = await fetch('/api/web/guest/chat', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text }), signal,
+          body: JSON.stringify({ message: text, level: getStudyLevel() }), signal,
         });
         const data = await res.json().catch(() => ({}));
         if (res.status === 429) {
@@ -1881,7 +1947,7 @@ const SUPABASE_URL = 'https://ahizppshhekmawqyyoyx.supabase.co';
         await typeReply(data.reply, signal, thinking);
         if (voiceOutputEnabled) speak(data.reply);
       } else {
-        const { reply } = await apiPost('/api/web/chat', { message: text, mode }, signal);
+        const { reply } = await apiPost('/api/web/chat', { message: text, mode, level: getStudyLevel() }, signal);
         await typeReply(reply, signal, thinking);
         if (voiceOutputEnabled) speak(reply);
       }
